@@ -706,71 +706,44 @@ if page == "👤 Player Profile":
         st.warning("No data available for this player yet.")
         st.stop()
 
-    # ----------------------------
-    # CAREER STATS
-    # ----------------------------
-    total_steps = int(user_df["steps"].sum())
-    avg_steps = int(user_df["steps"].mean())
-    active_days = (user_df["steps"] > 0).sum()
-
-    best_day_row = user_df.loc[user_df["steps"].idxmax()]
-    best_day = best_day_row["date"].strftime("%d %b %Y")
-    best_day_steps = int(best_day_row["steps"])
-
-    monthly_user = (
-        user_df.groupby(user_df["date"].dt.to_period("M"))["steps"]
-        .sum()
-        .reset_index()
-        .rename(columns={"date": "month"})
-    )
-
-    best_month_row = monthly_user.loc[monthly_user["steps"].idxmax()]
-    best_month = best_month_row["month"].strftime("%B %Y")
-    best_month_steps = int(best_month_row["steps"])
-
-    days_10k = (user_df["steps"] >= 10000).sum()
-    days_5k = (user_df["steps"] >= 5000).sum()
+    # ✅ LEAGUE HISTORY FOR THIS PLAYER (FIX)
+    player_lh = league_history[league_history["User"] == selected_user].sort_values("Month")
 
     # ----------------------------
-    # PLAYER CARD
+    # PLAYER CARD — KEY STATS
     # ----------------------------
     st.markdown("##### 📌 Key stats")
 
     u = user_df.sort_values("date").copy()
-    # ✅ Trim future empty days – keep only up to last active day
+
     if (u["steps"] > 0).any():
         last_active_date = u.loc[u["steps"] > 0, "date"].max()
         u = u[u["date"] <= last_active_date]
-    
-    # ---- Basics ----
+
     total_steps = int(u["steps"].sum())
     avg_steps = int(u["steps"].mean())
-    
+
     non_zero = u[u["steps"] > 0]
     lowest_day = int(non_zero["steps"].min()) if not non_zero.empty else 0
-    
+
     best_day_row = u.loc[u["steps"].idxmax()]
     best_day_steps = int(best_day_row["steps"])
     best_day_date = best_day_row["date"].strftime("%d %b %Y")
-    
-    # ---- Weekly & monthly records ----
+
     u["week"] = u["date"].dt.to_period("W").apply(lambda r: r.start_time)
     u["month_p"] = u["date"].dt.to_period("M")
-    
+
     weekly = u.groupby("week")["steps"].sum()
     monthly = u.groupby("month_p")["steps"].sum()
-    
+
     best_week_steps = int(weekly.max())
     best_month_steps = int(monthly.max())
-    
-    # ---- 10K / 5K coverage ----
+
     days_total = len(u)
     days_10k = (u["steps"] >= 10000).sum()
     days_5k = (u["steps"] >= 5000).sum()
-    
     pct_10k = round((days_10k / days_total) * 100, 2) if days_total else 0
-    
-    # ---- Streak helpers ----
+
     def max_streak(series):
         max_s = cur = 0
         for v in series:
@@ -780,7 +753,7 @@ if page == "👤 Player Profile":
             else:
                 cur = 0
         return max_s
-    
+
     def current_streak(series):
         cur = 0
         for v in reversed(series):
@@ -789,193 +762,125 @@ if page == "👤 Player Profile":
             else:
                 break
         return cur
-    
+
     is_10k = (u["steps"] >= 10000).tolist()
     is_5k = (u["steps"] >= 5000).tolist()
-    
+
     max_10k_streak = max_streak(is_10k)
     max_5k_streak = max_streak(is_5k)
-    
     current_10k_streak = current_streak(is_10k)
     current_5k_streak = current_streak(is_5k)
-    
-    # ---- Layout (3 columns like a stat card) ----
+
     c1, c2, c3 = st.columns(3)
-    
+
     c1.metric("Overall steps", f"{total_steps:,}")
     c1.metric("Your average", f"{avg_steps:,}")
     c1.metric("Lowest day (non-zero)", f"{lowest_day:,}")
-    
+
     c2.metric("Highest day", f"{best_day_steps:,}", best_day_date)
     c2.metric("Highest week", f"{best_week_steps:,}")
     c2.metric("Highest month", f"{best_month_steps:,}")
-    
+
     c3.metric("Magic 10K covered", f"{pct_10k}%")
     c3.metric("10K streak (max)", f"{max_10k_streak} days")
     c3.metric("5K streak (max)", f"{max_5k_streak} days")
-    
+
     st.caption(
         f"🔥 Current streaks (as of {last_active_date.strftime('%d %b %Y')}) — "
         f"10K: {current_10k_streak} days | 5K: {current_5k_streak} days"
     )
-    
+
+    # ----------------------------
+    # LEAGUE CAREER SNAPSHOT
+    # ----------------------------
     st.divider()
+    st.markdown("##### 🧍 League career snapshot")
 
-    st.markdown("##### 🏅 Career podiums & trophies")
-
-    # ----------------------------------
-    # Build monthly rankings (all-time)
-    # ----------------------------------
-    all_months = df["month"].dropna().unique()
-    
-    career_rows = []
-    
-    for m in all_months:
-        mdf = df[df["month"] == m]
-    
-        if mdf["steps"].sum() == 0:
-            continue
-    
-        table = (
-            mdf.groupby("User")["steps"]
-            .sum()
-            .reset_index()
-            .sort_values("steps", ascending=False)
-            .reset_index(drop=True)
-        )
-    
-        table["Rank"] = table.index + 1
-        table["month"] = m
-        career_rows.append(table)
-    
-    career_df = pd.concat(career_rows, ignore_index=True)
-    
-    player_hist = career_df[career_df["User"] == selected_user]
-
-    st.markdown("#### 🧍 Player Profile")
-    st.caption("Career overview & league journey")
-    
     first_month = player_lh["Month"].min().strftime("%b %Y")
     last_month = player_lh["Month"].max().strftime("%b %Y")
     seasons = player_lh["Month"].nunique()
-    
+
     prem_months = (player_lh["League"] == "Premier").sum()
     champ_months = (player_lh["League"] == "Championship").sum()
-    
     promotions = player_lh["Promoted"].sum()
     relegations = player_lh["Relegated"].sum()
-    
-    c1, c2, c3, c4 = st.columns(4)
-    
-    c1.metric("Seasons played", seasons)
-    c2.metric("Premier months", prem_months)
-    c3.metric("Promotions", promotions)
-    c4.metric("Relegations", relegations)
-    
+
+    l1, l2, l3, l4 = st.columns(4)
+
+    l1.metric("Seasons played", seasons)
+    l2.metric("Premier months", prem_months)
+    l3.metric("Promotions", promotions)
+    l4.metric("Relegations", relegations)
+
     st.info(f"🗓️ Active career: **{first_month} → {last_month}**")
 
-    
-    # ----------------------------------
-    # Career podium stats
-    # ----------------------------------
-    wins = (player_hist["Rank"] == 1).sum()
-    seconds = (player_hist["Rank"] == 2).sum()
-    thirds = (player_hist["Rank"] == 3).sum()
-    podiums = wins + seconds + thirds
-    
-    best_rank = int(player_hist["Rank"].min())
-    months_played = player_hist["month"].nunique()
-    
-    # ----------------------------------
-    # Trophy cabinet UI
-    # ----------------------------------
-    c1, c2, c3, c4 = st.columns(4)
-    
-    c1.metric("🥇 Wins", wins)
-    c2.metric("🥈 Seconds", seconds)
-    c3.metric("🥉 Thirds", thirds)
-    c4.metric("🏆 Total podiums", podiums)
-    
-    c1.metric("⭐ Best rank", f"#{best_rank}")
-    c2.metric("📆 Months played", months_played)
-    
+    # ----------------------------
+    # TROPHY CABINET
+    # ----------------------------
     st.divider()
-    st.markdown("#### 🏆 Trophy Cabinet")
-    
-    prem_titles = player_lh[(player_lh["League"] == "Premier") & (player_lh["Champion"] == True)].shape[0]
-    champ_titles = player_lh[(player_lh["League"] == "Championship") & (player_lh["Champion"] == True)].shape[0]
+    st.markdown("##### 🏆 Trophy cabinet")
+
+    prem_titles = player_lh[(player_lh["League"] == "Premier") & (player_lh["Champion"])].shape[0]
+    champ_titles = player_lh[(player_lh["League"] == "Championship") & (player_lh["Champion"])].shape[0]
     runnerups = player_lh[player_lh["Rank"] == 2].shape[0]
-    
     best_finish = int(player_lh["Rank"].min())
-    best_points = round(player_lh["points"].max() * 100)
-    
+    best_points = int(player_lh["points_display"].max())
+
     t1, t2, t3, t4, t5 = st.columns(5)
-    
+
     t1.metric("👑 Premier titles", prem_titles)
     t2.metric("🏆 Championship titles", champ_titles)
     t3.metric("🥈 Runner-ups", runnerups)
     t4.metric("🏅 Best rank", f"#{best_finish}")
     t5.metric("🚀 Best season", f"{best_points} pts")
 
-
-    
-
     # ----------------------------
-    # MONTHLY TREND
+    # LEAGUE JOURNEY TABLE
     # ----------------------------
-    st.markdown("##### 📈 Monthly trend")
-
-    monthly_user["month_str"] = monthly_user["month"].astype(str)
-
-    fig = px.line(
-        monthly_user,
-        x="month_str",
-        y="steps",
-        markers=True,
-        title="Monthly total steps"
-    )
-
-    fig.update_layout(
-        xaxis_title="Month",
-        yaxis_title="Steps",
-        height=450
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
     st.divider()
+    st.markdown("##### 📜 League journey")
+
+    journey = player_lh[["Month","League","Rank","points_display","Champion","Promoted","Relegated"]].copy()
+    journey["Month"] = journey["Month"].dt.strftime("%b %Y")
+
+    st.dataframe(
+        journey.rename(columns={
+            "points_display": "Points",
+            "Champion": "🏆 Champion",
+            "Promoted": "⬆ Promoted",
+            "Relegated": "⬇ Relegated"
+        }),
+        use_container_width=True,
+        hide_index=True
+    )
 
     # ----------------------------
-    # HISTORY TABLE
+    # MONTH BY MONTH BREAKDOWN
     # ----------------------------
+    st.divider()
     st.markdown("##### 📅 Month by month breakdown")
 
     u2 = user_df.copy()
     u2["month"] = u2["date"].dt.to_period("M")
-    
+
     monthly_stats = (
-    u2.groupby("month")
-      .agg(
-          total_steps=("steps", "sum"),
-          avg_steps=("steps", "mean"),
-          best_day=("steps", "max"),
-          days_10k=("steps", lambda x: (x >= 10000).sum()),
-          days_5k=("steps", lambda x: (x >= 5000).sum()),
-      )
-      .reset_index()
+        u2.groupby("month")
+          .agg(
+              total_steps=("steps", "sum"),
+              avg_steps=("steps", "mean"),
+              best_day=("steps", "max"),
+              days_10k=("steps", lambda x: (x >= 10000).sum()),
+              days_5k=("steps", lambda x: (x >= 5000).sum()),
+          )
+          .reset_index()
     )
-    
-    # ✅ REMOVE future / empty months
+
     monthly_stats = monthly_stats[monthly_stats["total_steps"] > 0]
-    
-    # ✅ Latest month first
     monthly_stats = monthly_stats.sort_values("month", ascending=False)
-    
-    # Formatting
+
     monthly_stats["month"] = monthly_stats["month"].dt.strftime("%B %Y")
     monthly_stats["avg_steps"] = monthly_stats["avg_steps"].astype(int)
-    
-    # Friendly column names
+
     monthly_stats = monthly_stats.rename(columns={
         "month": "Month",
         "total_steps": "Total steps",
@@ -985,6 +890,6 @@ if page == "👤 Player Profile":
         "days_5k": "Number of 5K days"
     })
 
-    
     st.dataframe(monthly_stats, use_container_width=True, hide_index=True)
+
 
