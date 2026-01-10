@@ -18,60 +18,65 @@ SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=cs
 # ----------------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv(SHEET_URL)
-    df.columns = df.columns.str.strip()
 
-    user_col = df.columns[0]
+    years = ["2024", "2025", "2026"]  # extend later if needed
+    all_data = []
 
-    df_long = df.melt(
-        id_vars=[user_col],
-        var_name="date",
-        value_name="steps"
-    )
+    for year in years:
+        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&sheet={year}"
+        df = pd.read_csv(url)
+        df.columns = df.columns.str.strip()
 
-    df_long = df_long.rename(columns={user_col: "User"})
+        user_col = df.columns[0]
 
-    df_long["date"] = pd.to_datetime(df_long["date"], format="%d-%b-%y", errors="coerce")
-    df_long["steps"] = pd.to_numeric(df_long["steps"], errors="coerce").fillna(0)
+        df_long = df.melt(
+            id_vars=[user_col],
+            var_name="date",
+            value_name="steps"
+        )
 
-    df_long = df_long.dropna(subset=["date"])
-    df_long["month"] = df_long["date"].dt.to_period("M")
+        df_long = df_long.rename(columns={user_col: "User"})
+        df_long["date"] = pd.to_datetime(df_long["date"], format="%d-%b-%y", errors="coerce")
+        df_long["steps"] = pd.to_numeric(df_long["steps"], errors="coerce").fillna(0)
+        df_long = df_long.dropna(subset=["date"])
 
-    return df_long
+        all_data.append(df_long)
 
+    df_all = pd.concat(all_data, ignore_index=True)
+    df_all["month"] = df_all["date"].dt.to_period("M")
 
-df = load_data()
+    return df_all
+
 
 st.title("🏃 Steps League – Monthly Results")
 
 # ----------------------------
-# MONTH SELECTOR
+# MONTH SELECTOR (last 6 real months only)
 # ----------------------------
-months = sorted(df["month"].unique())
+month_summary = (
+    df.groupby(df["date"].dt.to_period("M"))["steps"]
+    .sum()
+    .reset_index()
+)
+
+# keep only months which actually have data
+valid_months = month_summary[month_summary["steps"] > 0]["date"].sort_values()
+
+# last 6 months only
+available_months = valid_months.tail(6).tolist()
 
 selected_month = st.selectbox(
     "Select month",
-    options=months,
-    index=len(months) - 1,
+    available_months[::-1],
     format_func=lambda x: x.strftime("%B %Y")
 )
 
 month_df = df[df["month"] == selected_month]
 
-# ----------------------------
-# AGGREGATE
-# ----------------------------
-monthly_totals = (
-    month_df.groupby("User")["steps"]
-    .sum()
-    .reset_index()
-    .sort_values("steps", ascending=False)
-    .reset_index(drop=True)
-)
-
-monthly_totals.insert(0, "Rank", range(1, len(monthly_totals) + 1))
-
-st.markdown(f"### Results for {selected_month.strftime('%B %Y')} ⭐")
+# safety guard
+if month_df.empty or month_df["steps"].sum() == 0:
+    st.info("📭 Data not available yet for this month.\n\nPlease check back later or contact the admin 🙂")
+    st.stop()
 
 # ----------------------------
 # PODIUM
