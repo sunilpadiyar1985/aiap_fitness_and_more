@@ -407,7 +407,7 @@ if page == "🏠 Monthly Results":
     )
     
     st.plotly_chart(fig, use_container_width=True)
-    st.dataframe(monthly_totals, use_container_width=True, hide_index=True)
+    #st.dataframe(monthly_totals, use_container_width=True, hide_index=True)
 
 # =========================================================
 # 👤 PLAYER PROFILE PAGE
