@@ -395,6 +395,16 @@ if page == "🏠 Monthly Results":
         available_months[::-1],
         format_func=lambda x: x.strftime("%B %Y")
     )
+    month_lh = league_history[
+    league_history["Month"].dt.to_period("M") == selected_month
+    ]
+
+    st.subheader("🧪 League month preview")
+
+    st.dataframe(
+        month_lh[["User","League","points","Rank","Champion","Promoted","Relegated"]],
+        use_container_width=True
+    )
     
     month_df = df[df["month"] == selected_month]
     
