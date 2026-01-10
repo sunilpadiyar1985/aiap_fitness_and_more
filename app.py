@@ -3,8 +3,6 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
-st.cache_data.clear()
-
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered")
 page = st.sidebar.radio(
     "Navigate",
@@ -71,7 +69,7 @@ df = load_data()
 # =========================================================
 if page == "🏆 Hall of Fame":
 
-    st.title("🏆 Hall of Fame — All Time Records")
+    st.title("## 🏆 Hall of Fame — All Time Records")
     st.caption("Since the inception of the Steps League")
 
     # -------------------------
@@ -222,7 +220,7 @@ if page == "🏆 Hall of Fame":
 
 if page == "🏠 Monthly Results":
     
-    st.title("🏃 Steps League – Monthly Results")
+    st.title("## 🏃 Steps League – Monthly Results")
     
     # ----------------------------
     # MONTH SELECTOR (ONLY REAL MONTHS, LAST 6)
@@ -273,24 +271,49 @@ if page == "🏠 Monthly Results":
     top3 = monthly_totals.head(3).reset_index(drop=True)
     
     st.markdown("#### 🏆 This month's podium")
-    c1, c2, c3 = st.columns([1, 1.4, 1])
+    st.subheader("🏆 This month’s podium")
+
+    p1, p2, p3 = st.columns([1.1, 1.4, 1.1])
     
-    if len(top3) >= 2:
-        with c1:
-            st.markdown("<br><br>", unsafe_allow_html=True)
-            st.markdown("### 🥈 " + top3.loc[1, "User"])
-            st.markdown(f"#### {int(top3.loc[1, 'steps']):,} steps")
+    # 🥈 SECOND
+    with p1:
+        st.markdown(
+            f"""
+            <div style="background:#F4F6F8;padding:16px;border-radius:16px;text-align:center">
+                <div style="font-size:18px">🥈 Second</div>
+                <div style="font-size:20px;font-weight:600;margin-top:6px">{top3.loc[1,'User']}</div>
+                <div style="font-size:15px;color:#555">{int(top3.loc[1,'steps']):,} steps</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
-    with c2:
-        st.markdown("## 🥇 " + top3.loc[0, "User"])
-        st.markdown(f"## {int(top3.loc[0, 'steps']):,} steps")
-        st.markdown("👑 **Champion of the month**")
+    # 🥇 FIRST
+    with p2:
+        st.markdown(
+            f"""
+            <div style="background:#FFF7D6;padding:20px;border-radius:20px;text-align:center">
+                <div style="font-size:20px">🥇 Winner</div>
+                <div style="font-size:24px;font-weight:700;margin-top:6px">{top3.loc[0,'User']}</div>
+                <div style="font-size:17px;color:#444">{int(top3.loc[0,'steps']):,} steps</div>
+                <div style="font-size:13px;color:#777;margin-top:4px">👑 Champion of the month</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
-    if len(top3) >= 3:
-        with c3:
-            st.markdown("<br><br><br>", unsafe_allow_html=True)
-            st.markdown("#### 🥉 " + top3.loc[2, "User"])
-            st.markdown(f"##### {int(top3.loc[2, 'steps']):,} steps")
+    # 🥉 THIRD
+    with p3:
+        st.markdown(
+            f"""
+            <div style="background:#FBF1E6;padding:16px;border-radius:16px;text-align:center">
+                <div style="font-size:18px">🥉 Third</div>
+                <div style="font-size:20px;font-weight:600;margin-top:6px">{top3.loc[2,'User']}</div>
+                <div style="font-size:15px;color:#555">{int(top3.loc[2,'steps']):,} steps</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
     # ----------------------------
     # MONTHLY HIGHLIGHTS
@@ -393,7 +416,7 @@ if page == "🏠 Monthly Results":
 # =========================================================
 if page == "👤 Player Profile":
 
-    st.title("👤 Player Profile")
+    st.title("## 👤 Player Profile")
 
     users = sorted(df["User"].unique())
     selected_user = st.selectbox("Select player", users)
