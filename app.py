@@ -19,11 +19,16 @@ SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=cs
 @st.cache_data
 def load_data():
 
-    years = ["2024", "2025", "2026"]  # extend later if needed
+    YEAR_SHEETS = {
+        "2024": "1074409226",
+        "2025": "0",
+        "2026": "541668566"
+    }
+
     all_data = []
 
-    for year in years:
-        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&sheet={year}"
+    for year, gid in YEAR_SHEETS.items():
+        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={gid}"
         df = pd.read_csv(url)
         df.columns = df.columns.str.strip()
 
@@ -46,10 +51,6 @@ def load_data():
     df_all["month"] = df_all["date"].dt.to_period("M")
 
     return df_all
-df = load_data()
-st.write("Rows loaded:", len(df))
-st.write("Sample data:")
-st.dataframe(df.head())
 
 
 st.title("🏃 Steps League – Monthly Results")
@@ -58,7 +59,6 @@ st.title("🏃 Steps League – Monthly Results")
 # MONTH SELECTOR (last 6 real months only)
 # ----------------------------
 
-# All months that actually appear in data
 all_months = (
     df["date"]
     .dropna()
@@ -67,7 +67,6 @@ all_months = (
     .unique()
 )
 
-# Last 6 months only
 available_months = list(all_months[-6:])
 
 if not available_months:
@@ -82,10 +81,10 @@ selected_month = st.selectbox(
 
 month_df = df[df["month"] == selected_month]
 
-# Safety guard
 if month_df.empty:
     st.info("📭 Data not available yet for this month.\n\nPlease check back later or contact the admin 🙂")
     st.stop()
+
 
 # ----------------------------
 # PODIUM
