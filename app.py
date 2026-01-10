@@ -364,6 +364,64 @@ if page == "👤 Player Profile":
     
     st.divider()
 
+    st.subheader("🏅 Career podiums & trophies")
+
+    # ----------------------------------
+    # Build monthly rankings (all-time)
+    # ----------------------------------
+    all_months = df["month"].dropna().unique()
+    
+    career_rows = []
+    
+    for m in all_months:
+        mdf = df[df["month"] == m]
+    
+        if mdf["steps"].sum() == 0:
+            continue
+    
+        table = (
+            mdf.groupby("User")["steps"]
+            .sum()
+            .reset_index()
+            .sort_values("steps", ascending=False)
+            .reset_index(drop=True)
+        )
+    
+        table["Rank"] = table.index + 1
+        table["month"] = m
+        career_rows.append(table)
+    
+    career_df = pd.concat(career_rows, ignore_index=True)
+    
+    player_hist = career_df[career_df["User"] == selected_user]
+    
+    # ----------------------------------
+    # Career podium stats
+    # ----------------------------------
+    wins = (player_hist["Rank"] == 1).sum()
+    seconds = (player_hist["Rank"] == 2).sum()
+    thirds = (player_hist["Rank"] == 3).sum()
+    podiums = wins + seconds + thirds
+    
+    best_rank = int(player_hist["Rank"].min())
+    months_played = player_hist["month"].nunique()
+    
+    # ----------------------------------
+    # Trophy cabinet UI
+    # ----------------------------------
+    c1, c2, c3, c4 = st.columns(4)
+    
+    c1.metric("🥇 Wins", wins)
+    c2.metric("🥈 Seconds", seconds)
+    c3.metric("🥉 Thirds", thirds)
+    c4.metric("🏆 Total podiums", podiums)
+    
+    c1.metric("⭐ Best rank", f"#{best_rank}")
+    c2.metric("📆 Months played", months_played)
+    
+    st.divider()
+
+
     # ----------------------------
     # MONTHLY TREND
     # ----------------------------
