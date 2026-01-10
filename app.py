@@ -159,10 +159,10 @@ pivot_daily = daily.pivot_table(
 # ----------------------------
 # METRICS
 # ----------------------------
-std_dev = pivot_daily.std(axis=1).sort_values()
+std_dev = pivot_daily.std(axis=1).fillna(0).sort_values()
 top_consistent = std_dev.head(3)
 
-avg_steps = pivot_daily.mean(axis=1).sort_values(ascending=False)
+avg_steps = pivot_daily.mean(axis=1).fillna(0).sort_values(ascending=False)
 top_active = avg_steps.head(3)
 
 days_10k = (pivot_daily >= 10000).sum(axis=1).sort_values(ascending=False)
@@ -178,7 +178,7 @@ def slope(row):
         return 0
     return np.polyfit(x, y, 1)[0]
 
-slopes = pivot_daily.apply(slope, axis=1).sort_values(ascending=False)
+slopes = pivot_daily.apply(slope, axis=1).fillna(0).sort_values(ascending=False)
 top_improved = slopes.head(3)
 
 # ----------------------------
