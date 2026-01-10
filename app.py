@@ -69,7 +69,7 @@ df = load_data()
 # =========================================================
 if page == "🏆 Hall of Fame":
 
-    st.title("## 🏆 Hall of Fame — All Time Records")
+    st.markdown("## 🏆 Hall of Fame — All Time Records")
     st.caption("Since the inception of the Steps League")
 
     # -------------------------
@@ -220,7 +220,7 @@ if page == "🏆 Hall of Fame":
 
 if page == "🏠 Monthly Results":
     
-    st.title("## 🏃 Steps League – Monthly Results")
+    st.markdown("## 🏃 Steps League – Monthly Results")
     
     # ----------------------------
     # MONTH SELECTOR (ONLY REAL MONTHS, LAST 6)
@@ -271,8 +271,6 @@ if page == "🏠 Monthly Results":
     top3 = monthly_totals.head(3).reset_index(drop=True)
     
     st.markdown("#### 🏆 This month's podium")
-    st.subheader("🏆 This month’s podium")
-
     p1, p2, p3 = st.columns([1.1, 1.4, 1.1])
     
     # 🥈 SECOND
@@ -359,33 +357,33 @@ if page == "🏠 Monthly Results":
         st.success(f"""🎯 **Most consistent**
     
     {top_consistent.index[0]} — {int(top_consistent.iloc[0]):,} std dev  
-    _{top_consistent.index[1]} — {int(top_consistent.iloc[1]):,}_  
-    _{top_consistent.index[2]} — {int(top_consistent.iloc[2]):,}_""")
+    {top_consistent.index[1]} — {int(top_consistent.iloc[1]):,}  
+    {top_consistent.index[2]} — {int(top_consistent.iloc[2]):,}""")
     
         st.success(f"""⚡ **Highly active**
     
     {top_active.index[0]} — {int(top_active.iloc[0]):,} avg steps  
-    _{top_active.index[1]} — {int(top_active.iloc[1]):,}_  
-    _{top_active.index[2]} — {int(top_active.iloc[2]):,}_""")
+    {top_active.index[1]} — {int(top_active.iloc[1]):,} 
+    {top_active.index[2]} — {int(top_active.iloc[2]):,}""")
     
         st.success(f"""🚀 **Most improved**
     
     {top_improved.index[0]} — {int(top_improved.iloc[0]):,} slope  
-    _{top_improved.index[1]} — {int(top_improved.iloc[1]):,}_  
-    _{top_improved.index[2]} — {int(top_improved.iloc[2]):,}_""")
+    {top_improved.index[1]} — {int(top_improved.iloc[1]):,} 
+    {top_improved.index[2]} — {int(top_improved.iloc[2]):,}""")
     
     with c2:
         st.info(f"""🏅 **10K crossed king**
     
-    **{top_10k.index[0]}** — {int(top_10k.iloc[0])} days  
-    _{top_10k.index[1]} — {int(top_10k.iloc[1])} days_  
-    _{top_10k.index[2]} — {int(top_10k.iloc[2])} days_""")
+    {top_10k.index[0]} — {int(top_10k.iloc[0])} days  
+    {top_10k.index[1]} — {int(top_10k.iloc[1])} days  
+    {top_10k.index[2]} — {int(top_10k.iloc[2])} days""")
     
         st.info(f"""🥈 **5K crossed king**
     
-    **{top_5k.index[0]}** — {int(top_5k.iloc[0])} days  
-    _{top_5k.index[1]} — {int(top_5k.iloc[1])} days_  
-    _{top_5k.index[2]} — {int(top_5k.iloc[2])} days_""")
+    {top_5k.index[0]} — {int(top_5k.iloc[0])} days  
+    {top_5k.index[1]} — {int(top_5k.iloc[1])} days_  
+    {top_5k.index[2]} — {int(top_5k.iloc[2])} days""")
     
     # ----------------------------
     # LEADERBOARD
@@ -416,7 +414,7 @@ if page == "🏠 Monthly Results":
 # =========================================================
 if page == "👤 Player Profile":
 
-    st.title("## 👤 Player Profile")
+    st.markdown("## 👤 Player Profile")
 
     users = sorted(df["User"].unique())
     selected_user = st.selectbox("Select player", users)
