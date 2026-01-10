@@ -135,6 +135,79 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
+st.divider()
+
+st.subheader("🎖️ This month's highlights")
+
+# --------------------------------
+# Build daily matrix for the month
+# --------------------------------
+daily = month_df.copy()
+daily["day"] = daily["date"].dt.day
+
+pivot_daily = daily.pivot_table(
+    index="User",
+    columns="day",
+    values="steps",
+    aggfunc="sum"
+).fillna(0)
+
+# --------------------------------
+# 1. Consistent (lowest std dev)
+# --------------------------------
+std_dev = pivot_daily.std(axis=1)
+consistent_user = std_dev.idxmin()
+
+# --------------------------------
+# 2. Highly active (highest average)
+# --------------------------------
+avg_steps = pivot_daily.mean(axis=1)
+active_user = avg_steps.idxmax()
+
+# --------------------------------
+# 3. 10K crossed (most days >= 10k)
+# --------------------------------
+days_10k = (pivot_daily >= 10000).sum(axis=1)
+tenk_user = days_10k.idxmax()
+tenk_count = int(days_10k.max())
+
+# --------------------------------
+# 4. 5K crossed (most days >= 5k)
+# --------------------------------
+days_5k = (pivot_daily >= 5000).sum(axis=1)
+fivek_user = days_5k.idxmax()
+fivek_count = int(days_5k.max())
+
+# --------------------------------
+# 5. Most improved (slope)
+# --------------------------------
+import numpy as np
+
+def slope(row):
+    y = row.values
+    x = np.arange(len(y))
+    if np.all(y == 0):
+        return 0
+    return np.polyfit(x, y, 1)[0]
+
+slopes = pivot_daily.apply(slope, axis=1)
+improved_user = slopes.idxmax()
+
+# --------------------------------
+# Display nicely
+# --------------------------------
+c1, c2 = st.columns(2)
+
+with c1:
+    st.success(f"🎯 **Most consistent**\n\n{consistent_user}")
+    st.success(f"⚡ **Highly active**\n\n{active_user}")
+    st.success(f"🚀 **Most improved**\n\n{improved_user}")
+
+with c2:
+    st.info(f"🏅 **10K crossed king**\n\n{tenk_user} — {tenk_count} days")
+    st.info(f"🥈 **5K crossed king**\n\n{fivek_user} — {fivek_count} days")
+
+
 st.dataframe(
     monthly_totals,
     use_container_width=True,
