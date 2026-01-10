@@ -47,6 +47,10 @@ def load_data():
 
     return df_all
 df = load_data()
+st.write("Rows loaded:", len(df))
+st.write("Sample data:")
+st.dataframe(df.head())
+
 
 st.title("🏃 Steps League – Monthly Results")
 
