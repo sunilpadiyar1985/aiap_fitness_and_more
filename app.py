@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import numpy as np
 
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered")
 
@@ -47,7 +48,6 @@ st.title("🏃 Steps League – Monthly Results")
 # MONTH SELECTOR
 # ----------------------------
 months = sorted(df["month"].unique())
-latest_month = months[-1]
 
 selected_month = st.selectbox(
     "Select month",
@@ -69,13 +69,12 @@ monthly_totals = (
     .reset_index(drop=True)
 )
 
-# Add proper Rank starting from 1
 monthly_totals.insert(0, "Rank", range(1, len(monthly_totals) + 1))
 
 st.markdown(f"### Results for {selected_month.strftime('%B %Y')} ⭐")
 
 # ----------------------------
-# PODIUM (winner-style layout)
+# PODIUM
 # ----------------------------
 top3 = monthly_totals.head(3).reset_index(drop=True)
 
@@ -84,38 +83,29 @@ if len(top3) >= 1:
 
     c1, c2, c3 = st.columns([1, 1.4, 1])
 
-    # 🥈 SECOND (slightly lower)
     if len(top3) >= 2:
         with c1:
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-
+            st.markdown("<br><br>", unsafe_allow_html=True)
             st.markdown("### 🥈 " + top3.loc[1, "User"])
             st.markdown(f"#### {int(top3.loc[1, 'steps']):,} steps")
 
-    # 🥇 FIRST (highest, most prominent)
     with c2:
         st.markdown("## 🥇 " + top3.loc[0, "User"])
         st.markdown(f"## {int(top3.loc[0, 'steps']):,} steps")
         st.markdown("👑 **Champion of the month**")
 
-    # 🥉 THIRD (lowest)
     if len(top3) >= 3:
         with c3:
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-
+            st.markdown("<br><br><br>", unsafe_allow_html=True)
             st.markdown("#### 🥉 " + top3.loc[2, "User"])
             st.markdown(f"##### {int(top3.loc[2, 'steps']):,} steps")
 
 st.divider()
-
 st.subheader("🎖️ This month's highlights")
 
-# --------------------------------
-# Build daily matrix for the month
-# --------------------------------
+# ----------------------------
+# DAILY MATRIX
+# ----------------------------
 daily = month_df.copy()
 daily["day"] = daily["date"].dt.day
 
@@ -126,28 +116,20 @@ pivot_daily = daily.pivot_table(
     aggfunc="sum"
 ).fillna(0)
 
-# --------------------------------
+# ----------------------------
 # METRICS
-# --------------------------------
-
-# 1. Consistent (lowest std dev)
+# ----------------------------
 std_dev = pivot_daily.std(axis=1).sort_values()
 top_consistent = std_dev.head(3)
 
-# 2. Highly active (highest average)
 avg_steps = pivot_daily.mean(axis=1).sort_values(ascending=False)
 top_active = avg_steps.head(3)
 
-# 3. 10K crossed
 days_10k = (pivot_daily >= 10000).sum(axis=1).sort_values(ascending=False)
 top_10k = days_10k.head(3)
 
-# 4. 5K crossed
 days_5k = (pivot_daily >= 5000).sum(axis=1).sort_values(ascending=False)
 top_5k = days_5k.head(3)
-
-# 5. Most improved (slope)
-import numpy as np
 
 def slope(row):
     y = row.values
@@ -159,102 +141,74 @@ def slope(row):
 slopes = pivot_daily.apply(slope, axis=1).sort_values(ascending=False)
 top_improved = slopes.head(3)
 
-# --------------------------------
-# DISPLAY HELPERS
-# --------------------------------
-def show_top3(title, emoji, series, value_fmt, suffix=""):
-    st.markdown(f"### {emoji} {title}")
-
-    names = series.index.tolist()
-    values = series.values.tolist()
-
-    # Winner
-    st.markdown(f"**{names[0]} — {value_fmt(values[0])}{suffix}**")
-
-    # 2nd & 3rd (smaller)
-    if len(names) > 1:
-        st.markdown(
-            f"<span style='font-size:13px;color:#666'>"
-            f"{names[1]} — {value_fmt(values[1])}{suffix}<br>"
-            f"{names[2]} — {value_fmt(values[2])}{suffix}"
-            f"</span>",
-            unsafe_allow_html=True
-        )
-
-    st.markdown("---")
-
-
-# --------------------------------
-# LAYOUT
-# --------------------------------
+# ----------------------------
+# DISPLAY (KEEPING COLORED BLOCK STYLE)
+# ----------------------------
 c1, c2 = st.columns(2)
 
 with c1:
-    show_top3(
-        "Most consistent (lowest variation)",
-        "🎯",
-        top_consistent,
-        lambda x: f"{int(x):,}",
-        " std dev"
+    st.success(
+        f"""🎯 **Most consistent**
+
+**{top_consistent.index[0]}** — {int(top_consistent.iloc[0]):,} std dev  
+_{top_consistent.index[1]} — {int(top_consistent.iloc[1]):,}_  
+_{top_consistent.index[2]} — {int(top_consistent.iloc[2]):,}_"""
     )
 
-    show_top3(
-        "Highly active (highest daily avg)",
-        "⚡",
-        top_active,
-        lambda x: f"{int(x):,}",
-        " avg steps"
+    st.success(
+        f"""⚡ **Highly active**
+
+**{top_active.index[0]}** — {int(top_active.iloc[0]):,} avg steps  
+_{top_active.index[1]} — {int(top_active.iloc[1]):,}_  
+_{top_active.index[2]} — {int(top_active.iloc[2]):,}_"""
     )
 
-    show_top3(
-        "Most improved (trend)",
-        "🚀",
-        top_improved,
-        lambda x: f"{int(x):,}",
-        " slope"
+    st.success(
+        f"""🚀 **Most improved**
+
+**{top_improved.index[0]}** — {int(top_improved.iloc[0]):,} slope  
+_{top_improved.index[1]} — {int(top_improved.iloc[1]):,}_  
+_{top_improved.index[2]} — {int(top_improved.iloc[2]):,}_"""
     )
 
 with c2:
-    show_top3(
-        "10K crossed king",
-        "🏅",
-        top_10k,
-        lambda x: str(int(x)),
-        " days"
+    st.info(
+        f"""🏅 **10K crossed king**
+
+**{top_10k.index[0]}** — {int(top_10k.iloc[0])} days  
+_{top_10k.index[1]} — {int(top_10k.iloc[1])} days_  
+_{top_10k.index[2]} — {int(top_10k.iloc[2])} days_"""
     )
 
-    show_top3(
-        "5K crossed king",
-        "🥈",
-        top_5k,
-        lambda x: str(int(x)),
-        " days"
-    )
+    st.info(
+        f"""🥈 **5K crossed king**
 
+**{top_5k.index[0]}** — {int(top_5k.iloc[0])} days  
+_{top_5k.index[1]} — {int(top_5k.iloc[1])} days_  
+_{top_5k.index[2]} — {int(top_5k.iloc[2])} days_"""
+    )
 
 # ----------------------------
 # FULL LEADERBOARD
 # ----------------------------
+st.divider()
 st.subheader("📊 Monthly leaderboard")
 
 fig = px.bar(
     monthly_totals,
     x="User",
     y="steps",
-    title="Monthly leaderboard",
     text="steps"
 )
 
 fig.update_traces(texttemplate='%{text:,}', textposition='outside')
-
 fig.update_layout(
     xaxis_title="",
     yaxis_title="Steps",
-    xaxis={'categoryorder':'total descending'},
+    xaxis={'categoryorder': 'total descending'},
     height=500
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
-st.divider()
-
+st.dataframe(monthly_totals, use_container_width=True, hide_index=True)
