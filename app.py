@@ -229,7 +229,7 @@ if page == "🏆 Hall of Fame":
     # -------------------------
     # PODIUM HEADER
     # -------------------------
-    h0, h1, h2, h3 = st.columns([2.5, 1.5, 1.4, 1.4])
+    h0, h1, h2, h3 = st.columns([2.5, 1.7, 1.4, 1.4])
     
     with h1:
         st.markdown("<div style='text-align:center;font-size:26px'>🥇</div>", unsafe_allow_html=True)
