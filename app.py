@@ -540,6 +540,98 @@ if page == "🏠 Monthly Results":
     {top_5k.index[1]} — {int(top_5k.iloc[1])} days  
     {top_5k.index[2]} — {int(top_5k.iloc[2])} days""")
     
+    st.divider()
+    st.subheader("🏟️ League Results")
+
+    premier = month_lh[month_lh["League"] == "Premier"].sort_values("Rank")
+    championship = month_lh[month_lh["League"] == "Championship"].sort_values("Rank")
+
+    # =========================
+    # 🥇 PREMIER LEAGUE
+    # =========================
+    st.markdown("#### 🥇 Premier League")
+    
+    prem_champ = premier[premier["Champion"] == True]
+    
+    if not prem_champ.empty:
+        champ = prem_champ.iloc[0]
+        st.success(f"👑 **Premier Champion:** {champ['User']}  |  {champ['points']:.3f} pts")
+    
+    st.dataframe(
+        premier[["Rank","User","points","Promoted","Relegated"]]
+            .rename(columns={
+                "points": "Points",
+                "Promoted": "⬆ Promoted",
+                "Relegated": "⬇ Relegated"
+            }),
+        use_container_width=True,
+        hide_index=True
+    )
+    st.divider()
+    st.markdown("#### 🔁 Promotions & Relegations")
+    
+    promoted = month_lh[month_lh["Promoted"] == True]["User"].tolist()
+    relegated = month_lh[month_lh["Relegated"] == True]["User"].tolist()
+    
+    c1, c2 = st.columns(2)
+    
+    with c1:
+        if promoted:
+            st.success("⬆ **Promoted this month**\n\n" + "\n".join([f"• {u}" for u in promoted]))
+        else:
+            st.info("⬆ No promotions this month")
+    
+    with c2:
+        if relegated:
+            st.error("⬇ **Relegated this month**\n\n" + "\n".join([f"• {u}" for u in relegated]))
+        else:
+            st.info("⬇ No relegations this month")
+
+
+    # =========================
+    # 🥈 CHAMPIONSHIP
+    # =========================
+    st.markdown("#### 🥈 Championship")
+    
+    chmp_champ = championship[championship["Champion"] == True]
+    
+    if not chmp_champ.empty:
+        champ = chmp_champ.iloc[0]
+        st.info(f"🏆 **Championship Winner:** {champ['User']}  |  {champ['points']:.3f} pts")
+    
+    st.dataframe(
+        championship[["Rank","User","points","Promoted","Relegated"]]
+            .rename(columns={
+                "points": "Points",
+                "Promoted": "⬆ Promoted",
+                "Relegated": "⬇ Relegated"
+            }),
+        use_container_width=True,
+        hide_index=True
+    )
+    st.divider()
+
+    st.markdown("#### 🔁 Promotions & Relegations")
+    
+    promoted = month_lh[month_lh["Promoted"] == True]["User"].tolist()
+    relegated = month_lh[month_lh["Relegated"] == True]["User"].tolist()
+    
+    c1, c2 = st.columns(2)
+    
+    with c1:
+        if promoted:
+            st.success("⬆ **Promoted this month**\n\n" + "\n".join([f"• {u}" for u in promoted]))
+        else:
+            st.info("⬆ No promotions this month")
+    
+    with c2:
+        if relegated:
+            st.error("⬇ **Relegated this month**\n\n" + "\n".join([f"• {u}" for u in relegated]))
+        else:
+            st.info("⬇ No relegations this month")
+
+
+    
     # ----------------------------
     # LEADERBOARD
     # ----------------------------
