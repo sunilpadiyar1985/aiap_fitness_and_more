@@ -851,6 +851,29 @@ if page == "👤 Player Profile":
     career_df = pd.concat(career_rows, ignore_index=True)
     
     player_hist = career_df[career_df["User"] == selected_user]
+
+    st.markdown("#### 🧍 Player Profile")
+    st.caption("Career overview & league journey")
+    
+    first_month = player_lh["Month"].min().strftime("%b %Y")
+    last_month = player_lh["Month"].max().strftime("%b %Y")
+    seasons = player_lh["Month"].nunique()
+    
+    prem_months = (player_lh["League"] == "Premier").sum()
+    champ_months = (player_lh["League"] == "Championship").sum()
+    
+    promotions = player_lh["Promoted"].sum()
+    relegations = player_lh["Relegated"].sum()
+    
+    c1, c2, c3, c4 = st.columns(4)
+    
+    c1.metric("Seasons played", seasons)
+    c2.metric("Premier months", prem_months)
+    c3.metric("Promotions", promotions)
+    c4.metric("Relegations", relegations)
+    
+    st.info(f"🗓️ Active career: **{first_month} → {last_month}**")
+
     
     # ----------------------------------
     # Career podium stats
@@ -877,7 +900,25 @@ if page == "👤 Player Profile":
     c2.metric("📆 Months played", months_played)
     
     st.divider()
+    st.markdown("#### 🏆 Trophy Cabinet")
+    
+    prem_titles = player_lh[(player_lh["League"] == "Premier") & (player_lh["Champion"] == True)].shape[0]
+    champ_titles = player_lh[(player_lh["League"] == "Championship") & (player_lh["Champion"] == True)].shape[0]
+    runnerups = player_lh[player_lh["Rank"] == 2].shape[0]
+    
+    best_finish = int(player_lh["Rank"].min())
+    best_points = round(player_lh["points"].max() * 100)
+    
+    t1, t2, t3, t4, t5 = st.columns(5)
+    
+    t1.metric("👑 Premier titles", prem_titles)
+    t2.metric("🏆 Championship titles", champ_titles)
+    t3.metric("🥈 Runner-ups", runnerups)
+    t4.metric("🏅 Best rank", f"#{best_finish}")
+    t5.metric("🚀 Best season", f"{best_points} pts")
 
+
+    
 
     # ----------------------------
     # MONTHLY TREND
