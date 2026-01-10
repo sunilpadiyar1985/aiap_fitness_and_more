@@ -277,18 +277,86 @@ if page == "👤 Player Profile":
     # ----------------------------
     # PLAYER CARD
     # ----------------------------
-    st.subheader("🪪 Player card")
+    st.subheader("📌 Key stats")
 
+    u = user_df.sort_values("date").copy()
+    
+    # ---- Basics ----
+    total_steps = int(u["steps"].sum())
+    avg_steps = int(u["steps"].mean())
+    
+    non_zero = u[u["steps"] > 0]
+    lowest_day = int(non_zero["steps"].min()) if not non_zero.empty else 0
+    
+    best_day_row = u.loc[u["steps"].idxmax()]
+    best_day_steps = int(best_day_row["steps"])
+    best_day_date = best_day_row["date"].strftime("%d %b %Y")
+    
+    # ---- Weekly & monthly records ----
+    u["week"] = u["date"].dt.to_period("W").apply(lambda r: r.start_time)
+    u["month_p"] = u["date"].dt.to_period("M")
+    
+    weekly = u.groupby("week")["steps"].sum()
+    monthly = u.groupby("month_p")["steps"].sum()
+    
+    best_week_steps = int(weekly.max())
+    best_month_steps = int(monthly.max())
+    
+    # ---- 10K / 5K coverage ----
+    days_total = len(u)
+    days_10k = (u["steps"] >= 10000).sum()
+    days_5k = (u["steps"] >= 5000).sum()
+    
+    pct_10k = round((days_10k / days_total) * 100, 2) if days_total else 0
+    
+    # ---- Streak helpers ----
+    def max_streak(series):
+        max_s = cur = 0
+        for v in series:
+            if v:
+                cur += 1
+                max_s = max(max_s, cur)
+            else:
+                cur = 0
+        return max_s
+    
+    def current_streak(series):
+        cur = 0
+        for v in reversed(series):
+            if v:
+                cur += 1
+            else:
+                break
+        return cur
+    
+    is_10k = (u["steps"] >= 10000).tolist()
+    is_5k = (u["steps"] >= 5000).tolist()
+    
+    max_10k_streak = max_streak(is_10k)
+    max_5k_streak = max_streak(is_5k)
+    
+    current_10k_streak = current_streak(is_10k)
+    current_5k_streak = current_streak(is_5k)
+    
+    # ---- Layout (3 columns like a stat card) ----
     c1, c2, c3 = st.columns(3)
-
-    c1.metric("Total steps", f"{total_steps:,}")
-    c2.metric("Avg per day", f"{avg_steps:,}")
-    c3.metric("Active days", f"{active_days:,}")
-
-    c1.metric("Best day", best_day, f"{best_day_steps:,} steps")
-    c2.metric("Best month", best_month, f"{best_month_steps:,} steps")
-    c3.metric("10K / 5K days", f"{days_10k} / {days_5k}")
-
+    
+    c1.metric("Overall steps", f"{total_steps:,}")
+    c1.metric("Your average", f"{avg_steps:,}")
+    c1.metric("Lowest day (non-zero)", f"{lowest_day:,}")
+    
+    c2.metric("Highest day", f"{best_day_steps:,}", best_day_date)
+    c2.metric("Highest week", f"{best_week_steps:,}")
+    c2.metric("Highest month", f"{best_month_steps:,}")
+    
+    c3.metric("Magic 10K covered", f"{pct_10k}%")
+    c3.metric("10K streak (max)", f"{max_10k_streak} days")
+    c3.metric("5K streak (max)", f"{max_5k_streak} days")
+    
+    st.caption(
+        f"🔥 Current streaks — 10K: {current_10k_streak} days | 5K: {current_5k_streak} days"
+    )
+    
     st.divider()
 
     # ----------------------------
@@ -319,11 +387,27 @@ if page == "👤 Player Profile":
     # ----------------------------
     # HISTORY TABLE
     # ----------------------------
-    st.subheader("📅 Month by month")
+    st.subheader("📅 Month by month breakdown")
 
-    hist = monthly_user.copy()
-    hist["month"] = hist["month"].dt.strftime("%B %Y")
-    hist = hist.sort_values("month")
-
-    st.dataframe(hist, use_container_width=True, hide_index=True)
+    u2 = user_df.copy()
+    u2["month"] = u2["date"].dt.to_period("M")
+    
+    monthly_stats = (
+        u2.groupby("month")
+          .agg(
+              total_steps=("steps", "sum"),
+              avg_steps=("steps", "mean"),
+              best_day=("steps", "max"),
+              days_10k=("steps", lambda x: (x >= 10000).sum()),
+              days_5k=("steps", lambda x: (x >= 5000).sum()),
+          )
+          .reset_index()
+    )
+    
+    monthly_stats["month"] = monthly_stats["month"].dt.strftime("%B %Y")
+    monthly_stats["avg_steps"] = monthly_stats["avg_steps"].astype(int)
+    
+    monthly_stats = monthly_stats.sort_values("month")
+    
+    st.dataframe(monthly_stats, use_container_width=True, hide_index=True)
 
