@@ -90,7 +90,7 @@ if len(top3) >= 1:
 
     # 🥇 FIRST (highest, most prominent)
     with c2:
-        st.markdown("# 🥇 " + top3.loc[0, "User"])
+        st.markdown("## 🥇 " + top3.loc[0, "User"])
         st.markdown(f"## {int(top3.loc[0, 'steps']):,} steps")
         st.markdown("👑 **Champion of the month**")
 
