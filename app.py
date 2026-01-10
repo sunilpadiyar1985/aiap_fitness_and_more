@@ -65,7 +65,11 @@ monthly_totals = (
     .sum()
     .reset_index()
     .sort_values("steps", ascending=False)
+    .reset_index(drop=True)
 )
+
+# Add proper Rank starting from 1
+monthly_totals.insert(0, "Rank", range(1, len(monthly_totals) + 1))
 
 st.subheader(f"Results for {selected_month.strftime('%B %Y')} ⭐")
 
@@ -115,4 +119,8 @@ st.bar_chart(
     monthly_totals.set_index("User")["steps"]
 )
 
-st.dataframe(monthly_totals, use_container_width=True)
+st.dataframe(
+    monthly_totals,
+    use_container_width=True,
+    hide_index=True
+)
