@@ -70,21 +70,28 @@ monthly_totals = (
 st.subheader(f"Results for {selected_month.strftime('%B %Y')} ⭐")
 
 # ----------------------------
-# PODIUM
+# PODIUM (winner-style layout)
 # ----------------------------
-top3 = monthly_totals.head(3)
+top3 = monthly_totals.head(3).reset_index(drop=True)
 
-if len(top3) > 0:
-    col1, col2, col3 = st.columns(3)
+if len(top3) >= 1:
+    st.subheader("🏆 This month's podium")
 
-    medals = ["🥇", "🥈", "🥉"]
-    cols = [col1, col2, col3]
+    c1, c2, c3 = st.columns([1, 1.3, 1])  # middle wider
 
-    for i in range(min(3, len(top3))):
-        cols[i].metric(
-            f"{medals[i]} {top3.iloc[i]['User']}",
-            f"{int(top3.iloc[i]['steps']):,} steps"
-        )
+    if len(top3) >= 2:
+        with c1:
+            st.markdown("### 🥈 Second")
+            st.metric(top3.loc[1, "User"], f"{int(top3.loc[1, 'steps']):,} steps")
+
+    with c2:
+        st.markdown("## 🥇 Winner")
+        st.metric(top3.loc[0, "User"], f"{int(top3.loc[0, 'steps']):,} steps")
+
+    if len(top3) >= 3:
+        with c3:
+            st.markdown("### 🥉 Third")
+            st.metric(top3.loc[2, "User"], f"{int(top3.loc[2, 'steps']):,} steps")
 
 st.divider()
 
