@@ -63,7 +63,162 @@ def load_data():
     df_all["month"] = df_all["date"].dt.to_period("M")
 
     return df_all
+
+@st.cache_data
+def load_roster():
+    SHEET_ID = "1DfUJd33T-12UVOavd6SqCfkcNl8_4sVxcqqXHtBeWpw"
+    ROSTER_GID = "175789419"
+
+    url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={ROSTER_GID}"
+    r = pd.read_csv(url)
+
+    r.columns = r.columns.str.strip()
+    r["Active from"] = pd.to_datetime(r["Active from"])
+    r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce")
+
+    return r
+
+#-------------------
+#League Engine
+#-------------------
+
+def build_league_history(df, roster_df):
+
+    df = df.copy()
+    df["month"] = df["date"].dt.to_period("M")
+    df = df.sort_values("date")
+
+    roster_df = roster_df.copy()
+    roster_df["Active from"] = pd.to_datetime(roster_df["Active from"])
+    roster_df["Active till"] = pd.to_datetime(roster_df["Active till"], errors="coerce")
+
+    all_months = sorted(df["month"].unique())
+
+    history_rows = []
+    prev_month_avg = None
+    prev_league = {}
+
+    for i, month in enumerate(all_months):
+
+        month_start = month.to_timestamp()
+        month_end = month.to_timestamp("M")
+
+        # -------------------------
+        # Active roster for month
+        # -------------------------
+        active = roster_df[
+            (roster_df["Active from"] <= month_end) &
+            ((roster_df["Active till"].isna()) | (roster_df["Active till"] >= month_start))
+        ]["User"].unique().tolist()
+
+        month_df = df[(df["month"] == month) & (df["User"].isin(active))]
+
+        if month_df.empty:
+            continue
+
+        # -------------------------
+        # DAILY WINS
+        # -------------------------
+        daily_max = month_df.groupby("date")["steps"].transform("max")
+        month_df["daily_win"] = (month_df["steps"] == daily_max) & (month_df["steps"] > 0)
+
+        # -------------------------
+        # MONTHLY KPIs
+        # -------------------------
+        kpi = month_df.groupby("User").agg(
+            total_steps=("steps", "sum"),
+            avg_steps=("steps", "mean"),
+            best_day=("steps", "max"),
+            tenk_days=("steps", lambda x: (x >= 10000).sum()),
+            daily_wins=("daily_win", "sum")
+        ).reset_index()
+
+        month_df["week"] = month_df["date"].dt.to_period("W").apply(lambda r: r.start_time)
+        best_week = (
+            month_df.groupby(["User", "week"])["steps"]
+            .sum()
+            .groupby("User")
+            .max()
+            .reset_index(name="best_week")
+        )
+
+        kpi = kpi.merge(best_week, on="User", how="left").fillna(0)
+
+        # -------------------------
+        # LEAGUE PLACEMENT
+        # -------------------------
+        if i == 0:
+            kpi["League"] = "Premier"
+        else:
+            avg_prev = prev_month_avg.reindex(active).fillna(0)
+
+            premier = avg_prev[avg_prev >= 7000].index.tolist()
+
+            if len(premier) < 6:
+                premier = avg_prev.sort_values(ascending=False).head(6).index.tolist()
+
+            kpi["League"] = kpi["User"].apply(
+                lambda x: "Premier" if x in premier else "Championship"
+            )
+
+        # -------------------------
+        # NORMALIZATION
+        # -------------------------
+        for col in ["total_steps", "best_day", "best_week", "tenk_days", "daily_wins"]:
+            max_val = kpi[col].max()
+            kpi[col + "_score"] = kpi[col] / max_val if max_val > 0 else 0
+
+        # -------------------------
+        # POINTS
+        # -------------------------
+        kpi["points"] = (
+            kpi["total_steps_score"] * 0.5 +
+            kpi["best_day_score"]   * 0.1 +
+            kpi["best_week_score"]  * 0.1 +
+            kpi["tenk_days_score"]  * 0.3 +
+            kpi["daily_wins_score"] * 0.2
+        )
+
+        # -------------------------
+        # LEAGUE RANKING
+        # -------------------------
+        kpi["Rank"] = (
+            kpi.groupby("League")["points"]
+            .rank(method="min", ascending=False)
+        )
+
+        # -------------------------
+        # PROMOTION / RELEGATION
+        # -------------------------
+        if prev_league:
+            kpi["Prev league"] = kpi["User"].map(prev_league)
+            kpi["Promoted"] = (kpi["Prev league"] == "Championship") & (kpi["League"] == "Premier")
+            kpi["Relegated"] = (kpi["Prev league"] == "Premier") & (kpi["League"] == "Championship")
+        else:
+            kpi["Promoted"] = False
+            kpi["Relegated"] = False
+
+        kpi["Champion"] = kpi["Rank"] == 1
+        kpi["Month"] = month.to_timestamp()
+
+        history_rows.append(kpi)
+
+        prev_month_avg = kpi.set_index("User")["avg_steps"]
+        prev_league = kpi.set_index("User")["League"].to_dict()
+
+    history = pd.concat(history_rows, ignore_index=True)
+    return history
+    
 df = load_data()
+roster_df = load_roster()
+league_history = build_league_history(df, roster_df)
+
+st.subheader("🧪 League history preview")
+st.dataframe(league_history.head(50), use_container_width=True)
+st.stop()
+
+###data load ends###
+
 # =========================================================
 # 🏆 HALL OF FAME — ALL TIME RECORDS
 # =========================================================
