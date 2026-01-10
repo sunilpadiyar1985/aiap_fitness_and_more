@@ -400,15 +400,21 @@ if page == "👤 Player Profile":
           best_day=("steps", "max"),
           days_10k=("steps", lambda x: (x >= 10000).sum()),
           days_5k=("steps", lambda x: (x >= 5000).sum()),
-          )
-          .reset_index()
-        )
-        
+      )
+      .reset_index()
+    )
+    
+    # ✅ REMOVE future / empty months
+    monthly_stats = monthly_stats[monthly_stats["total_steps"] > 0]
+    
+    # ✅ Latest month first
     monthly_stats = monthly_stats.sort_values("month", ascending=False)
-        
+    
+    # Formatting
     monthly_stats["month"] = monthly_stats["month"].dt.strftime("%B %Y")
     monthly_stats["avg_steps"] = monthly_stats["avg_steps"].astype(int)
-        
+    
+    # Friendly column names
     monthly_stats = monthly_stats.rename(columns={
         "month": "Month",
         "total_steps": "Total steps",
