@@ -213,9 +213,6 @@ df = load_data()
 roster_df = load_roster()
 league_history = build_league_history(df, roster_df)
 
-st.subheader("🧪 League history preview")
-st.dataframe(league_history.head(50), use_container_width=True)
-st.stop()
 
 ###data load ends###
 
@@ -473,6 +470,13 @@ if page == "🏠 Monthly Results":
     # ----------------------------
     st.divider()
     st.markdown("##### 🎖️ This month's highlights")
+
+    st.subheader("🧪 League month preview")
+
+    st.dataframe(
+        month_lh[["User","League","points","Rank","Champion","Promoted","Relegated"]],
+        use_container_width=True
+    )
     
     daily = month_df.copy()
     daily["day"] = daily["date"].dt.day
