@@ -179,6 +179,8 @@ def build_league_history(df, roster_df):
             kpi["daily_wins_score"] * 0.2
         )
 
+        kpi["points_display"] = (kpi["points"] * 100).round(0).astype(int)
+
         # -------------------------
         # LEAGUE RANKING
         # -------------------------
@@ -541,7 +543,7 @@ if page == "🏠 Monthly Results":
     {top_5k.index[2]} — {int(top_5k.iloc[2])} days""")
     
     st.divider()
-    st.subheader("🏟️ League Results")
+    st.markdown("#### 🏟️ League Results")
 
     premier = month_lh[month_lh["League"] == "Premier"].sort_values("Rank")
     championship = month_lh[month_lh["League"] == "Championship"].sort_values("Rank")
@@ -549,18 +551,18 @@ if page == "🏠 Monthly Results":
     # =========================
     # 🥇 PREMIER LEAGUE
     # =========================
-    st.markdown("#### 🥇 Premier League")
+    st.markdown("##### 🥇 Premier League")
     
     prem_champ = premier[premier["Champion"] == True]
     
     if not prem_champ.empty:
         champ = prem_champ.iloc[0]
-        st.success(f"👑 **Premier Champion:** {champ['User']}  |  {champ['points']:.3f} pts")
+        st.success(f"👑 **Premier Champion:** {champ['User']}  |  {champ['points_display']:.3f} pts")
     
     st.dataframe(
-        premier[["Rank","User","points","Promoted","Relegated"]]
+        premier[["Rank","User","points_display","Promoted","Relegated"]]
             .rename(columns={
-                "points": "Points",
+                "points_display": "Points",
                 "Promoted": "⬆ Promoted",
                 "Relegated": "⬇ Relegated"
             }),
@@ -568,7 +570,7 @@ if page == "🏠 Monthly Results":
         hide_index=True
     )
     st.divider()
-    st.markdown("#### 🔁 Promotions & Relegations")
+    st.markdown("###### 🔁 Promotions & Relegations")
     
     promoted = month_lh[month_lh["Promoted"] == True]["User"].tolist()
     relegated = month_lh[month_lh["Relegated"] == True]["User"].tolist()
@@ -591,7 +593,7 @@ if page == "🏠 Monthly Results":
     # =========================
     # 🥈 CHAMPIONSHIP
     # =========================
-    st.markdown("#### 🥈 Championship")
+    st.markdown("##### 🥈 Championship")
     
     chmp_champ = championship[championship["Champion"] == True]
     
@@ -600,9 +602,9 @@ if page == "🏠 Monthly Results":
         st.info(f"🏆 **Championship Winner:** {champ['User']}  |  {champ['points']:.3f} pts")
     
     st.dataframe(
-        championship[["Rank","User","points","Promoted","Relegated"]]
+        championship[["Rank","User","points_display","Promoted","Relegated"]]
             .rename(columns={
-                "points": "Points",
+                "points_display": "Points",
                 "Promoted": "⬆ Promoted",
                 "Relegated": "⬇ Relegated"
             }),
@@ -611,7 +613,7 @@ if page == "🏠 Monthly Results":
     )
     st.divider()
 
-    st.markdown("#### 🔁 Promotions & Relegations")
+    st.markdown("###### 🔁 Promotions & Relegations")
     
     promoted = month_lh[month_lh["Promoted"] == True]["User"].tolist()
     relegated = month_lh[month_lh["Relegated"] == True]["User"].tolist()
