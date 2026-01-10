@@ -72,6 +72,21 @@ if page == "🏆 Hall of Fame":
     st.title("🏆 Hall of Fame — All Time Records")
     st.caption("Since the inception of the Steps League")
 
+    # -------------------------
+    # PODIUM HEADER
+    # -------------------------
+    h0, h1, h2, h3 = st.columns([2.5, 1.5, 1.4, 1.4])
+    
+    with h1:
+        st.markdown("<div style='text-align:center;font-size:26px'>🥇</div>", unsafe_allow_html=True)
+    with h2:
+        st.markdown("<div style='text-align:center;font-size:24px'>🥈</div>", unsafe_allow_html=True)
+    with h3:
+        st.markdown("<div style='text-align:center;font-size:22px'>🥉</div>", unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+
+
     d = df.copy().sort_values("date")
 
     # Trim future empty days
@@ -140,6 +155,7 @@ if page == "🏆 Hall of Fame":
             items.append(("", ""))
 
         c0, c1, c2, c3 = st.columns([2.5, 1.7, 1.6, 1.6])
+        
 
         with c0:
             st.markdown(
@@ -155,7 +171,7 @@ if page == "🏆 Hall of Fame":
             st.markdown(
                 f"""
                 <div style="background:#FFD70022;padding:14px;border-radius:14px;text-align:center">
-                <div style="font-size:26px;font-weight:700">🥇 {items[0][1]}</div>
+                <div style="font-size:26px;font-weight:700"> {items[0][1]}</div>
                 <div style="font-size:14px;color:#444">{items[0][0]}</div>
                 </div>
                 """,
@@ -166,7 +182,7 @@ if page == "🏆 Hall of Fame":
             st.markdown(
                 f"""
                 <div style="background:#C0C0C022;padding:14px;border-radius:14px;text-align:center">
-                <div style="font-size:22px;font-weight:600">🥈 {items[1][1]}</div>
+                <div style="font-size:22px;font-weight:600"> {items[1][1]}</div>
                 <div style="font-size:13px;color:#555">{items[1][0]}</div>
                 </div>
                 """,
@@ -177,7 +193,7 @@ if page == "🏆 Hall of Fame":
             st.markdown(
                 f"""
                 <div style="background:#CD7F3222;padding:14px;border-radius:14px;text-align:center">
-                <div style="font-size:20px;font-weight:500">🥉 {items[2][1]}</div>
+                <div style="font-size:20px;font-weight:500"> {items[2][1]}</div>
                 <div style="font-size:12px;color:#666">{items[2][0]}</div>
                 </div>
                 """,
