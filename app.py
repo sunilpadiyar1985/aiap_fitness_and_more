@@ -127,34 +127,26 @@ pivot_daily = daily.pivot_table(
 ).fillna(0)
 
 # --------------------------------
+# METRICS
+# --------------------------------
+
 # 1. Consistent (lowest std dev)
-# --------------------------------
-std_dev = pivot_daily.std(axis=1)
-consistent_user = std_dev.idxmin()
+std_dev = pivot_daily.std(axis=1).sort_values()
+top_consistent = std_dev.head(3)
 
-# --------------------------------
 # 2. Highly active (highest average)
-# --------------------------------
-avg_steps = pivot_daily.mean(axis=1)
-active_user = avg_steps.idxmax()
+avg_steps = pivot_daily.mean(axis=1).sort_values(ascending=False)
+top_active = avg_steps.head(3)
 
-# --------------------------------
-# 3. 10K crossed (most days >= 10k)
-# --------------------------------
-days_10k = (pivot_daily >= 10000).sum(axis=1)
-tenk_user = days_10k.idxmax()
-tenk_count = int(days_10k.max())
+# 3. 10K crossed
+days_10k = (pivot_daily >= 10000).sum(axis=1).sort_values(ascending=False)
+top_10k = days_10k.head(3)
 
-# --------------------------------
-# 4. 5K crossed (most days >= 5k)
-# --------------------------------
-days_5k = (pivot_daily >= 5000).sum(axis=1)
-fivek_user = days_5k.idxmax()
-fivek_count = int(days_5k.max())
+# 4. 5K crossed
+days_5k = (pivot_daily >= 5000).sum(axis=1).sort_values(ascending=False)
+top_5k = days_5k.head(3)
 
-# --------------------------------
 # 5. Most improved (slope)
-# --------------------------------
 import numpy as np
 
 def slope(row):
@@ -164,29 +156,80 @@ def slope(row):
         return 0
     return np.polyfit(x, y, 1)[0]
 
-slopes = pivot_daily.apply(slope, axis=1)
-improved_user = slopes.idxmax()
+slopes = pivot_daily.apply(slope, axis=1).sort_values(ascending=False)
+top_improved = slopes.head(3)
 
 # --------------------------------
-# Display nicely
+# DISPLAY HELPERS
+# --------------------------------
+def show_top3(title, emoji, series, value_fmt, suffix=""):
+    st.markdown(f"### {emoji} {title}")
+
+    names = series.index.tolist()
+    values = series.values.tolist()
+
+    # Winner
+    st.markdown(f"**{names[0]} — {value_fmt(values[0])}{suffix}**")
+
+    # 2nd & 3rd (smaller)
+    if len(names) > 1:
+        st.markdown(
+            f"<span style='font-size:13px;color:#666'>"
+            f"{names[1]} — {value_fmt(values[1])}{suffix}<br>"
+            f"{names[2]} — {value_fmt(values[2])}{suffix}"
+            f"</span>",
+            unsafe_allow_html=True
+        )
+
+    st.markdown("---")
+
+
+# --------------------------------
+# LAYOUT
 # --------------------------------
 c1, c2 = st.columns(2)
 
 with c1:
-    st.success(f"🎯 **Most consistent**\n\n{consistent_user}")
-    st.success(f"⚡ **Highly active**\n\n{active_user}")
-    st.success(f"🚀 **Most improved**\n\n{improved_user}")
+    show_top3(
+        "Most consistent (lowest variation)",
+        "🎯",
+        top_consistent,
+        lambda x: f"{int(x):,}",
+        " std dev"
+    )
+
+    show_top3(
+        "Highly active (highest daily avg)",
+        "⚡",
+        top_active,
+        lambda x: f"{int(x):,}",
+        " avg steps"
+    )
+
+    show_top3(
+        "Most improved (trend)",
+        "🚀",
+        top_improved,
+        lambda x: f"{int(x):,}",
+        " slope"
+    )
 
 with c2:
-    st.info(f"🏅 **10K crossed king**\n\n{tenk_user} — {tenk_count} days")
-    st.info(f"🥈 **5K crossed king**\n\n{fivek_user} — {fivek_count} days")
+    show_top3(
+        "10K crossed king",
+        "🏅",
+        top_10k,
+        lambda x: str(int(x)),
+        " days"
+    )
 
-
-st.dataframe(
-    monthly_totals,
-    use_container_width=True,
-    hide_index=True
-)
+    show_top3(
+        "5K crossed king",
+        "🥈",
+        top_5k,
+        lambda x: str(int(x)),
+        " days"
+    )
 
 
 # ----------------------------
