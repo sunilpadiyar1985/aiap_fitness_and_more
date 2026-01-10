@@ -9,12 +9,9 @@ st.set_page_config(page_title="Steps League – Monthly Results", page_icon="�
 # CONFIG
 # ----------------------------
 SHEET_ID = "1DfUJd33T-12UVOavd6SqCfkcNl8_4sVxcqqXHtBeWpw"
-GID = "0"  # change later for other year tabs
-
-SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}"
 
 # ----------------------------
-# LOAD DATA
+# LOAD DATA (MULTI YEAR, SAFE)
 # ----------------------------
 @st.cache_data
 def load_data():
@@ -33,7 +30,6 @@ def load_data():
         try:
             df = pd.read_csv(url)
 
-            # if sheet exists but is empty
             if df.empty:
                 continue
 
@@ -54,8 +50,7 @@ def load_data():
             if not df_long.empty:
                 all_data.append(df_long)
 
-        except Exception as e:
-            # skip sheets that are empty / not ready
+        except:
             continue
 
     if not all_data:
@@ -65,22 +60,23 @@ def load_data():
     df_all["month"] = df_all["date"].dt.to_period("M")
 
     return df_all
+
+
 df = load_data()
 
 st.title("🏃 Steps League – Monthly Results")
 
 # ----------------------------
-# MONTH SELECTOR
+# MONTH SELECTOR (ONLY REAL MONTHS, LAST 6)
 # ----------------------------
-all_months = (
-    df["date"]
-    .dropna()
-    .dt.to_period("M")
-    .sort_values()
-    .unique()
+month_totals = (
+    df.groupby(df["date"].dt.to_period("M"))["steps"]
+    .sum()
+    .reset_index()
 )
 
-available_months = list(all_months[-6:])
+real_months = month_totals[month_totals["steps"] > 0]["date"].sort_values()
+available_months = real_months.tail(6).tolist()
 
 if not available_months:
     st.warning("No data available yet.")
@@ -94,12 +90,12 @@ selected_month = st.selectbox(
 
 month_df = df[df["month"] == selected_month]
 
-if month_df.empty:
+if month_df["steps"].sum() == 0:
     st.info("📭 Data not available yet for this month.\n\nPlease check back later or contact the admin 🙂")
     st.stop()
 
 # ----------------------------
-# AGGREGATE  ✅ MUST BE HERE
+# AGGREGATE
 # ----------------------------
 monthly_totals = (
     month_df.groupby("User")["steps"]
@@ -111,41 +107,39 @@ monthly_totals = (
 
 monthly_totals.insert(0, "Rank", range(1, len(monthly_totals) + 1))
 
-
+st.markdown(f"### Results for {selected_month.strftime('%B %Y')} ⭐")
 
 # ----------------------------
 # PODIUM
 # ----------------------------
 top3 = monthly_totals.head(3).reset_index(drop=True)
 
-if len(top3) >= 1:
-    st.markdown("#### 🏆 This month's podium")
+st.markdown("#### 🏆 This month's podium")
+c1, c2, c3 = st.columns([1, 1.4, 1])
 
-    c1, c2, c3 = st.columns([1, 1.4, 1])
+if len(top3) >= 2:
+    with c1:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown("### 🥈 " + top3.loc[1, "User"])
+        st.markdown(f"#### {int(top3.loc[1, 'steps']):,} steps")
 
-    if len(top3) >= 2:
-        with c1:
-            st.markdown("<br><br>", unsafe_allow_html=True)
-            st.markdown("### 🥈 " + top3.loc[1, "User"])
-            st.markdown(f"#### {int(top3.loc[1, 'steps']):,} steps")
+with c2:
+    st.markdown("## 🥇 " + top3.loc[0, "User"])
+    st.markdown(f"## {int(top3.loc[0, 'steps']):,} steps")
+    st.markdown("👑 **Champion of the month**")
 
-    with c2:
-        st.markdown("## 🥇 " + top3.loc[0, "User"])
-        st.markdown(f"## {int(top3.loc[0, 'steps']):,} steps")
-        st.markdown("👑 **Champion of the month**")
+if len(top3) >= 3:
+    with c3:
+        st.markdown("<br><br><br>", unsafe_allow_html=True)
+        st.markdown("#### 🥉 " + top3.loc[2, "User"])
+        st.markdown(f"##### {int(top3.loc[2, 'steps']):,} steps")
 
-    if len(top3) >= 3:
-        with c3:
-            st.markdown("<br><br><br>", unsafe_allow_html=True)
-            st.markdown("#### 🥉 " + top3.loc[2, "User"])
-            st.markdown(f"##### {int(top3.loc[2, 'steps']):,} steps")
-
+# ----------------------------
+# MONTHLY HIGHLIGHTS
+# ----------------------------
 st.divider()
 st.subheader("🎖️ This month's highlights")
 
-# ----------------------------
-# DAILY MATRIX
-# ----------------------------
 daily = month_df.copy()
 daily["day"] = daily["date"].dt.day
 
@@ -156,9 +150,6 @@ pivot_daily = daily.pivot_table(
     aggfunc="sum"
 ).fillna(0)
 
-# ----------------------------
-# METRICS
-# ----------------------------
 std_dev = pivot_daily.std(axis=1).fillna(0).sort_values()
 top_consistent = std_dev.head(3)
 
@@ -181,55 +172,42 @@ def slope(row):
 slopes = pivot_daily.apply(slope, axis=1).fillna(0).sort_values(ascending=False)
 top_improved = slopes.head(3)
 
-# ----------------------------
-# DISPLAY (KEEPING COLORED BLOCK STYLE)
-# ----------------------------
 c1, c2 = st.columns(2)
 
 with c1:
-    st.success(
-        f"""🎯 **Most consistent**
+    st.success(f"""🎯 **Most consistent**
 
-**{top_consistent.index[0]}** — {int(top_consistent.iloc[0] or 0):,} std dev  
+**{top_consistent.index[0]}** — {int(top_consistent.iloc[0]):,} std dev  
 _{top_consistent.index[1]} — {int(top_consistent.iloc[1]):,}_  
-_{top_consistent.index[2]} — {int(top_consistent.iloc[2]):,}_"""
-    )
+_{top_consistent.index[2]} — {int(top_consistent.iloc[2]):,}_""")
 
-    st.success(
-        f"""⚡ **Highly active**
+    st.success(f"""⚡ **Highly active**
 
 **{top_active.index[0]}** — {int(top_active.iloc[0]):,} avg steps  
 _{top_active.index[1]} — {int(top_active.iloc[1]):,}_  
-_{top_active.index[2]} — {int(top_active.iloc[2]):,}_"""
-    )
+_{top_active.index[2]} — {int(top_active.iloc[2]):,}_""")
 
-    st.success(
-        f"""🚀 **Most improved**
+    st.success(f"""🚀 **Most improved**
 
 **{top_improved.index[0]}** — {int(top_improved.iloc[0]):,} slope  
 _{top_improved.index[1]} — {int(top_improved.iloc[1]):,}_  
-_{top_improved.index[2]} — {int(top_improved.iloc[2]):,}_"""
-    )
+_{top_improved.index[2]} — {int(top_improved.iloc[2]):,}_""")
 
 with c2:
-    st.info(
-        f"""🏅 **10K crossed king**
+    st.info(f"""🏅 **10K crossed king**
 
 **{top_10k.index[0]}** — {int(top_10k.iloc[0])} days  
 _{top_10k.index[1]} — {int(top_10k.iloc[1])} days_  
-_{top_10k.index[2]} — {int(top_10k.iloc[2])} days_"""
-    )
+_{top_10k.index[2]} — {int(top_10k.iloc[2])} days_""")
 
-    st.info(
-        f"""🥈 **5K crossed king**
+    st.info(f"""🥈 **5K crossed king**
 
 **{top_5k.index[0]}** — {int(top_5k.iloc[0])} days  
 _{top_5k.index[1]} — {int(top_5k.iloc[1])} days_  
-_{top_5k.index[2]} — {int(top_5k.iloc[2])} days_"""
-    )
+_{top_5k.index[2]} — {int(top_5k.iloc[2])} days_""")
 
 # ----------------------------
-# FULL LEADERBOARD
+# LEADERBOARD
 # ----------------------------
 st.divider()
 st.subheader("📊 Monthly leaderboard")
@@ -250,5 +228,4 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
-
 st.dataframe(monthly_totals, use_container_width=True, hide_index=True)
