@@ -77,21 +77,32 @@ top3 = monthly_totals.head(3).reset_index(drop=True)
 if len(top3) >= 1:
     st.subheader("🏆 This month's podium")
 
-    c1, c2, c3 = st.columns([1, 1.3, 1])  # middle wider
+    c1, c2, c3 = st.columns([1, 1.4, 1])
 
+    # 🥈 SECOND (slightly lower)
     if len(top3) >= 2:
         with c1:
-            st.markdown("### 🥈 Second")
-            st.metric(top3.loc[1, "User"], f"{int(top3.loc[1, 'steps']):,} steps")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
 
+            st.markdown("## 🥈 " + top3.loc[1, "User"])
+            st.markdown(f"### {int(top3.loc[1, 'steps']):,} steps")
+
+    # 🥇 FIRST (highest, most prominent)
     with c2:
-        st.markdown("## 🥇 Winner")
-        st.metric(top3.loc[0, "User"], f"{int(top3.loc[0, 'steps']):,} steps")
+        st.markdown("## 🥇 " + top3.loc[0, "User"])
+        st.markdown(f"## {int(top3.loc[0, 'steps']):,} steps")
+        st.markdown("👑 **Champion of the month**")
 
+    # 🥉 THIRD (lowest)
     if len(top3) >= 3:
         with c3:
-            st.markdown("### 🥉 Third")
-            st.metric(top3.loc[2, "User"], f"{int(top3.loc[2, 'steps']):,} steps")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            st.markdown("## 🥉 " + top3.loc[2, "User"])
+            st.markdown(f"### {int(top3.loc[2, 'steps']):,} steps")
 
 st.divider()
 
