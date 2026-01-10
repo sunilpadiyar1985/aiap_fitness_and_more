@@ -111,32 +111,6 @@ if len(top3) >= 1:
 
 st.divider()
 
-# ----------------------------
-# FULL LEADERBOARD
-# ----------------------------
-st.subheader("📊 Monthly leaderboard")
-
-fig = px.bar(
-    monthly_totals,
-    x="User",
-    y="steps",
-    title="Monthly leaderboard",
-    text="steps"
-)
-
-fig.update_traces(texttemplate='%{text:,}', textposition='outside')
-
-fig.update_layout(
-    xaxis_title="",
-    yaxis_title="Steps",
-    xaxis={'categoryorder':'total descending'},
-    height=500
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-st.divider()
-
 st.subheader("🎖️ This month's highlights")
 
 # --------------------------------
@@ -213,3 +187,31 @@ st.dataframe(
     use_container_width=True,
     hide_index=True
 )
+
+
+# ----------------------------
+# FULL LEADERBOARD
+# ----------------------------
+st.subheader("📊 Monthly leaderboard")
+
+fig = px.bar(
+    monthly_totals,
+    x="User",
+    y="steps",
+    title="Monthly leaderboard",
+    text="steps"
+)
+
+fig.update_traces(texttemplate='%{text:,}', textposition='outside')
+
+fig.update_layout(
+    xaxis_title="",
+    yaxis_title="Steps",
+    xaxis={'categoryorder':'total descending'},
+    height=500
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+st.divider()
+
