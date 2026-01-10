@@ -134,7 +134,14 @@ if page == "🏆 Hall of Fame":
         c0, c1, c2, c3 = st.columns([2.3, 1.3, 1.3, 1.3])
 
         with c0:
-            st.markdown(f"### {emoji} {title}")
+            st.markdown(
+                f"""
+                <div style="font-size:20px; font-weight:600; line-height:1.3;">
+                    {emoji} {title}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         with c1:
             st.markdown(
