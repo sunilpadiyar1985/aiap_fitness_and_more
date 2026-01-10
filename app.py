@@ -71,7 +71,7 @@ monthly_totals = (
 # Add proper Rank starting from 1
 monthly_totals.insert(0, "Rank", range(1, len(monthly_totals) + 1))
 
-st.markdown(f"## Results for {selected_month.strftime('%B %Y')} ⭐")
+st.markdown(f"### Results for {selected_month.strftime('%B %Y')} ⭐")
 
 # ----------------------------
 # PODIUM (winner-style layout)
@@ -79,7 +79,7 @@ st.markdown(f"## Results for {selected_month.strftime('%B %Y')} ⭐")
 top3 = monthly_totals.head(3).reset_index(drop=True)
 
 if len(top3) >= 1:
-    st.markdown("#🏆 This month's podium")
+    st.markdown("## 🏆 This month's podium")
 
     c1, c2, c3 = st.columns([1, 1.4, 1])
 
