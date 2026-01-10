@@ -190,7 +190,7 @@ with c1:
     st.success(
         f"""🎯 **Most consistent**
 
-**{top_consistent.index[0]}** — {int(top_consistent.iloc[0]):,} std dev  
+**{top_consistent.index[0]}** — {int(top_consistent.iloc[0] or 0):,} std dev  
 _{top_consistent.index[1]} — {int(top_consistent.iloc[1]):,}_  
 _{top_consistent.index[2]} — {int(top_consistent.iloc[2]):,}_"""
     )
