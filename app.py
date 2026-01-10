@@ -70,9 +70,8 @@ df = load_data()
 st.title("🏃 Steps League – Monthly Results")
 
 # ----------------------------
-# MONTH SELECTOR (last 6 real months only)
+# MONTH SELECTOR
 # ----------------------------
-
 all_months = (
     df["date"]
     .dropna()
@@ -98,6 +97,20 @@ month_df = df[df["month"] == selected_month]
 if month_df.empty:
     st.info("📭 Data not available yet for this month.\n\nPlease check back later or contact the admin 🙂")
     st.stop()
+
+# ----------------------------
+# AGGREGATE  ✅ MUST BE HERE
+# ----------------------------
+monthly_totals = (
+    month_df.groupby("User")["steps"]
+    .sum()
+    .reset_index()
+    .sort_values("steps", ascending=False)
+    .reset_index(drop=True)
+)
+
+monthly_totals.insert(0, "Rank", range(1, len(monthly_totals) + 1))
+
 
 
 # ----------------------------
