@@ -951,7 +951,7 @@ if page == "📜 League History":
     relegated = month_lh[month_lh["Relegated"] == True]["User"].tolist()
 
     if promoted or relegated:
-        st.markdown("#### 🔁 League movement")
+        st.markdown("##### 🔁 League movement")
 
         p1, p2 = st.columns(2)
 
@@ -964,62 +964,11 @@ if page == "📜 League History":
                 st.warning("⬇ **Relegated:** " + ", ".join(relegated))
 
     st.divider()
-
-    # ----------------------------
-    # PREMIER LEAGUE TABLE
-    # ----------------------------
-    st.markdown("### 🏟️ Premier League")
-
-    premier = (
-        month_lh[month_lh["League"] == "Premier"]
-        .sort_values("Rank")
-    )
-
-    if premier.empty:
-        st.info("No Premier League this month.")
-    else:
-        st.dataframe(
-            premier[["Rank","User","points_display","Champion","Promoted","Relegated"]]
-            .rename(columns={
-                "points_display": "Points",
-                "Champion": "🏆",
-                "Promoted": "⬆",
-                "Relegated": "⬇"
-            }),
-            use_container_width=True,
-            hide_index=True
-        )
-
-    # ----------------------------
-    # CHAMPIONSHIP TABLE
-    # ----------------------------
-    st.markdown("### 🥈 Championship")
-
-    champ = (
-        month_lh[month_lh["League"] == "Championship"]
-        .sort_values("Rank")
-    )
-
-    if champ.empty:
-        st.info("No Championship this month.")
-    else:
-        st.dataframe(
-            champ[["Rank","User","points_display","Champion","Promoted","Relegated"]]
-            .rename(columns={
-                "points_display": "Points",
-                "Champion": "🏆",
-                "Promoted": "⬆",
-                "Relegated": "⬇"
-            }),
-            use_container_width=True,
-            hide_index=True
-        )
-
     # ----------------------------
     # QUICK STORY STRIP
     # ----------------------------
     st.divider()
-    st.markdown("#### 🧾 Season story")
+    st.markdown("##### 🧾 Season story")
 
     story = []
 
