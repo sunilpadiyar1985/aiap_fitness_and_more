@@ -9,6 +9,8 @@ page = st.sidebar.radio(
     ["🏠 Monthly Results", "👤 Player Profile"]
 )
 
+df = load_data()
+
 if page == "🏠 Monthly Results":
     # ----------------------------
     # CONFIG
@@ -65,9 +67,6 @@ if page == "🏠 Monthly Results":
         df_all["month"] = df_all["date"].dt.to_period("M")
     
         return df_all
-    
-    
-    df = load_data()
     
     st.title("🏃 Steps League – Monthly Results")
     
