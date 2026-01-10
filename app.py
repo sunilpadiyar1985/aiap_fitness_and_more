@@ -921,7 +921,7 @@ if page == "📜 League History":
 
     st.divider()
 
-    st.markdown(f"### 🗓️ {selected_month.strftime('%B %Y')}")
+    st.markdown(f"##### 🗓️ {selected_month.strftime('%B %Y')}")
 
     # ----------------------------
     # CHAMPIONS
