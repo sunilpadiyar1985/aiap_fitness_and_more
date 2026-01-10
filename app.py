@@ -92,6 +92,14 @@ if page == "🏆 Hall of Fame":
     best_month = d.groupby(["User","month_p"])["steps"].sum().groupby("User").max()
 
     tenk_pct = (d["steps"] >= 10000).groupby(d["User"]).mean() * 100
+    # Number of 10K days (all-time)
+    tenk_days = (d["steps"] >= 10000).groupby(d["User"]).sum()
+    
+    # Number of 5K days (all-time)
+    fivek_days = (d["steps"] >= 5000).groupby(d["User"]).sum()
+    
+    # 5K completion percentage
+    fivek_pct = (d["steps"] >= 5000).groupby(d["User"]).mean() * 100
 
     # -------------------------
     # Streaks (max)
@@ -182,11 +190,14 @@ if page == "🏆 Hall of Fame":
     # DISPLAY
     # -------------------------
     record_row("Highest total steps (career)", "👣", total_steps)
-    record_row("Highest average per day", "📊", avg_steps)
+    record_row("Highest average", "📊", avg_steps)
     record_row("Highest steps in a day", "🔥", best_day)
     record_row("Highest steps in a week", "🗓️", best_week)
     record_row("Highest steps in a month", "📆", best_month)
-    record_row("Highest 10K completion %", "🏅", tenk_pct, lambda x: f"{x:.2f}%")
+    record_row("Highest 10K days (all-time)", "🏅", tenk_days, lambda x: f"{int(x)} days")
+    record_row("Highest 5K days (all-time)", "🥈", fivek_days, lambda x: f"{int(x)} days")
+    record_row("Highest 10K %completion", "🏅", tenk_pct, lambda x: f"{x:.2f}%")
+    record_row("Highest 5K %completion", "📈", fivek_pct, lambda x: f"{x:.2f}%")
     record_row("Longest 10K streak", "⚡", streak_10k, lambda x: f"{int(x)} days")
     record_row("Longest 5K streak", "💪", streak_5k, lambda x: f"{int(x)} days")
 
