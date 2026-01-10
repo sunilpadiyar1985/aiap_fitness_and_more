@@ -999,52 +999,112 @@ if page == "ℹ️ Readme: Our Dashboard":
 
     st.divider()
 
+    st.markdown("### 🚶 What is this?")
     st.markdown("""
-    ### 🚶 What is this?
+The **Steps League** is a fun, community-driven fitness league built around one simple idea:
 
-    The **Steps League** is a fun, community-driven fitness league built around one simple idea:
+> _Move more. Stay consistent. And make it fun._
 
-    > _Move more. Stay consistent. And make it fun._
+This dashboard tracks daily step data and turns it into:
 
-    This dashboard tracks daily step data and turns it into:
+• monthly competitions  
+• leagues (Premier & Championship)  
+• promotions & relegations  
+• career records  
+• hall of fame stats  
 
-    • monthly competitions  
-    • leagues (Premier & Championship)  
-    • promotions & relegations  
-    • career records  
-    • hall of fame stats  
-
-    Think of it like **Fantasy Football meets Fitbit** 😄
-    """)
+Think of it like **Fantasy Football meets Fitbit** 😄
+""")
 
     st.divider()
 
+    st.markdown("### 🏟️ The League System")
     st.markdown("""
-    ### 🏟️ The League System
+There are two leagues:
 
-    There are two leagues:
+🥇 **Premier League** – the top division  
+🥈 **Championship** – the second division  
 
-    🥇 **Premier League** – the top division  
-    🥈 **Championship** – the second division  
+Every month, players are placed into leagues based on their **average steps in the previous month**.
 
-    Every month, players are placed into leagues based on their **average steps in the previous month**.
+**How league placement works:**
 
-    #### How league placement works:
-    • First month ever → everyone starts in Premier  
-    • If your previous month average ≥ **7,000 steps/day** → Premier  
-    • Otherwise → Championship  
-    • At least **6 players** are always kept in Premier  
-    • New players always start in Championship  
+• First month ever → everyone starts in Premier  
+• If your previous month average ≥ **7,000 steps/day** → Premier  
+• Otherwise → Championship  
+• At least **6 players** are always kept in Premier  
+• New players always start in Championship  
 
-    Promotions and relegations happen automatically every month.
-    """)
+Promotions and relegations happen automatically every month.
+""")
 
     st.divider()
 
+    st.markdown("### 🧮 How points are calculated")
     st.markdown("""
-    ### 🧮 How points are calculated
+Monthly league winners are **not decided only by total steps**.
 
-    Monthly league winners are **not decided only by total steps**.
+Each player earns points based on multiple aspects of performance:
 
-    Each pl
+• Total steps  
+• Highest single day  
+• Highest week  
+• Number of 10K days  
+• Number of daily wins  
+
+These are combined using weighted scoring and normalized within the month.
+
+The result is a **balanced score** that rewards:
+
+• consistency  
+• peak performance  
+• staying active regularly  
+
+This means someone who is steady all month can beat someone who only had a few big days.
+""")
+
+    st.divider()
+
+    st.markdown("### 🏆 What the pages show")
+    st.markdown("""
+#### 📅 Monthly Results
+• Step winners  
+• Monthly highlights  
+• Premier & Championship tables  
+• Champions of the month  
+• Promotions & relegations  
+
+#### 👤 Player Profile
+• Career step stats  
+• Streaks and records  
+• Trophy cabinet  
+• League journey over time  
+
+#### 🏆 Hall of Fame
+• All-time fitness records  
+• League legends  
+• Titles, streaks, dominance stats  
+
+#### 📜 League History
+• Full month-by-month archive  
+• Past champions  
+• Historical league tables  
+""")
+
+    st.divider()
+
+    st.markdown("### ❤️ Why this exists")
+    st.markdown("""
+This league exists to:
+
+• make walking more fun  
+• encourage consistency  
+• celebrate improvement  
+• build a healthy community habit  
+
+Whether you're chasing trophies or just building a routine — every step counts 👣
+""")
+
+    st.success("If something looks wrong, confusing, or interesting — reach out to the league admin 😄")
+
 
