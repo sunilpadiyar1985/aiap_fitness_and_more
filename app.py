@@ -131,7 +131,7 @@ if page == "🏆 Hall of Fame":
         while len(items) < 3:
             items.append(("", ""))
 
-        c0, c1, c2, c3 = st.columns([2.3, 1.3, 1.3, 1.3])
+        c0, c1, c2, c3 = st.columns([2.5, 1.5, 1.4, 1.4])
 
         with c0:
             st.markdown(
