@@ -393,21 +393,31 @@ if page == "👤 Player Profile":
     u2["month"] = u2["date"].dt.to_period("M")
     
     monthly_stats = (
-        u2.groupby("month")
-          .agg(
-              total_steps=("steps", "sum"),
-              avg_steps=("steps", "mean"),
-              best_day=("steps", "max"),
-              days_10k=("steps", lambda x: (x >= 10000).sum()),
-              days_5k=("steps", lambda x: (x >= 5000).sum()),
+    u2.groupby("month")
+      .agg(
+          total_steps=("steps", "sum"),
+          avg_steps=("steps", "mean"),
+          best_day=("steps", "max"),
+          days_10k=("steps", lambda x: (x >= 10000).sum()),
+          days_5k=("steps", lambda x: (x >= 5000).sum()),
           )
           .reset_index()
-    )
-    
+        )
+        
+    monthly_stats = monthly_stats.sort_values("month", ascending=False)
+        
     monthly_stats["month"] = monthly_stats["month"].dt.strftime("%B %Y")
     monthly_stats["avg_steps"] = monthly_stats["avg_steps"].astype(int)
-    
-    monthly_stats = monthly_stats.sort_values("month")
+        
+    monthly_stats = monthly_stats.rename(columns={
+        "month": "Month",
+        "total_steps": "Total steps",
+        "avg_steps": "Average per day",
+        "best_day": "Best single day",
+        "days_10k": "Number of 10K days",
+        "days_5k": "Number of 5K days"
+    })
+
     
     st.dataframe(monthly_stats, use_container_width=True, hide_index=True)
 
