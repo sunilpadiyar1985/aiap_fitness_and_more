@@ -46,7 +46,7 @@ def load_data():
             )
 
             df_long = df_long.rename(columns={user_col: "User"})
-            df_long["date"] = pd.to_datetime(df_long["date"], format="%d-%b-%y", errors="coerce")
+            df_long["date"] = pd.to_datetime(df_long["date"], errors="coerce", dayfirst=True)
             df_long["steps"] = pd.to_numeric(df_long["steps"], errors="coerce").fillna(0)
             df_long = df_long.dropna(subset=["date"])
 
@@ -71,7 +71,7 @@ df = load_data()
 if page == "🏆 Hall of Fame":
 
     st.title("🏆 Hall of Fame — All Time Records")
-    st.caption("Since the inception of the Steps League")
+    st.caption("Since the inception of our AIAP Fiteness Tracking")
 
     d = df.copy()
     d = d.sort_values("date")
@@ -146,7 +146,7 @@ if page == "🏆 Hall of Fame":
     # ----------------------------
     # DISPLAY
     # ----------------------------
-    show_hof("Highest total steps (career)", "👣", total_steps, " steps")
+    show_hof("Highest total steps (career)", "👣", total_steps)
     show_hof("Highest average per day", "📊", avg_steps, " avg")
     show_hof("Highest steps in a day", "🔥", best_day, " steps")
     show_hof("Highest steps in a week", "🗓️", best_week, " steps")
