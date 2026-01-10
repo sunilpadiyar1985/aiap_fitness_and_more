@@ -53,17 +53,22 @@ st.title("🏃 Steps League – Monthly Results")
 # ----------------------------
 # MONTH SELECTOR (last 6 real months only)
 # ----------------------------
-month_summary = (
-    df.groupby(df["date"].dt.to_period("M"))["steps"]
-    .sum()
-    .reset_index()
+
+# All months that actually appear in data
+all_months = (
+    df["date"]
+    .dropna()
+    .dt.to_period("M")
+    .sort_values()
+    .unique()
 )
 
-# keep only months which actually have data
-valid_months = month_summary[month_summary["steps"] > 0]["date"].sort_values()
+# Last 6 months only
+available_months = list(all_months[-6:])
 
-# last 6 months only
-available_months = valid_months.tail(6).tolist()
+if not available_months:
+    st.warning("No data available yet.")
+    st.stop()
 
 selected_month = st.selectbox(
     "Select month",
@@ -73,8 +78,8 @@ selected_month = st.selectbox(
 
 month_df = df[df["month"] == selected_month]
 
-# safety guard
-if month_df.empty or month_df["steps"].sum() == 0:
+# Safety guard
+if month_df.empty:
     st.info("📭 Data not available yet for this month.\n\nPlease check back later or contact the admin 🙂")
     st.stop()
 
