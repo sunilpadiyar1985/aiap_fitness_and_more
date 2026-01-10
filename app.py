@@ -64,7 +64,6 @@ def load_data():
 
     return df_all
 df = load_data()
-
 # =========================================================
 # 🏆 HALL OF FAME — ALL TIME RECORDS
 # =========================================================
@@ -72,29 +71,28 @@ if page == "🏆 Hall of Fame":
 
     st.title("🏆 Hall of Fame — All Time Records")
     st.caption("Since the inception of the Steps League")
-    
+
     d = df.copy().sort_values("date")
-    
+
     # Trim future empty days
     if (d["steps"] > 0).any():
         last_active = d.loc[d["steps"] > 0, "date"].max()
         d = d[d["date"] <= last_active]
-    
+
     base = d.groupby("User")
-    
+
     total_steps = base["steps"].sum()
     avg_steps = base["steps"].mean()
     best_day = base["steps"].max()
-    
+
     d["week"] = d["date"].dt.to_period("W").apply(lambda r: r.start_time)
     d["month_p"] = d["date"].dt.to_period("M")
-    
+
     best_week = d.groupby(["User","week"])["steps"].sum().groupby("User").max()
     best_month = d.groupby(["User","month_p"])["steps"].sum().groupby("User").max()
-    
+
     tenk_pct = (d["steps"] >= 10000).groupby(d["User"]).mean() * 100
-    
-    
+
     # -------------------------
     # Streaks (max)
     # -------------------------
@@ -107,53 +105,83 @@ if page == "🏆 Hall of Fame":
             else:
                 cur = 0
         return max_s
-    
+
     streak_10k = {}
     streak_5k = {}
-    
+
     for user, u in d.groupby("User"):
         u = u.sort_values("date")
         streak_10k[user] = max_streak((u["steps"] >= 10000).tolist())
         streak_5k[user] = max_streak((u["steps"] >= 5000).tolist())
-    
+
     streak_10k = pd.Series(streak_10k)
     streak_5k = pd.Series(streak_5k)
-    
-    
-    # -------------------------
-    # Helper to format podium cells
-    # -------------------------
-    def top3_row(series, formatter=lambda x: f"{int(x):,}"):
-        top3 = series.sort_values(ascending=False).head(3)
-        vals = []
-        for name, value in top3.items():
-            vals.append(f"{formatter(value)}\n{name}")
-        while len(vals) < 3:
-            vals.append("")
-        return vals
-    
-    
-    # -------------------------
-    # Build Hall of Fame table
-    # -------------------------
-    hof_rows = []
-    
-    hof_rows.append(["👣 Highest total steps (career)", *top3_row(total_steps)])
-    hof_rows.append(["📊 Highest average per day", *top3_row(avg_steps)])
-    hof_rows.append(["🔥 Highest steps in a day", *top3_row(best_day)])
-    hof_rows.append(["🗓️ Highest steps in a week", *top3_row(best_week)])
-    hof_rows.append(["📆 Highest steps in a month", *top3_row(best_month)])
-    hof_rows.append(["🏅 Highest 10K completion %", *top3_row(tenk_pct, lambda x: f"{x:.2f}%")])
-    hof_rows.append(["⚡ Longest 10K streak", *top3_row(streak_10k, lambda x: f"{int(x)} days")])
-    hof_rows.append(["💪 Longest 5K streak", *top3_row(streak_5k, lambda x: f"{int(x)} days")])
-    
-    hof_df = pd.DataFrame(
-        hof_rows,
-        columns=["Category", "🥇", "🥈", "🥉"]
-    )
-    
-    st.dataframe(hof_df, use_container_width=True, hide_index=True)
 
+    # -------------------------
+    # RECORD ROW UI
+    # -------------------------
+    def record_row(title, emoji, series, formatter=lambda x: f"{int(x):,}"):
+
+        top3 = series.sort_values(ascending=False).head(3)
+
+        items = []
+        for name, value in top3.items():
+            items.append((name, formatter(value)))
+
+        while len(items) < 3:
+            items.append(("", ""))
+
+        c0, c1, c2, c3 = st.columns([2.3, 1.3, 1.3, 1.3])
+
+        with c0:
+            st.markdown(f"### {emoji} {title}")
+
+        with c1:
+            st.markdown(
+                f"""
+                <div style="background:#FFD70022;padding:14px;border-radius:14px;text-align:center">
+                <div style="font-size:26px;font-weight:700">🥇 {items[0][1]}</div>
+                <div style="font-size:14px;color:#444">{items[0][0]}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with c2:
+            st.markdown(
+                f"""
+                <div style="background:#C0C0C022;padding:14px;border-radius:14px;text-align:center">
+                <div style="font-size:22px;font-weight:600">🥈 {items[1][1]}</div>
+                <div style="font-size:13px;color:#555">{items[1][0]}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with c3:
+            st.markdown(
+                f"""
+                <div style="background:#CD7F3222;padding:14px;border-radius:14px;text-align:center">
+                <div style="font-size:20px;font-weight:500">🥉 {items[2][1]}</div>
+                <div style="font-size:12px;color:#666">{items[2][0]}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+    # -------------------------
+    # DISPLAY
+    # -------------------------
+    record_row("Highest total steps (career)", "👣", total_steps)
+    record_row("Highest average per day", "📊", avg_steps)
+    record_row("Highest steps in a day", "🔥", best_day)
+    record_row("Highest steps in a week", "🗓️", best_week)
+    record_row("Highest steps in a month", "📆", best_month)
+    record_row("Highest 10K completion %", "🏅", tenk_pct, lambda x: f"{x:.2f}%")
+    record_row("Longest 10K streak", "⚡", streak_10k, lambda x: f"{int(x)} days")
+    record_row("Longest 5K streak", "💪", streak_5k, lambda x: f"{int(x)} days")
 
 
 if page == "🏠 Monthly Results":
