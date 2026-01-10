@@ -358,19 +358,19 @@ if page == "🏠 Monthly Results":
     with c1:
         st.success(f"""🎯 **Most consistent**
     
-    **{top_consistent.index[0]}** — {int(top_consistent.iloc[0]):,} std dev  
+    {top_consistent.index[0]} — {int(top_consistent.iloc[0]):,} std dev  
     _{top_consistent.index[1]} — {int(top_consistent.iloc[1]):,}_  
     _{top_consistent.index[2]} — {int(top_consistent.iloc[2]):,}_""")
     
         st.success(f"""⚡ **Highly active**
     
-    **{top_active.index[0]}** — {int(top_active.iloc[0]):,} avg steps  
+    {top_active.index[0]} — {int(top_active.iloc[0]):,} avg steps  
     _{top_active.index[1]} — {int(top_active.iloc[1]):,}_  
     _{top_active.index[2]} — {int(top_active.iloc[2]):,}_""")
     
         st.success(f"""🚀 **Most improved**
     
-    **{top_improved.index[0]}** — {int(top_improved.iloc[0]):,} slope  
+    {top_improved.index[0]} — {int(top_improved.iloc[0]):,} slope  
     _{top_improved.index[1]} — {int(top_improved.iloc[1]):,}_  
     _{top_improved.index[2]} — {int(top_improved.iloc[2]):,}_""")
     
