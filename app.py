@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered")
 
@@ -115,9 +116,24 @@ st.divider()
 # ----------------------------
 st.subheader("📊 Monthly leaderboard")
 
-st.bar_chart(
-    monthly_totals.set_index("User")["steps"]
+fig = px.bar(
+    monthly_totals,
+    x="User",
+    y="steps",
+    title="Monthly leaderboard",
+    text="steps"
 )
+
+fig.update_traces(texttemplate='%{text:,}', textposition='outside')
+
+fig.update_layout(
+    xaxis_title="",
+    yaxis_title="Steps",
+    xaxis={'categoryorder':'total descending'},
+    height=500
+)
+
+st.plotly_chart(fig, use_container_width=True)
 
 st.dataframe(
     monthly_totals,
