@@ -371,6 +371,38 @@ if page == "🏆 Hall of Fame":
     record_row("Longest 10K streak", "⚡", streak_10k, lambda x: f"{int(x)} days")
     record_row("Longest 5K streak", "💪", streak_5k, lambda x: f"{int(x)} days")
 
+    st.divider()
+    st.markdown("#### 🏟️ League Hall of Fame")
+    st.caption("All-time league dominance & achievements")
+    
+    lh = league_history.copy()
+    
+    lh["Month"] = pd.to_datetime(lh["Month"])
+
+    # Titles
+    prem_titles = lh[(lh["League"] == "Premier") & (lh["Champion"] == True)]["User"].value_counts()
+    champ_titles = lh[(lh["League"] == "Championship") & (lh["Champion"] == True)]["User"].value_counts()
+    
+    # Runner-up (Rank 2)
+    runner_up = lh[lh["Rank"] == 2]["User"].value_counts()
+    
+    # Premier presence
+    prem_months = lh[lh["League"] == "Premier"]["User"].value_counts()
+    
+    # Promotions / relegations
+    promotions = lh[lh["Promoted"] == True]["User"].value_counts()
+    relegations = lh[lh["Relegated"] == True]["User"].value_counts()
+    
+    # Best points season
+    best_season = lh.sort_values("points", ascending=False).groupby("User").first()["points"]
+
+    record_row("Most Premier titles", "👑", prem_titles, lambda x: f"{int(x)} titles")
+    record_row("Most Championship titles", "🏆", champ_titles, lambda x: f"{int(x)} titles")
+    record_row("Most runner-up finishes", "🥈", runner_up, lambda x: f"{int(x)} times")
+    record_row("Most months in Premier", "🏟️", prem_months, lambda x: f"{int(x)} months")
+    record_row("Most promotions", "⬆", promotions, lambda x: f"{int(x)} promotions")
+    record_row("Most relegations", "⬇", relegations, lambda x: f"{int(x)} relegations")
+    record_row("Best single-season performance", "🚀", best_season, lambda x: f"{round(x*100)} pts")
 
 if page == "🏠 Monthly Results":
     
