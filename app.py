@@ -382,7 +382,7 @@ if page == "🏠 Monthly Results":
         st.info(f"""🥈 **5K crossed king**
     
     {top_5k.index[0]} — {int(top_5k.iloc[0])} days  
-    {top_5k.index[1]} — {int(top_5k.iloc[1])} days_  
+    {top_5k.index[1]} — {int(top_5k.iloc[1])} days  
     {top_5k.index[2]} — {int(top_5k.iloc[2])} days""")
     
     # ----------------------------
