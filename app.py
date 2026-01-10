@@ -6,7 +6,7 @@ import numpy as np
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered")
 page = st.sidebar.radio(
     "Navigate",
-    ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History"]
+    ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History", "ℹ️ Readme: Our Dashboard"]
 )
 # ----------------------------
 # CONFIG
@@ -989,4 +989,62 @@ if page == "📜 League History":
     else:
         st.write("A calm month in the league 😄")
 
+# =========================================================
+# ℹ️ ABOUT — STEPS LEAGUE README
+# =========================================================
+if page == "ℹ️ Readme: Our Dashboard":
+
+    st.markdown("## ℹ️ About the Steps League")
+    st.caption("What this dashboard is, and how the league works")
+
+    st.divider()
+
+    st.markdown("""
+    ### 🚶 What is this?
+
+    The **Steps League** is a fun, community-driven fitness league built around one simple idea:
+
+    > _Move more. Stay consistent. And make it fun._
+
+    This dashboard tracks daily step data and turns it into:
+
+    • monthly competitions  
+    • leagues (Premier & Championship)  
+    • promotions & relegations  
+    • career records  
+    • hall of fame stats  
+
+    Think of it like **Fantasy Football meets Fitbit** 😄
+    """)
+
+    st.divider()
+
+    st.markdown("""
+    ### 🏟️ The League System
+
+    There are two leagues:
+
+    🥇 **Premier League** – the top division  
+    🥈 **Championship** – the second division  
+
+    Every month, players are placed into leagues based on their **average steps in the previous month**.
+
+    #### How league placement works:
+    • First month ever → everyone starts in Premier  
+    • If your previous month average ≥ **7,000 steps/day** → Premier  
+    • Otherwise → Championship  
+    • At least **6 players** are always kept in Premier  
+    • New players always start in Championship  
+
+    Promotions and relegations happen automatically every month.
+    """)
+
+    st.divider()
+
+    st.markdown("""
+    ### 🧮 How points are calculated
+
+    Monthly league winners are **not decided only by total steps**.
+
+    Each pl
 
