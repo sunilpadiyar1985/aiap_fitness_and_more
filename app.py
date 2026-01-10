@@ -29,23 +29,37 @@ def load_data():
 
     for year, gid in YEAR_SHEETS.items():
         url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={gid}"
-        df = pd.read_csv(url)
-        df.columns = df.columns.str.strip()
 
-        user_col = df.columns[0]
+        try:
+            df = pd.read_csv(url)
 
-        df_long = df.melt(
-            id_vars=[user_col],
-            var_name="date",
-            value_name="steps"
-        )
+            # if sheet exists but is empty
+            if df.empty:
+                continue
 
-        df_long = df_long.rename(columns={user_col: "User"})
-        df_long["date"] = pd.to_datetime(df_long["date"], format="%d-%b-%y", errors="coerce")
-        df_long["steps"] = pd.to_numeric(df_long["steps"], errors="coerce").fillna(0)
-        df_long = df_long.dropna(subset=["date"])
+            df.columns = df.columns.str.strip()
+            user_col = df.columns[0]
 
-        all_data.append(df_long)
+            df_long = df.melt(
+                id_vars=[user_col],
+                var_name="date",
+                value_name="steps"
+            )
+
+            df_long = df_long.rename(columns={user_col: "User"})
+            df_long["date"] = pd.to_datetime(df_long["date"], format="%d-%b-%y", errors="coerce")
+            df_long["steps"] = pd.to_numeric(df_long["steps"], errors="coerce").fillna(0)
+            df_long = df_long.dropna(subset=["date"])
+
+            if not df_long.empty:
+                all_data.append(df_long)
+
+        except Exception as e:
+            # skip sheets that are empty / not ready
+            continue
+
+    if not all_data:
+        return pd.DataFrame(columns=["User", "date", "steps", "month"])
 
     df_all = pd.concat(all_data, ignore_index=True)
     df_all["month"] = df_all["date"].dt.to_period("M")
