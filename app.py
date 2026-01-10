@@ -317,7 +317,7 @@ if page == "🏠 Monthly Results":
     # MONTHLY HIGHLIGHTS
     # ----------------------------
     st.divider()
-    st.markdown("### 🎖️ This month's highlights")
+    st.markdown("##### 🎖️ This month's highlights")
     
     daily = month_df.copy()
     daily["day"] = daily["date"].dt.day
@@ -389,7 +389,7 @@ if page == "🏠 Monthly Results":
     # LEADERBOARD
     # ----------------------------
     st.divider()
-    st.markdown("### 📊 Monthly leaderboard")
+    st.markdown("##### 📊 Monthly leaderboard")
     
     fig = px.bar(
         monthly_totals,
@@ -453,7 +453,7 @@ if page == "👤 Player Profile":
     # ----------------------------
     # PLAYER CARD
     # ----------------------------
-    st.markdown("### 📌 Key stats")
+    st.markdown("##### 📌 Key stats")
 
     u = user_df.sort_values("date").copy()
     # ✅ Trim future empty days – keep only up to last active day
@@ -540,7 +540,7 @@ if page == "👤 Player Profile":
     
     st.divider()
 
-    st.markdown("### 🏅 Career podiums & trophies")
+    st.markdown("##### 🏅 Career podiums & trophies")
 
     # ----------------------------------
     # Build monthly rankings (all-time)
@@ -601,7 +601,7 @@ if page == "👤 Player Profile":
     # ----------------------------
     # MONTHLY TREND
     # ----------------------------
-    st.markdown("### 📈 Monthly trend")
+    st.markdown("##### 📈 Monthly trend")
 
     monthly_user["month_str"] = monthly_user["month"].astype(str)
 
@@ -626,7 +626,7 @@ if page == "👤 Player Profile":
     # ----------------------------
     # HISTORY TABLE
     # ----------------------------
-    st.markdown("### 📅 Month by month breakdown")
+    st.markdown("##### 📅 Month by month breakdown")
 
     u2 = user_df.copy()
     u2["month"] = u2["date"].dt.to_period("M")
