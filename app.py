@@ -6,7 +6,7 @@ import numpy as np
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered")
 page = st.sidebar.radio(
     "Navigate",
-    ["🏠 Monthly Results", "👤 Player Profile"]
+    ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile"]
 )
 # ----------------------------
 # CONFIG
@@ -64,6 +64,97 @@ def load_data():
 
     return df_all
 df = load_data()
+
+# =========================================================
+# 🏆 HALL OF FAME — ALL TIME RECORDS
+# =========================================================
+if page == "🏆 Hall of Fame":
+
+    st.title("🏆 Hall of Fame — All Time Records")
+    st.caption("Since the inception of the Steps League")
+
+    d = df.copy()
+    d = d.sort_values("date")
+
+    # Trim future empty days
+    if (d["steps"] > 0).any():
+        last_active = d.loc[d["steps"] > 0, "date"].max()
+        d = d[d["date"] <= last_active]
+
+    # ----------------------------
+    # Core aggregates per user
+    # ----------------------------
+    base = d.groupby("User")
+
+    total_steps = base["steps"].sum()
+    avg_steps = base["steps"].mean()
+    best_day = base["steps"].max()
+
+    d["week"] = d["date"].dt.to_period("W").apply(lambda r: r.start_time)
+    d["month_p"] = d["date"].dt.to_period("M")
+
+    best_week = d.groupby(["User","week"])["steps"].sum().groupby("User").max()
+    best_month = d.groupby(["User","month_p"])["steps"].sum().groupby("User").max()
+
+    days_10k = (d["steps"] >= 10000).groupby(d["User"]).mean() * 100
+
+    # ----------------------------
+    # Streaks (max)
+    # ----------------------------
+    def max_streak(series):
+        max_s = cur = 0
+        for v in series:
+            if v:
+                cur += 1
+                max_s = max(max_s, cur)
+            else:
+                cur = 0
+        return max_s
+
+    streaks_10k = {}
+    streaks_5k = {}
+
+    for user, u in d.groupby("User"):
+        u = u.sort_values("date")
+        streaks_10k[user] = max_streak((u["steps"] >= 10000).tolist())
+        streaks_5k[user] = max_streak((u["steps"] >= 5000).tolist())
+
+    streaks_10k = pd.Series(streaks_10k)
+    streaks_5k = pd.Series(streaks_5k)
+
+    # ----------------------------
+    # Helper to show podium
+    # ----------------------------
+    def show_hof(title, emoji, series, suffix=""):
+        top3 = series.sort_values(ascending=False).head(3)
+
+        st.markdown(f"### {emoji} {title}")
+
+        cols = st.columns(3)
+
+        medals = ["🥇", "🥈", "🥉"]
+
+        for i, (name, value) in enumerate(top3.items()):
+            with cols[i]:
+                st.metric(
+                    medals[i] + " " + name,
+                    f"{int(value):,}{suffix}"
+                )
+
+        st.markdown("---")
+
+    # ----------------------------
+    # DISPLAY
+    # ----------------------------
+    show_hof("Highest total steps (career)", "👣", total_steps, " steps")
+    show_hof("Highest average per day", "📊", avg_steps, " avg")
+    show_hof("Highest steps in a day", "🔥", best_day, " steps")
+    show_hof("Highest steps in a week", "🗓️", best_week, " steps")
+    show_hof("Highest steps in a month", "📆", best_month, " steps")
+    show_hof("Best 10K consistency", "🏅", days_10k, " %")
+    show_hof("Longest 10K streak", "⚡", streaks_10k, " days")
+    show_hof("Longest 5K streak", "💪", streaks_5k, " days")
+
 
 if page == "🏠 Monthly Results":
     
