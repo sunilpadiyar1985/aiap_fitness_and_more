@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
+st.cache_data.clear()
+
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered")
 page = st.sidebar.radio(
     "Navigate",
