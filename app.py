@@ -46,7 +46,7 @@ def load_data():
     df_all["month"] = df_all["date"].dt.to_period("M")
 
     return df_all
-
+df = load_data()
 
 st.title("🏃 Steps League – Monthly Results")
 
