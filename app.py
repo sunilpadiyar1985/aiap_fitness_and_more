@@ -280,6 +280,10 @@ if page == "👤 Player Profile":
     st.subheader("📌 Key stats")
 
     u = user_df.sort_values("date").copy()
+    # ✅ Trim future empty days – keep only up to last active day
+    if (u["steps"] > 0).any():
+        last_active_date = u.loc[u["steps"] > 0, "date"].max()
+        u = u[u["date"] <= last_active_date]
     
     # ---- Basics ----
     total_steps = int(u["steps"].sum())
@@ -354,7 +358,8 @@ if page == "👤 Player Profile":
     c3.metric("5K streak (max)", f"{max_5k_streak} days")
     
     st.caption(
-        f"🔥 Current streaks — 10K: {current_10k_streak} days | 5K: {current_5k_streak} days"
+        f"🔥 Current streaks (as of {last_active_date.strftime('%d %b %Y')}) — "
+        f"10K: {current_10k_streak} days | 5K: {current_5k_streak} days"
     )
     
     st.divider()
