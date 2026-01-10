@@ -8,65 +8,64 @@ page = st.sidebar.radio(
     "Navigate",
     ["🏠 Monthly Results", "👤 Player Profile"]
 )
+# ----------------------------
+# CONFIG
+# ----------------------------
+SHEET_ID = "1DfUJd33T-12UVOavd6SqCfkcNl8_4sVxcqqXHtBeWpw"
 
+# ----------------------------
+# LOAD DATA (MULTI YEAR, SAFE)
+# ----------------------------
+@st.cache_data
+def load_data():
+
+    YEAR_SHEETS = {
+        "2024": "1074409226",
+        "2025": "0",
+        "2026": "541668566"
+    }
+
+    all_data = []
+
+    for year, gid in YEAR_SHEETS.items():
+        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={gid}"
+
+        try:
+            df = pd.read_csv(url)
+
+            if df.empty:
+                continue
+
+            df.columns = df.columns.str.strip()
+            user_col = df.columns[0]
+
+            df_long = df.melt(
+                id_vars=[user_col],
+                var_name="date",
+                value_name="steps"
+            )
+
+            df_long = df_long.rename(columns={user_col: "User"})
+            df_long["date"] = pd.to_datetime(df_long["date"], format="%d-%b-%y", errors="coerce")
+            df_long["steps"] = pd.to_numeric(df_long["steps"], errors="coerce").fillna(0)
+            df_long = df_long.dropna(subset=["date"])
+
+            if not df_long.empty:
+                all_data.append(df_long)
+
+        except:
+            continue
+
+    if not all_data:
+        return pd.DataFrame(columns=["User", "date", "steps", "month"])
+
+    df_all = pd.concat(all_data, ignore_index=True)
+    df_all["month"] = df_all["date"].dt.to_period("M")
+
+    return df_all
 df = load_data()
 
 if page == "🏠 Monthly Results":
-    # ----------------------------
-    # CONFIG
-    # ----------------------------
-    SHEET_ID = "1DfUJd33T-12UVOavd6SqCfkcNl8_4sVxcqqXHtBeWpw"
-    
-    # ----------------------------
-    # LOAD DATA (MULTI YEAR, SAFE)
-    # ----------------------------
-    @st.cache_data
-    def load_data():
-    
-        YEAR_SHEETS = {
-            "2024": "1074409226",
-            "2025": "0",
-            "2026": "541668566"
-        }
-    
-        all_data = []
-    
-        for year, gid in YEAR_SHEETS.items():
-            url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={gid}"
-    
-            try:
-                df = pd.read_csv(url)
-    
-                if df.empty:
-                    continue
-    
-                df.columns = df.columns.str.strip()
-                user_col = df.columns[0]
-    
-                df_long = df.melt(
-                    id_vars=[user_col],
-                    var_name="date",
-                    value_name="steps"
-                )
-    
-                df_long = df_long.rename(columns={user_col: "User"})
-                df_long["date"] = pd.to_datetime(df_long["date"], format="%d-%b-%y", errors="coerce")
-                df_long["steps"] = pd.to_numeric(df_long["steps"], errors="coerce").fillna(0)
-                df_long = df_long.dropna(subset=["date"])
-    
-                if not df_long.empty:
-                    all_data.append(df_long)
-    
-            except:
-                continue
-    
-        if not all_data:
-            return pd.DataFrame(columns=["User", "date", "steps", "month"])
-    
-        df_all = pd.concat(all_data, ignore_index=True)
-        df_all["month"] = df_all["date"].dt.to_period("M")
-    
-        return df_all
     
     st.title("🏃 Steps League – Monthly Results")
     
