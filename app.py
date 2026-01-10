@@ -398,13 +398,6 @@ if page == "🏠 Monthly Results":
     month_lh = league_history[
     league_history["Month"].dt.to_period("M") == selected_month
     ]
-
-    st.subheader("🧪 League month preview")
-
-    st.dataframe(
-        month_lh[["User","League","points","Rank","Champion","Promoted","Relegated"]],
-        use_container_width=True
-    )
     
     month_df = df[df["month"] == selected_month]
     
@@ -480,13 +473,6 @@ if page == "🏠 Monthly Results":
     # ----------------------------
     st.divider()
     st.markdown("##### 🎖️ This month's highlights")
-
-    st.subheader("🧪 League month preview")
-
-    st.dataframe(
-        month_lh[["User","League","points","Rank","Champion","Promoted","Relegated"]],
-        use_container_width=True
-    )
     
     daily = month_df.copy()
     daily["day"] = daily["date"].dt.day
