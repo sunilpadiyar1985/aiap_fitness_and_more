@@ -6,7 +6,7 @@ import numpy as np
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered")
 page = st.sidebar.radio(
     "Navigate",
-    ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile"]
+    ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History"]
 )
 # ----------------------------
 # CONFIG
@@ -891,5 +891,153 @@ if page == "👤 Player Profile":
     })
 
     st.dataframe(monthly_stats, use_container_width=True, hide_index=True)
+
+# =========================================================
+# 📜 LEAGUE HISTORY PAGE
+# =========================================================
+if page == "📜 League History":
+
+    st.markdown("## 📜 League History")
+    st.caption("Season-by-season league archive")
+
+    lh = league_history.copy()
+    lh["Month"] = pd.to_datetime(lh["Month"])
+
+    # Sort latest first
+    months = sorted(lh["Month"].unique(), reverse=True)
+
+    if not months:
+        st.info("No league history available yet.")
+        st.stop()
+
+    # Month selector
+    selected_month = st.selectbox(
+        "Select month",
+        months,
+        format_func=lambda x: x.strftime("%B %Y")
+    )
+
+    month_lh = lh[lh["Month"] == selected_month]
+
+    st.divider()
+
+    st.markdown(f"### 🗓️ {selected_month.strftime('%B %Y')}")
+
+    # ----------------------------
+    # CHAMPIONS
+    # ----------------------------
+    champs = month_lh[month_lh["Champion"] == True]
+
+    if not champs.empty:
+        c1, c2 = st.columns(2)
+
+        prem_champ = champs[champs["League"] == "Premier"]
+        champ_champ = champs[champs["League"] == "Championship"]
+
+        with c1:
+            if not prem_champ.empty:
+                r = prem_champ.iloc[0]
+                st.success(f"👑 **Premier Champion:** {r['User']} — {int(r['points_display'])} pts")
+
+        with c2:
+            if not champ_champ.empty:
+                r = champ_champ.iloc[0]
+                st.success(f"🏆 **Championship Champion:** {r['User']} — {int(r['points_display'])} pts")
+
+    # ----------------------------
+    # PROMOTION / RELEGATION BANNER
+    # ----------------------------
+    promoted = month_lh[month_lh["Promoted"] == True]["User"].tolist()
+    relegated = month_lh[month_lh["Relegated"] == True]["User"].tolist()
+
+    if promoted or relegated:
+        st.markdown("#### 🔁 League movement")
+
+        p1, p2 = st.columns(2)
+
+        with p1:
+            if promoted:
+                st.info("⬆ **Promoted:** " + ", ".join(promoted))
+
+        with p2:
+            if relegated:
+                st.warning("⬇ **Relegated:** " + ", ".join(relegated))
+
+    st.divider()
+
+    # ----------------------------
+    # PREMIER LEAGUE TABLE
+    # ----------------------------
+    st.markdown("### 🏟️ Premier League")
+
+    premier = (
+        month_lh[month_lh["League"] == "Premier"]
+        .sort_values("Rank")
+    )
+
+    if premier.empty:
+        st.info("No Premier League this month.")
+    else:
+        st.dataframe(
+            premier[["Rank","User","points_display","Champion","Promoted","Relegated"]]
+            .rename(columns={
+                "points_display": "Points",
+                "Champion": "🏆",
+                "Promoted": "⬆",
+                "Relegated": "⬇"
+            }),
+            use_container_width=True,
+            hide_index=True
+        )
+
+    # ----------------------------
+    # CHAMPIONSHIP TABLE
+    # ----------------------------
+    st.markdown("### 🥈 Championship")
+
+    champ = (
+        month_lh[month_lh["League"] == "Championship"]
+        .sort_values("Rank")
+    )
+
+    if champ.empty:
+        st.info("No Championship this month.")
+    else:
+        st.dataframe(
+            champ[["Rank","User","points_display","Champion","Promoted","Relegated"]]
+            .rename(columns={
+                "points_display": "Points",
+                "Champion": "🏆",
+                "Promoted": "⬆",
+                "Relegated": "⬇"
+            }),
+            use_container_width=True,
+            hide_index=True
+        )
+
+    # ----------------------------
+    # QUICK STORY STRIP
+    # ----------------------------
+    st.divider()
+    st.markdown("#### 🧾 Season story")
+
+    story = []
+
+    if not champs.empty:
+        for _, r in champs.iterrows():
+            title = "Premier" if r["League"] == "Premier" else "Championship"
+            story.append(f"🏆 {r['User']} won the {title} League")
+
+    if promoted:
+        story.append("⬆ Promotions: " + ", ".join(promoted))
+
+    if relegated:
+        story.append("⬇ Relegations: " + ", ".join(relegated))
+
+    if story:
+        for s in story:
+            st.success(s)
+    else:
+        st.write("A calm month in the league 😄")
 
 
