@@ -128,6 +128,9 @@ def load_data():
 
     return df_all
 
+def mark_inactive(name):
+    return name if name in active_users_now else f"{name}*"
+
 @st.cache_data
 def load_roster():
     SHEET_ID = "1DfUJd33T-12UVOavd6SqCfkcNl8_4sVxcqqXHtBeWpw"
@@ -141,6 +144,16 @@ def load_roster():
     r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce")
 
     return r
+
+today = pd.Timestamp.today().normalize()
+
+active_users_now = set(
+    roster_df[
+        (roster_df["Active from"] <= today) &
+        ((roster_df["Active till"].isna()) | (roster_df["Active till"] >= today))
+    ]["User"]
+)
+
 
 #-------------------
 #League Engine
@@ -371,7 +384,7 @@ if page == "🏆 Hall of Fame":
 
         items = []
         for name, value in top3.items():
-            items.append((name, formatter(value)))
+            items.append((mark_inactive(name), formatter(value)))
 
         while len(items) < 3:
             items.append(("", ""))
@@ -983,13 +996,15 @@ if page == "📜 League History":
         title_counts = L["User"].value_counts()
     
         # --- Longest streaks ---
+        latest_month = champs["Month"].max()
         streaks = []
-    
-        for user, g in L.groupby("User"):
+        
+        for user, g in champs.groupby("User"):
             g = g.sort_values("Month")
             current = longest = 1
             prev = None
-    
+            active_streak = False
+        
             for m in g["Month"]:
                 if prev is not None and (m.to_period("M") - prev.to_period("M")) == 1:
                     current += 1
@@ -997,11 +1012,16 @@ if page == "📜 League History":
                 else:
                     current = 1
                 prev = m
+        
+            # if user's latest title is in latest league month → streak is active
+            if prev.to_period("M") == latest_month.to_period("M"):
+                active_streak = True
+        
+            streaks.append((user, longest, active_streak))
+
     
-            streaks.append((user, longest))
-    
-        streak_df = pd.DataFrame(streaks, columns=["User","Streak"]) \
-                       .sort_values("Streak", ascending=False)
+        streak_df = pd.DataFrame(streaks, columns=["User","Streak","Active"]) \
+              .sort_values("Streak", ascending=False)
     
         # --- Runner ups ---
         runners = lh[(lh["League"] == league) & (lh["Rank"] == 2)]["User"].value_counts()
@@ -1046,6 +1066,8 @@ if page == "📜 League History":
     st.markdown("#### 🏟️ Hall of Champions")
 
     b1, b2, b3, b4, b5 = st.columns(5)
+    top = streak_df.iloc[0]
+    star = "*" if top["Active"] else ""
 
     with b1:
         if not prem_titles.empty:
@@ -1053,7 +1075,8 @@ if page == "📜 League History":
 
     with b2:
         if not prem_streaks.empty:
-            hall_card("🔥 Longest Premier streak", prem_streaks.iloc[0]["User"], f"↑ {int(prem_streaks.iloc[0]['Streak'])} months")
+            hall_card("🔥 Longest streak", top["User"], f"{int(top['Streak'])} months{star}")
+            st.caption("* Active streak")
     
     with b3:
         if not prem_no_title.empty:
@@ -1090,7 +1113,7 @@ if page == "📜 League History":
                     margin-bottom:10px;
                     border-left:6px solid #f5c542;
                 ">
-                    👑 <b>{d['User']}</b> — {d['Titles']} Premier titles | best streak {d['Streak']} months
+                    👑 <b>{mark_inactive(d['User'])}</b> — {d['Titles']} Premier titles | best streak {d['Streak']} months
                 </div>
                 """, unsafe_allow_html=True)
     
@@ -1105,7 +1128,7 @@ if page == "📜 League History":
                     margin-bottom:10px;
                     border-left:6px solid #4a90e2;
                 ">
-                    🏆 <b>{d['User']}</b> — {d['Titles']} Championship titles | best streak {d['Streak']} months
+                    🏆 <b>{mark_inactive(d['User'])}</b> — {d['Titles']} Championship titles | best streak {d['Streak']} months
                 </div>
                 """, unsafe_allow_html=True)
     
