@@ -432,7 +432,7 @@ if page == "🏠 Monthly Results":
     )
     
     real_months = month_totals[month_totals["steps"] > 0]["date"].sort_values().unique()
-    available_months = real_months.tail(6).tolist()
+    available_months = list(real_months[-6:])
     
     if not available_months:
         st.warning("No data available yet.")
