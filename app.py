@@ -1000,6 +1000,13 @@ if page == "📜 League History":
     # Combined dynasties list for display
     dynasties = engines["Premier"]["dynasties"] + engines["Championship"]["dynasties"]
 
+    prem_titles     = engines["Premier"]["titles"]
+    prem_streaks    = engines["Premier"]["streaks"]
+    prem_no_title   = engines["Premier"]["no_title"]
+    
+    champ_titles    = engines["Championship"]["titles"]
+    champ_streaks   = engines["Championship"]["streaks"]
+    champ_no_title  = engines["Championship"]["no_title"]
 
     # =====================================================
     # 🏟️ HALL BANNERS
@@ -1009,12 +1016,12 @@ if page == "📜 League History":
     b1, b2, b3, b4, b5 = st.columns(5)
 
     with b1:
-        if not title_counts.empty:
-            hall_card("🏅 Most titles", title_counts.index[0], f"↑ {int(title_counts.iloc[0])}")
-    
+    if not prem_titles.empty:
+        hall_card("🏅 Most Premier titles", prem_titles.index[0], f"↑ {int(prem_titles.iloc[0])}")
+
     with b2:
-        if not streak_df.empty:
-            hall_card("🔥 Longest streak", streak_df.iloc[0]["User"], f"↑ {int(streak_df.iloc[0]['Streak'])} months")
+        if not prem_streaks.empty:
+            hall_card("🔥 Longest Premier streak", prem_streaks.iloc[0]["User"], f"↑ {int(prem_streaks.iloc[0]['Streak'])} months")
     
     with b3:
         if not prem_no_title.empty:
@@ -1026,7 +1033,7 @@ if page == "📜 League History":
     
     with b5:
         if dynasties:
-            hall_card("👑 Dynasty", dynasties[0], "Legend status")
+            hall_card("👑 Dynasty", dynasties[0]["User"], "Legend status")
 
     st.divider()
 
