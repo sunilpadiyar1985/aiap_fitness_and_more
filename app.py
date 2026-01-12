@@ -129,28 +129,28 @@ def load_data():
     return df_all
 
 @st.cache_data
+@st.cache_data
 def load_roster():
     SHEET_ID = "1DfUJd33T-12UVOavd6SqCfkcNl8_4sVxcqqXHtBeWpw"
     ROSTER_GID = "175789419"
 
     url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={ROSTER_GID}"
-
-    r = pd.read_csv(url, dtype=str)   # 👈 force everything as text
+    r = pd.read_csv(url, dtype=str)
 
     r.columns = r.columns.str.strip()
 
-    # Clean whitespace
-    r["Active from"] = r["Active from"].astype(str).str.strip()
-    r["Active till"] = r["Active till"].astype(str).str.strip()
+    # 🔥 HARD CLEAN (kills hidden unicode, spaces, junk)
+    for col in ["Active from", "Active till"]:
+        r[col] = (
+            r[col]
+            .astype(str)
+            .str.replace("\u00A0", " ", regex=False)   # non-breaking space
+            .str.replace("\u200B", "", regex=False)    # zero-width space
+            .str.strip()
+            .replace({"": None, "None": None, "nan": None})
+        )
 
-    # Convert "empty-like" values to NA
-    r["Active till"] = r["Active till"].replace(
-        ["", "None", "none", "nan", "NaN"], pd.NA
-    )
-
-    # Parse dates
-    r["Active from"] = pd.to_datetime(r["Active from"], errors="coerce", dayfirst=True)
-    r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce", dayfirst=True)
+        r[col] = pd.to_datetime(r[col], errors="coerce", dayfirst=True)
 
     return r
 
