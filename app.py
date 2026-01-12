@@ -681,9 +681,6 @@ if page == "🏠 Monthly Results":
     {top_5k.index[1]} — {int(top_5k.iloc[1])} days  
     {top_5k.index[2]} — {int(top_5k.iloc[2])} days""")
     
-    st.divider()
-    st.markdown("###### 🏟️ League Results")
-
     premier = month_lh[month_lh["League"] == "Premier"].sort_values("Rank")
     championship = month_lh[month_lh["League"] == "Championship"].sort_values("Rank")
     
