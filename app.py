@@ -296,6 +296,21 @@ df = load_data()
 roster_df = load_roster()
 league_history = build_league_history(df, roster_df)
 
+# ----------------------------
+# ACTIVE USERS ENGINE
+# ----------------------------
+today = pd.Timestamp.today().normalize()
+
+active_users_now = set(
+    roster_df[
+        (roster_df["Active from"] <= today) &
+        ((roster_df["Active till"].isna()) | (roster_df["Active till"] >= today))
+    ]["User"]
+)
+
+def mark_inactive(name):
+    return name if name in active_users_now else f"{name}*"
+
 
 ###data load ends###
 
