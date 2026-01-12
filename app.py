@@ -128,9 +128,6 @@ def load_data():
 
     return df_all
 
-def mark_inactive(name):
-    return name if name in active_users_now else f"{name}*"
-
 @st.cache_data
 def load_roster():
     SHEET_ID = "1DfUJd33T-12UVOavd6SqCfkcNl8_4sVxcqqXHtBeWpw"
@@ -144,15 +141,6 @@ def load_roster():
     r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce")
 
     return r
-
-today = pd.Timestamp.today().normalize()
-
-active_users_now = set(
-    roster_df[
-        (roster_df["Active from"] <= today) &
-        ((roster_df["Active till"].isna()) | (roster_df["Active till"] >= today))
-    ]["User"]
-)
 
 
 #-------------------
