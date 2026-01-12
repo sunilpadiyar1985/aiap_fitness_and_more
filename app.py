@@ -237,7 +237,7 @@ league_history = build_league_history(df, roster_df)
 # =========================================================
 if page == "🏆 Hall of Fame":
 
-    st.markdown("###### 🏆 Hall of Fame — All Time Records")
+    st.markdown("### 🏆 Hall of Fame — All Time Records")
     st.caption("Since the inception of the Steps League")
 
     # -------------------------
@@ -420,7 +420,7 @@ if page == "🏆 Hall of Fame":
 
 if page == "🏠 Monthly Results":
     
-    st.markdown("###### 🏃 Steps League – Monthly Results")
+    st.markdown("### 🏃 Steps League – Monthly Results")
     
     # ----------------------------
     # MONTH SELECTOR (ONLY REAL MONTHS, LAST 6)
@@ -660,7 +660,7 @@ if page == "🏠 Monthly Results":
 # =========================================================
 if page == "👤 Player Profile":
 
-    st.markdown("###### 👤 Player Profile")
+    st.markdown("### 👤 Player Profile")
 
     users = sorted(df["User"].unique())
     selected_user = st.selectbox("Select player", users)
@@ -862,7 +862,7 @@ if page == "👤 Player Profile":
 # =========================================================
 if page == "📜 League History":
 
-    st.markdown("## 📜 League History")
+    st.markdown("### 📜 League History")
     st.caption("The official record book of the Steps League")
 
     lh = league_history.copy()
@@ -918,7 +918,7 @@ if page == "📜 League History":
     # =====================================================
     # 🏟️ HALL BANNERS
     # =====================================================
-    st.markdown("### 🏟️ Hall of Champions")
+    st.markdown("#### 🏟️ Hall of Champions")
 
     b1, b2, b3, b4 = st.columns(4)
 
@@ -940,7 +940,7 @@ if page == "📜 League History":
     # 👑 DYNASTY CALLOUTS
     # =====================================================
     if dynasties:
-        st.markdown("### 👑 Dynasties of the League")
+        st.markdown("#### 👑 Dynasties of the League")
         for d in dynasties:
             t = int(title_counts.get(d, 0))
             s = int(streak_df[streak_df["User"] == d]["Streak"].max())
@@ -979,12 +979,12 @@ if page == "📜 League History":
     prem_hist = history_df[history_df["League"] == "Premier"].drop(columns=["League"]).head(12)
     champ_hist = history_df[history_df["League"] == "Championship"].drop(columns=["League"]).head(12)
 
-    st.markdown("### 🥇 Premier League — Last 12 months")
+    st.markdown("#### 🥇 Premier League — Last 12 months")
     st.dataframe(prem_hist, use_container_width=True, hide_index=True, height=460)
 
     st.divider()
 
-    st.markdown("### 🥈 Championship — Last 12 months")
+    st.markdown("#### 🥈 Championship — Last 12 months")
     st.dataframe(champ_hist, use_container_width=True, hide_index=True, height=460)
 
     st.caption("🏆 Only winners and runner-ups are shown here. Full tables are in Monthly Results.")
@@ -997,7 +997,7 @@ if page == "📜 League History":
 # =========================================================
 if page == "ℹ️ Readme: Our Dashboard":
 
-    st.markdown("###### ℹ️ About the Steps League")
+    st.markdown("### ℹ️ About the Steps League")
     st.caption("What this dashboard is, and how the league works")
 
     st.divider()
