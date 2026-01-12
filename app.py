@@ -296,8 +296,8 @@ active_users_now = set(
     ]["User"]
 )
 
-def mark_inactive(name):
-    return name if name in active_users_now else f"{name}*"
+def name_with_status(name):
+    return name if name in active_users_now else f"{name} 💤"
 
 
 ###data load ends###
@@ -324,7 +324,6 @@ if page == "🏆 Hall of Fame":
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-
     d = df.copy().sort_values("date")
 
     # Trim future empty days
@@ -345,17 +344,12 @@ if page == "🏆 Hall of Fame":
     best_month = d.groupby(["User","month_p"])["steps"].sum().groupby("User").max()
 
     tenk_pct = (d["steps"] >= 10000).groupby(d["User"]).mean() * 100
-    # Number of 10K days (all-time)
     tenk_days = (d["steps"] >= 10000).groupby(d["User"]).sum()
-    
-    # Number of 5K days (all-time)
     fivek_days = (d["steps"] >= 5000).groupby(d["User"]).sum()
-    
-    # 5K completion percentage
     fivek_pct = (d["steps"] >= 5000).groupby(d["User"]).mean() * 100
 
     # -------------------------
-    # Streaks (max)
+    # STREAK ENGINES
     # -------------------------
     def max_streak(series):
         max_s = cur = 0
@@ -367,16 +361,53 @@ if page == "🏆 Hall of Fame":
                 cur = 0
         return max_s
 
+    def current_streak(series):
+        cur = 0
+        for v in reversed(series):
+            if v:
+                cur += 1
+            else:
+                break
+        return cur
+
     streak_10k = {}
     streak_5k = {}
+    current_10k = {}
+    current_5k = {}
 
     for user, u in d.groupby("User"):
         u = u.sort_values("date")
-        streak_10k[user] = max_streak((u["steps"] >= 10000).tolist())
-        streak_5k[user] = max_streak((u["steps"] >= 5000).tolist())
+
+        is10 = (u["steps"] >= 10000).tolist()
+        is5 = (u["steps"] >= 5000).tolist()
+
+        streak_10k[user] = max_streak(is10)
+        streak_5k[user] = max_streak(is5)
+
+        current_10k[user] = current_streak(is10)
+        current_5k[user] = current_streak(is5)
 
     streak_10k = pd.Series(streak_10k)
     streak_5k = pd.Series(streak_5k)
+
+    # -------------------------
+    # STREAK DISPLAY SERIES (🔥 if active)
+    # -------------------------
+    def streak_name(name, is_active):
+        base = name_with_status(name)
+        return f"{base} 🔥" if is_active else base
+
+    streak_10k_display = streak_10k.copy()
+    streak_10k_display.index = [
+        streak_name(u, current_10k.get(u, 0) > 0)
+        for u in streak_10k.index
+    ]
+
+    streak_5k_display = streak_5k.copy()
+    streak_5k_display.index = [
+        streak_name(u, current_5k.get(u, 0) > 0)
+        for u in streak_5k.index
+    ]
 
     # -------------------------
     # RECORD ROW UI
@@ -387,56 +418,24 @@ if page == "🏆 Hall of Fame":
 
         items = []
         for name, value in top3.items():
-            items.append((mark_inactive(name), formatter(value)))
+            items.append((name_with_status(name) if name in active_users_now or "🔥" not in name else name, formatter(value)))
 
         while len(items) < 3:
             items.append(("", ""))
 
         c0, c1, c2, c3 = st.columns([2.5, 1.7, 1.6, 1.6])
-        
 
         with c0:
-            st.markdown(
-                f"""
-                <div style="font-size:20px; font-weight:600; line-height:1.3;">
-                    {emoji} {title}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='font-size:20px;font-weight:600'>{emoji} {title}</div>", unsafe_allow_html=True)
 
         with c1:
-            st.markdown(
-                f"""
-                <div style="background:#FFD70022;padding:14px;border-radius:14px;text-align:center">
-                <div style="font-size:26px;font-weight:700"> {items[0][1]}</div>
-                <div style="font-size:14px;color:#444">{items[0][0]}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='background:#FFD70022;padding:14px;border-radius:14px;text-align:center'><div style='font-size:26px;font-weight:700'>{items[0][1]}</div><div style='font-size:14px'>{items[0][0]}</div></div>", unsafe_allow_html=True)
 
         with c2:
-            st.markdown(
-                f"""
-                <div style="background:#C0C0C022;padding:14px;border-radius:14px;text-align:center">
-                <div style="font-size:22px;font-weight:600"> {items[1][1]}</div>
-                <div style="font-size:13px;color:#555">{items[1][0]}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='background:#C0C0C022;padding:14px;border-radius:14px;text-align:center'><div style='font-size:22px;font-weight:600'>{items[1][1]}</div><div style='font-size:13px'>{items[1][0]}</div></div>", unsafe_allow_html=True)
 
         with c3:
-            st.markdown(
-                f"""
-                <div style="background:#CD7F3222;padding:14px;border-radius:14px;text-align:center">
-                <div style="font-size:20px;font-weight:500"> {items[2][1]}</div>
-                <div style="font-size:12px;color:#666">{items[2][0]}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='background:#CD7F3222;padding:14px;border-radius:14px;text-align:center'><div style='font-size:20px;font-weight:500'>{items[2][1]}</div><div style='font-size:12px'>{items[2][0]}</div></div>", unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -452,33 +451,23 @@ if page == "🏆 Hall of Fame":
     record_row("Highest 5K days (all-time)", "🥈", fivek_days, lambda x: f"{int(x)} days")
     record_row("Highest 10K %completion", "🏅", tenk_pct, lambda x: f"{x:.2f}%")
     record_row("Highest 5K %completion", "📈", fivek_pct, lambda x: f"{x:.2f}%")
-    record_row("Longest 10K streak", "⚡", streak_10k, lambda x: f"{int(x)} days")
-    record_row("Longest 5K streak", "💪", streak_5k, lambda x: f"{int(x)} days")
+    record_row("Longest 10K streak", "⚡", streak_10k_display, lambda x: f"{int(x)} days")
+    record_row("Longest 5K streak", "💪", streak_5k_display, lambda x: f"{int(x)} days")
 
     st.divider()
     st.markdown("###### 🏟️ League Hall of Fame")
     st.caption("All-time league dominance & achievements")
-    
+
     lh = league_history.copy()
-    
     lh["Month"] = pd.to_datetime(lh["Month"])
 
-    # Titles
-    prem_titles = lh[(lh["League"] == "Premier") & (lh["Champion"] == True)]["User"].value_counts()
-    champ_titles = lh[(lh["League"] == "Championship") & (lh["Champion"] == True)]["User"].value_counts()
-    
-    # Runner-up (Rank 2)
+    prem_titles = lh[(lh["League"] == "Premier") & (lh["Champion"])]["User"].value_counts()
+    champ_titles = lh[(lh["League"] == "Championship") & (lh["Champion"])]["User"].value_counts()
     prem_runner_up = lh[(lh["League"] == "Premier") & (lh["Rank"] == 2)]["User"].value_counts()
     champ_runner_up = lh[(lh["League"] == "Championship") & (lh["Rank"] == 2)]["User"].value_counts()
-    
-    # Premier presence
     prem_months = lh[lh["League"] == "Premier"]["User"].value_counts()
-    
-    # Promotions / relegations
-    promotions = lh[lh["Promoted"] == True]["User"].value_counts()
-    relegations = lh[lh["Relegated"] == True]["User"].value_counts()
-    
-    # Best points season
+    promotions = lh[lh["Promoted"]]["User"].value_counts()
+    relegations = lh[lh["Relegated"]]["User"].value_counts()
     best_season = lh.sort_values("points", ascending=False).groupby("User").first()["points"]
 
     record_row("Most Premier titles", "👑", prem_titles, lambda x: f"{int(x)} titles")
@@ -489,6 +478,7 @@ if page == "🏆 Hall of Fame":
     record_row("Most promotions", "⬆", promotions, lambda x: f"{int(x)} promotions")
     record_row("Most relegations", "⬇", relegations, lambda x: f"{int(x)} relegations")
     record_row("Best single-season performance", "🚀", best_season, lambda x: f"{round(x*100)} pts")
+
 
 
 if page == "🏠 Monthly Results":
@@ -571,7 +561,7 @@ if page == "🏠 Monthly Results":
             f"""
             <div style="background:#F4F6F8;padding:16px;border-radius:16px;text-align:center">
                 <div style="font-size:18px">🥈 Second</div>
-                <div style="font-size:20px;font-weight:600;margin-top:6px">{top3.loc[1,'User']}</div>
+                <div style="font-size:20px;font-weight:600;margin-top:6px">{name_with_status(top3.loc[1,'User'])}</div>
                 <div style="font-size:15px;color:#555">{int(top3.loc[1,'steps']):,} steps</div>
             </div>
             """,
@@ -584,7 +574,7 @@ if page == "🏠 Monthly Results":
             f"""
             <div style="background:#FFF7D6;padding:20px;border-radius:20px;text-align:center">
                 <div style="font-size:20px">🥇 Winner</div>
-                <div style="font-size:24px;font-weight:700;margin-top:6px">{top3.loc[0,'User']}</div>
+                <div style="font-size:24px;font-weight:700;margin-top:6px">{name_with_status(top3.loc[0,'User'])}</div>
                 <div style="font-size:17px;color:#444">{int(top3.loc[0,'steps']):,} steps</div>
                 <div style="font-size:13px;color:#777;margin-top:4px">👑 Champion of the month</div>
             </div>
@@ -598,7 +588,7 @@ if page == "🏠 Monthly Results":
             f"""
             <div style="background:#FBF1E6;padding:16px;border-radius:16px;text-align:center">
                 <div style="font-size:18px">🥉 Third</div>
-                <div style="font-size:20px;font-weight:600;margin-top:6px">{top3.loc[2,'User']}</div>
+                <div style="font-size:20px;font-weight:600;margin-top:6px">{name_with_status(top3.loc[2,'User'])}</div>
                 <div style="font-size:15px;color:#555">{int(top3.loc[2,'steps']):,} steps</div>
             </div>
             """,
@@ -657,11 +647,6 @@ if page == "🏠 Monthly Results":
     
     slopes = pivot_active.apply(slope, axis=1).sort_values(ascending=False)
     top_improved = slopes.head(3)
-
-
-    if pivot_active.empty:
-        st.info("No activity recorded yet for this month.")
-        st.stop()
     
     c1, c2 = st.columns(2)
     
@@ -767,7 +752,10 @@ if page == "👤 Player Profile":
     st.markdown("### 👤 Player Profile")
 
     users = sorted(df["User"].unique())
-    selected_user = st.selectbox("Select player", users)
+    display_map = {name_with_status(u): u for u in users}
+    
+    selected_label = st.selectbox("Select player", list(display_map.keys()))
+    selected_user = display_map[selected_label]
 
     user_df = df[df["User"] == selected_user]
 
@@ -813,6 +801,10 @@ if page == "👤 Player Profile":
     days_5k = (u["steps"] >= 5000).sum()
     pct_10k = round((days_10k / days_total) * 100, 2) if days_total else 0
 
+    def streak_name(name, active):
+        base = name_with_status(name)
+        return f"{base} 🔥" if active else base
+    
     def max_streak(series):
         max_s = cur = 0
         for v in series:
@@ -1069,16 +1061,21 @@ if page == "📜 League History":
     st.markdown("#### 🏟️ Hall of Champions")
 
     b1, b2, b3, b4, b5 = st.columns(5)
-    top = streak_df.iloc[0]
-    star = "*" if top["Active"] else ""
+    all_streaks = pd.concat([
+        prem_streaks.assign(League="Premier"),
+        champ_streaks.assign(League="Championship")
+    ])
+    
+    top = all_streaks.sort_values("Streak", ascending=False).iloc[0]
+    star = " 🔥" if top["Active"] else ""
 
     with b1:
         if not prem_titles.empty:
-            hall_card("🏅 Most Premier titles", prem_titles.index[0], f"↑ {int(prem_titles.iloc[0])}")
+            hall_card("🏅 Most Premier titles", name_with_status(prem_titles.index[0]), f"↑ {int(prem_titles.iloc[0])}")
 
     with b2:
         if not prem_streaks.empty:
-            hall_card("🔥 Longest streak", top["User"], f"{int(top['Streak'])} months{star}")
+            hall_card("🔥 Longest streak", name_with_status(top["User"]), f"{int(top['Streak'])} months{star}")
             st.caption("* Active streak")
     
     with b3:
@@ -1116,7 +1113,7 @@ if page == "📜 League History":
                     margin-bottom:10px;
                     border-left:6px solid #f5c542;
                 ">
-                    👑 <b>{mark_inactive(d['User'])}</b> — {d['Titles']} Premier titles | best streak {d['Streak']} months
+                    👑 <b>{name_with_status(d['User'])}</b> — {d['Titles']} Premier titles | best streak {d['Streak']} months
                 </div>
                 """, unsafe_allow_html=True)
     
@@ -1131,7 +1128,7 @@ if page == "📜 League History":
                     margin-bottom:10px;
                     border-left:6px solid #4a90e2;
                 ">
-                    🏆 <b>{mark_inactive(d['User'])}</b> — {d['Titles']} Championship titles | best streak {d['Streak']} months
+                    🏆 <b>{name_with_status(d['User'])}</b> — {d['Titles']} Championship titles | best streak {d['Streak']} months
                 </div>
                 """, unsafe_allow_html=True)
     
@@ -1158,9 +1155,9 @@ if page == "📜 League History":
             records.append({
                 "Month": m.strftime("%b %Y"),
                 "League": league,
-                "Winner": winner["User"],
+                "Winner": name_with_status(winner["User"]),
                 "Winner Points": int(winner["points_display"]),
-                "Runner-up": runner["User"],
+                "Runner-up": name_with_status(runner["User"]),
                 "Runner-up Points": int(runner["points_display"])
             })
 
