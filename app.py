@@ -149,17 +149,6 @@ def load_roster():
 
     return r
 
-st.write("Roster debug")
-st.dataframe(roster_df)
-
-st.write("Inactive according to system:")
-st.write(
-    roster_df[
-        (roster_df["Active till"].notna()) &
-        (roster_df["Active till"] < pd.Timestamp.today().normalize())
-    ][["User", "Active till"]]
-)
-
 #-------------------
 #League Engine
 #-------------------
@@ -300,6 +289,21 @@ def build_league_history(df, roster_df):
 df = load_data()
 roster_df = load_roster()
 league_history = build_league_history(df, roster_df)
+
+# ---------- TEMP DEBUG ----------
+st.subheader("ROSTER DEBUG")
+st.dataframe(roster_df)
+
+today = pd.Timestamp.today().normalize()
+
+st.subheader("SYSTEM-INACTIVE USERS")
+st.dataframe(
+    roster_df[
+        (roster_df["Active till"].notna()) &
+        (roster_df["Active till"] < today)
+    ][["User", "Active till"]]
+)
+# ---------- TEMP DEBUG ----------
 
 # ----------------------------
 # ACTIVE USERS ENGINE
