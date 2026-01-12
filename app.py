@@ -1016,8 +1016,8 @@ if page == "📜 League History":
     b1, b2, b3, b4, b5 = st.columns(5)
 
     with b1:
-    if not prem_titles.empty:
-        hall_card("🏅 Most Premier titles", prem_titles.index[0], f"↑ {int(prem_titles.iloc[0])}")
+        if not prem_titles.empty:
+            hall_card("🏅 Most Premier titles", prem_titles.index[0], f"↑ {int(prem_titles.iloc[0])}")
 
     with b2:
         if not prem_streaks.empty:
