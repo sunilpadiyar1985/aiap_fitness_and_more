@@ -237,7 +237,7 @@ league_history = build_league_history(df, roster_df)
 # =========================================================
 if page == "🏆 Hall of Fame":
 
-    st.markdown("## 🏆 Hall of Fame — All Time Records")
+    st.markdown("###### 🏆 Hall of Fame — All Time Records")
     st.caption("Since the inception of the Steps League")
 
     # -------------------------
@@ -386,7 +386,7 @@ if page == "🏆 Hall of Fame":
     record_row("Longest 5K streak", "💪", streak_5k, lambda x: f"{int(x)} days")
 
     st.divider()
-    st.markdown("#### 🏟️ League Hall of Fame")
+    st.markdown("###### 🏟️ League Hall of Fame")
     st.caption("All-time league dominance & achievements")
     
     lh = league_history.copy()
@@ -420,7 +420,7 @@ if page == "🏆 Hall of Fame":
 
 if page == "🏠 Monthly Results":
     
-    st.markdown("## 🏃 Steps League – Monthly Results")
+    st.markdown("###### 🏃 Steps League – Monthly Results")
     
     # ----------------------------
     # MONTH SELECTOR (ONLY REAL MONTHS, LAST 6)
@@ -473,7 +473,7 @@ if page == "🏠 Monthly Results":
     # ----------------------------
     top3 = monthly_totals.head(3).reset_index(drop=True)
     
-    st.markdown("##### 🏆 This month's podium")
+    st.markdown("###### 🏆 This month's podium")
     p1, p2, p3 = st.columns([1.1, 1.4, 1.1])
     
     # 🥈 SECOND
@@ -520,7 +520,7 @@ if page == "🏠 Monthly Results":
     # MONTHLY HIGHLIGHTS
     # ----------------------------
     st.divider()
-    st.markdown("##### 🎖️ This month's highlights")
+    st.markdown("###### 🎖️ This month's highlights")
     
     daily = month_df.copy()
     daily["day"] = daily["date"].dt.day
@@ -589,13 +589,13 @@ if page == "🏠 Monthly Results":
     {top_5k.index[2]} — {int(top_5k.iloc[2])} days""")
     
     st.divider()
-    st.markdown("#### 🏟️ League Results")
+    st.markdown("###### 🏟️ League Results")
 
     premier = month_lh[month_lh["League"] == "Premier"].sort_values("Rank")
     championship = month_lh[month_lh["League"] == "Championship"].sort_values("Rank")
     
     st.divider()
-    st.markdown("#### 🏟️ League Tables")
+    st.markdown("###### 🏟️ League Tables")
     
     premier = month_lh[month_lh["League"] == "Premier"].sort_values("Rank")
     championship = month_lh[month_lh["League"] == "Championship"].sort_values("Rank")
@@ -603,7 +603,7 @@ if page == "🏠 Monthly Results":
     c1, c2 = st.columns(2)
     
     with c1:
-        st.markdown("##### 🥇 Premier League")
+        st.markdown("###### 🥇 Premier League")
         st.dataframe(
             premier[["Rank","User","points_display","Promoted","Relegated"]]
                 .rename(columns={
@@ -616,7 +616,7 @@ if page == "🏠 Monthly Results":
         )
     
     with c2:
-        st.markdown("##### 🥈 Championship")
+        st.markdown("###### 🥈 Championship")
         st.dataframe(
             championship[["Rank","User","points_display","Promoted","Relegated"]]
                 .rename(columns={
@@ -635,7 +635,7 @@ if page == "🏠 Monthly Results":
     # LEADERBOARD
     # ----------------------------
     st.divider()
-    st.markdown("##### 📊 Monthly leaderboard")
+    st.markdown("###### 📊 Monthly leaderboard")
     
     fig = px.bar(
         monthly_totals,
@@ -660,7 +660,7 @@ if page == "🏠 Monthly Results":
 # =========================================================
 if page == "👤 Player Profile":
 
-    st.markdown("## 👤 Player Profile")
+    st.markdown("###### 👤 Player Profile")
 
     users = sorted(df["User"].unique())
     selected_user = st.selectbox("Select player", users)
@@ -677,7 +677,7 @@ if page == "👤 Player Profile":
     # ----------------------------
     # PLAYER CARD — KEY STATS
     # ----------------------------
-    st.markdown("##### 📌 Key stats")
+    st.markdown("###### 📌 Key stats")
 
     u = user_df.sort_values("date").copy()
 
@@ -759,7 +759,7 @@ if page == "👤 Player Profile":
     # LEAGUE CAREER SNAPSHOT
     # ----------------------------
     st.divider()
-    st.markdown("##### 🧍 League career snapshot")
+    st.markdown("###### 🧍 League career snapshot")
 
     first_month = player_lh["Month"].min().strftime("%b %Y")
     last_month = player_lh["Month"].max().strftime("%b %Y")
@@ -783,7 +783,7 @@ if page == "👤 Player Profile":
     # TROPHY CABINET
     # ----------------------------
     st.divider()
-    st.markdown("##### 🏆 Trophy cabinet")
+    st.markdown("###### 🏆 Trophy cabinet")
 
     prem_titles = player_lh[(player_lh["League"] == "Premier") & (player_lh["Champion"])].shape[0]
     champ_titles = player_lh[(player_lh["League"] == "Championship") & (player_lh["Champion"])].shape[0]
@@ -803,7 +803,7 @@ if page == "👤 Player Profile":
     # LEAGUE JOURNEY TABLE
     # ----------------------------
     st.divider()
-    st.markdown("##### 📜 League journey")
+    st.markdown("###### 📜 League journey")
 
     journey = player_lh[["Month","League","Rank","points_display","Champion","Promoted","Relegated"]].copy()
     journey["Month"] = journey["Month"].dt.strftime("%b %Y")
@@ -823,7 +823,7 @@ if page == "👤 Player Profile":
     # MONTH BY MONTH BREAKDOWN
     # ----------------------------
     st.divider()
-    st.markdown("##### 📅 Month by month breakdown")
+    st.markdown("###### 📅 Month by month breakdown")
 
     u2 = user_df.copy()
     u2["month"] = u2["date"].dt.to_period("M")
@@ -862,7 +862,7 @@ if page == "👤 Player Profile":
 # =========================================================
 if page == "📜 League History":
 
-    st.markdown("## 📜 League History")
+    st.markdown("###### 📜 League History")
     st.caption("Season-by-season champions archive")
 
     lh = league_history.copy()
@@ -913,7 +913,7 @@ if page == "📜 League History":
     c1, c2 = st.columns(2)
 
     with c1:
-        st.markdown("### 🥇 Premier League History")
+        st.markdown("###### 🥇 Premier League History")
         st.dataframe(
             prem_hist,
             use_container_width=True,
@@ -921,7 +921,7 @@ if page == "📜 League History":
         )
 
     with c2:
-        st.markdown("### 🥈 Championship History")
+        st.markdown("###### 🥈 Championship History")
         st.dataframe(
             champ_hist,
             use_container_width=True,
@@ -938,12 +938,12 @@ if page == "📜 League History":
 # =========================================================
 if page == "ℹ️ Readme: Our Dashboard":
 
-    st.markdown("## ℹ️ About the Steps League")
+    st.markdown("###### ℹ️ About the Steps League")
     st.caption("What this dashboard is, and how the league works")
 
     st.divider()
 
-    st.markdown("### 🚶 What is this?")
+    st.markdown("###### 🚶 What is this?")
     st.markdown("""
 The **Steps League** is a fun, community-driven fitness league built around one simple idea:
 
@@ -962,7 +962,7 @@ Think of it like **Fantasy Football meets Fitbit** 😄
 
     st.divider()
 
-    st.markdown("### 🏟️ The League System")
+    st.markdown("###### 🏟️ The League System")
     st.markdown("""
 There are two leagues:
 
@@ -984,7 +984,7 @@ Promotions and relegations happen automatically every month.
 
     st.divider()
 
-    st.markdown("### 🧮 How points are calculated")
+    st.markdown("###### 🧮 How points are calculated")
     st.markdown("""
 Monthly league winners are **not decided only by total steps**.
 
@@ -1009,7 +1009,7 @@ This means someone who is steady all month can beat someone who only had a few b
 
     st.divider()
 
-    st.markdown("### 🏆 What the pages show")
+    st.markdown("###### 🏆 What the pages show")
     st.markdown("""
 #### 📅 Monthly Results
 • Step winners  
@@ -1037,7 +1037,7 @@ This means someone who is steady all month can beat someone who only had a few b
 
     st.divider()
 
-    st.markdown("### ❤️ Why this exists")
+    st.markdown("###### ❤️ Why this exists")
     st.markdown("""
 This league exists to:
 
