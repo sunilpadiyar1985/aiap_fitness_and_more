@@ -127,8 +127,7 @@ def load_data():
     df_all["month"] = df_all["date"].dt.to_period("M")
 
     return df_all
-
-@st.cache_data
+    
 @st.cache_data
 def load_roster():
     SHEET_ID = "1DfUJd33T-12UVOavd6SqCfkcNl8_4sVxcqqXHtBeWpw"
@@ -139,20 +138,14 @@ def load_roster():
 
     r.columns = r.columns.str.strip()
 
-    # 🔥 HARD CLEAN (kills hidden unicode, spaces, junk)
-    for col in ["Active from", "Active till"]:
-        r[col] = (
-            r[col]
-            .astype(str)
-            .str.replace("\u00A0", " ", regex=False)   # non-breaking space
-            .str.replace("\u200B", "", regex=False)    # zero-width space
-            .str.strip()
-            .replace({"": None, "None": None, "nan": None})
-        )
+    st.markdown("### 🔍 ROSTER RAW DEBUG")
+    for i, v in enumerate(r["Active till"].astype(str).unique()):
+        st.write(i, repr(v))
 
-        r[col] = pd.to_datetime(r[col], errors="coerce", dayfirst=True)
+    st.stop()   # ⛔ stop app here so we only debug this
 
     return r
+
 
 #-------------------
 #League Engine
