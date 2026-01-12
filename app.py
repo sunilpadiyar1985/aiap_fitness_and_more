@@ -946,8 +946,7 @@ if page == "📜 League History":
     champ_no_title = champ_runnerups[~champ_runnerups.index.isin(
         lh[(lh["League"] == "Championship") & (lh["Champion"])]["User"]
     )]
-    # users who never won a title
-    no_title = runnerups[~runnerups.index.isin(title_counts.index)]
+    
 
     # Dynasty callout (3+ titles or streak >=3)
     dynasties = title_counts[title_counts >= 3].index.tolist()
