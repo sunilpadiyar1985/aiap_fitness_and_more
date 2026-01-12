@@ -858,12 +858,12 @@ if page == "👤 Player Profile":
     st.dataframe(monthly_stats, use_container_width=True, hide_index=True)
 
 # =========================================================
-# 📜 LEAGUE HISTORY — TITLES ARCHIVE
+# 📜 LEAGUE HISTORY — HALL OF CHAMPIONS
 # =========================================================
 if page == "📜 League History":
 
-    st.markdown("###### 📜 League History")
-    st.caption("Season-by-season champions archive")
+    st.markdown("## 📜 League History")
+    st.caption("The official record book of the Steps League")
 
     lh = league_history.copy()
     lh["Month"] = pd.to_datetime(lh["Month"])
@@ -876,9 +876,82 @@ if page == "📜 League History":
         st.info("No league history available yet.")
         st.stop()
 
-    # ----------------------------
-    # Build summary tables
-    # ----------------------------
+    # =====================================================
+    # 🏅 TITLES & STREAK ENGINE
+    # =====================================================
+    champs = lh[lh["Champion"] == True].copy()
+    champs = champs.sort_values("Month")
+
+    # Most titles
+    title_counts = champs.groupby("User").size().sort_values(ascending=False)
+
+    # Longest champion streak
+    streaks = []
+
+    for user, g in champs.groupby("User"):
+        g = g.sort_values("Month")
+        current = longest = 1
+
+        prev = None
+        for m in g["Month"]:
+            if prev and (m.to_period("M") - prev.to_period("M")) == 1:
+                current += 1
+                longest = max(longest, current)
+            else:
+                current = 1
+            prev = m
+
+        streaks.append((user, longest))
+
+    streak_df = pd.DataFrame(streaks, columns=["User","Streak"]).sort_values("Streak", ascending=False)
+
+    # Runner-ups without titles
+    runnerups = lh[lh["Rank"] == 2]["User"].value_counts()
+    no_title = runnerups.copy()
+    for u in title_counts.index:
+        no_title.pop(u, None)
+
+    # Dynasty callout (3+ titles or streak >=3)
+    dynasties = title_counts[title_counts >= 3].index.tolist()
+    dynasties += streak_df[streak_df["Streak"] >= 3]["User"].tolist()
+    dynasties = list(set(dynasties))
+
+    # =====================================================
+    # 🏟️ HALL BANNERS
+    # =====================================================
+    st.markdown("### 🏟️ Hall of Champions")
+
+    b1, b2, b3, b4 = st.columns(4)
+
+    if not title_counts.empty:
+        b1.metric("🏅 Most titles", title_counts.index[0], int(title_counts.iloc[0]))
+
+    if not streak_df.empty:
+        b2.metric("🔥 Longest streak", streak_df.iloc[0]["User"], f"{int(streak_df.iloc[0]['Streak'])} months")
+
+    if not no_title.empty:
+        b3.metric("⚔️ Most runner-ups (no title)", no_title.index[0], int(no_title.iloc[0]))
+
+    if dynasties:
+        b4.metric("👑 Dynasty", dynasties[0], "Legend status")
+
+    st.divider()
+
+    # =====================================================
+    # 👑 DYNASTY CALLOUTS
+    # =====================================================
+    if dynasties:
+        st.markdown("### 👑 Dynasties of the League")
+        for d in dynasties:
+            t = int(title_counts.get(d, 0))
+            s = int(streak_df[streak_df["User"] == d]["Streak"].max())
+            st.success(f"👑 **{d}** — {t} titles | best streak {s} months")
+
+        st.divider()
+
+    # =====================================================
+    # 📊 HISTORY TABLES (LAST 12 MONTHS)
+    # =====================================================
     records = []
 
     for m in months:
@@ -904,32 +977,19 @@ if page == "📜 League History":
 
     history_df = pd.DataFrame(records)
 
-    prem_hist = history_df[history_df["League"] == "Premier"].drop(columns=["League"])
-    champ_hist = history_df[history_df["League"] == "Championship"].drop(columns=["League"])
+    prem_hist = history_df[history_df["League"] == "Premier"].drop(columns=["League"]).head(12)
+    champ_hist = history_df[history_df["League"] == "Championship"].drop(columns=["League"]).head(12)
 
-    # ----------------------------
-    # UI
-    # ----------------------------
-    c1, c2 = st.columns(2)
-
-    with c1:
-        st.markdown("###### 🥇 Premier League History")
-        st.dataframe(
-            prem_hist,
-            use_container_width=True,
-            hide_index=True
-        )
-
-    with c2:
-        st.markdown("###### 🥈 Championship History")
-        st.dataframe(
-            champ_hist,
-            use_container_width=True,
-            hide_index=True
-        )
+    st.markdown("### 🥇 Premier League — Last 12 months")
+    st.dataframe(prem_hist, use_container_width=True, hide_index=True, height=460)
 
     st.divider()
-    st.caption("🏆 Only top 2 of each league are recorded here. Full standings remain available in Monthly Results.")
+
+    st.markdown("### 🥈 Championship — Last 12 months")
+    st.dataframe(champ_hist, use_container_width=True, hide_index=True, height=460)
+
+    st.caption("🏆 Only winners and runner-ups are shown here. Full tables are in Monthly Results.")
+
 
 
 
