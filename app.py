@@ -858,97 +858,78 @@ if page == "👤 Player Profile":
     st.dataframe(monthly_stats, use_container_width=True, hide_index=True)
 
 # =========================================================
-# 📜 LEAGUE HISTORY — FULL ARCHIVE
+# 📜 LEAGUE HISTORY — TITLES ARCHIVE
 # =========================================================
 if page == "📜 League History":
 
     st.markdown("## 📜 League History")
-    st.caption("Complete historical league archive")
+    st.caption("Season-by-season champions archive")
 
     lh = league_history.copy()
     lh["Month"] = pd.to_datetime(lh["Month"])
 
     # Only months with real data
     valid = lh.groupby("Month")["points"].sum()
-    months = sorted(valid[valid > 0].index)
+    months = sorted(valid[valid > 0].index, reverse=True)
 
     if not months:
         st.info("No league history available yet.")
         st.stop()
 
+    # ----------------------------
+    # Build summary tables
+    # ----------------------------
+    records = []
+
+    for m in months:
+        month_df = lh[lh["Month"] == m]
+
+        for league in ["Premier", "Championship"]:
+            league_df = month_df[month_df["League"] == league].sort_values("Rank")
+
+            if len(league_df) < 2:
+                continue
+
+            winner = league_df.iloc[0]
+            runner = league_df.iloc[1]
+
+            records.append({
+                "Month": m.strftime("%b %Y"),
+                "League": league,
+                "Winner": winner["User"],
+                "Winner Points": int(winner["points_display"]),
+                "Runner-up": runner["User"],
+                "Runner-up Points": int(runner["points_display"])
+            })
+
+    history_df = pd.DataFrame(records)
+
+    prem_hist = history_df[history_df["League"] == "Premier"].drop(columns=["League"])
+    champ_hist = history_df[history_df["League"] == "Championship"].drop(columns=["League"])
+
+    # ----------------------------
+    # UI
+    # ----------------------------
+    c1, c2 = st.columns(2)
+
+    with c1:
+        st.markdown("### 🥇 Premier League History")
+        st.dataframe(
+            prem_hist,
+            use_container_width=True,
+            hide_index=True
+        )
+
+    with c2:
+        st.markdown("### 🥈 Championship History")
+        st.dataframe(
+            champ_hist,
+            use_container_width=True,
+            hide_index=True
+        )
+
     st.divider()
-
-    # Loop through all months (latest first)
-    for month in reversed(months):
-
-        month_lh = lh[lh["Month"] == month]
-
-        premier = month_lh[month_lh["League"] == "Premier"].sort_values("Rank")
-        championship = month_lh[month_lh["League"] == "Championship"].sort_values("Rank")
-
-        st.markdown(f"### 🗓️ {month.strftime('%B %Y')}")
-
-        # ----------------------------
-        # Champions row
-        # ----------------------------
-        champs = month_lh[month_lh["Champion"] == True]
-
-        c1, c2 = st.columns(2)
-
-        prem_champ = champs[champs["League"] == "Premier"]
-        champ_champ = champs[champs["League"] == "Championship"]
-
-        with c1:
-            if not prem_champ.empty:
-                r = prem_champ.iloc[0]
-                st.success(f"👑 **Premier Champion:** {r['User']} — {int(r['points_display'])} pts")
-
-        with c2:
-            if not champ_champ.empty:
-                r = champ_champ.iloc[0]
-                st.success(f"🏆 **Championship Champion:** {r['User']} — {int(r['points_display'])} pts")
-
-        # ----------------------------
-        # Tables
-        # ----------------------------
-        t1, t2 = st.columns(2)
-
-        with t1:
-            st.markdown("#### 🥇 Premier League")
-            st.dataframe(
-                premier[["Rank","User","points_display"]]
-                    .rename(columns={"points_display": "Points"}),
-                use_container_width=True,
-                hide_index=True
-            )
-
-        with t2:
-            st.markdown("#### 🥈 Championship")
-            st.dataframe(
-                championship[["Rank","User","points_display"]]
-                    .rename(columns={"points_display": "Points"}),
-                use_container_width=True,
-                hide_index=True
-            )
-
-        # ----------------------------
-        # Movement strip
-        # ----------------------------
-        promoted = month_lh[month_lh["Promoted"] == True]["User"].tolist()
-        relegated = month_lh[month_lh["Relegated"] == True]["User"].tolist()
-
-        if promoted or relegated:
-            m1, m2 = st.columns(2)
-
-            with m1:
-                if promoted:
-                    st.info("⬆ Promoted: " + ", ".join(promoted))
-
-            with m2:
-                if relegated:
-                    st.warning("⬇ Relegated: " + ", ".join(relegated))
-
-        st.divider()
+    st.caption("🏆 Only top 2 of each league are recorded here. Full standings remain available in Monthly Results.")
 
 
 
