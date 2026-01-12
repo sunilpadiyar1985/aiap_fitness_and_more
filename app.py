@@ -474,6 +474,7 @@ if page == "🏆 Hall of Fame":
     record_row("Most relegations", "⬇", relegations, lambda x: f"{int(x)} relegations")
     record_row("Best single-season performance", "🚀", best_season, lambda x: f"{round(x*100)} pts")
 
+
 if page == "🏠 Monthly Results":
     
     st.markdown("### 🏃 Steps League – Monthly Results")
@@ -499,15 +500,34 @@ if page == "🏠 Monthly Results":
         available_months[::-1],
         format_func=lambda x: x.strftime("%B %Y")
     )
+    month_start = selected_month.to_timestamp()
+    month_end = selected_month.to_timestamp("M")
+    
+    active_users = roster_df[
+        (roster_df["Active from"] <= month_end) &
+        ((roster_df["Active till"].isna()) | (roster_df["Active till"] >= month_start))
+    ]["User"].unique().tolist()
+
     month_lh = league_history[
     league_history["Month"].dt.to_period("M") == selected_month
     ]
     
-    month_df = df[df["month"] == selected_month]
+    month_df = df[
+        (df["month"] == selected_month) &
+        (df["User"].isin(active_users))
+    ]
     
     if month_df["steps"].sum() == 0:
         st.info("📭 Data not available yet for this month.\n\nPlease check back later or contact the admin 🙂")
         st.stop()
+    
+    # Total monthly steps per user
+    user_totals = pivot_daily.sum(axis=1)
+    
+    # Only users with some activity
+    active_users = user_totals[user_totals > 0].index
+    
+    pivot_active = pivot_daily.loc[active_users]
     
     # ----------------------------
     # AGGREGATE
@@ -588,16 +608,16 @@ if page == "🏠 Monthly Results":
         aggfunc="sum"
     ).fillna(0)
     
-    std_dev = pivot_daily.std(axis=1).fillna(0).sort_values()
+    std_dev = pivot_active.std(axis=1).fillna(0).sort_values()
     top_consistent = std_dev.head(3)
     
-    avg_steps = pivot_daily.mean(axis=1).fillna(0).sort_values(ascending=False)
+    avg_steps = pivot_active.mean(axis=1).fillna(0).sort_values(ascending=False)
     top_active = avg_steps.head(3)
     
-    days_10k = (pivot_daily >= 10000).sum(axis=1).sort_values(ascending=False)
+    days_10k = (pivot_active >= 10000).sum(axis=1).sort_values(ascending=False)
     top_10k = days_10k.head(3)
     
-    days_5k = (pivot_daily >= 5000).sum(axis=1).sort_values(ascending=False)
+    days_5k = (pivot_active >= 5000).sum(axis=1).sort_values(ascending=False)
     top_5k = days_5k.head(3)
     
     def slope(row):
@@ -607,8 +627,12 @@ if page == "🏠 Monthly Results":
             return 0
         return np.polyfit(x, y, 1)[0]
     
-    slopes = pivot_daily.apply(slope, axis=1).fillna(0).sort_values(ascending=False)
+    slopes = pivot_active.apply(slope, axis=1).fillna(0).sort_values(ascending=False)
     top_improved = slopes.head(3)
+
+    if pivot_active.empty:
+        st.info("No activity recorded yet for this month.")
+        st.stop()
     
     c1, c2 = st.columns(2)
     
@@ -683,8 +707,6 @@ if page == "🏠 Monthly Results":
             use_container_width=True,
             hide_index=True
         )
-
-
 
     
     # ----------------------------
