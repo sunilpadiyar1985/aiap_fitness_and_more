@@ -149,6 +149,16 @@ def load_roster():
 
     return r
 
+st.write("Roster debug")
+st.dataframe(roster_df)
+
+st.write("Inactive according to system:")
+st.write(
+    roster_df[
+        (roster_df["Active till"].notna()) &
+        (roster_df["Active till"] < pd.Timestamp.today().normalize())
+    ][["User", "Active till"]]
+)
 
 #-------------------
 #League Engine
