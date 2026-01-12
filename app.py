@@ -46,7 +46,17 @@ def load_data():
             )
 
             df_long = df_long.rename(columns={user_col: "User"})
+            # First attempt (normal)
             df_long["date"] = pd.to_datetime(df_long["date"], errors="coerce", dayfirst=True)
+            
+            # Second attempt for anything that failed (force format like 1-Dec-2025)
+            mask = df_long["date"].isna()
+            df_long.loc[mask, "date"] = pd.to_datetime(
+                df_long.loc[mask, "date"],
+                format="%d-%b-%Y",
+                errors="coerce"
+            )
+
             df_long["steps"] = pd.to_numeric(df_long["steps"], errors="coerce").fillna(0)
             df_long = df_long.dropna(subset=["date"])
 
