@@ -30,6 +30,34 @@ div[data-testid="metric-container"] {
 </style>
 """, unsafe_allow_html=True)
 
+def hall_card(title, name, sub):
+    st.markdown(f"""
+    <div style="
+        background:#f7f9fc;
+        padding:14px;
+        border-radius:14px;
+        text-align:center;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    ">
+        <div style="font-size:14px; font-weight:500; color:#666;">{title}</div>
+        <div style="font-size:20px; font-weight:600; margin-top:6px; white-space:normal;">
+            {name}
+        </div>
+        <div style="
+            display:inline-block;
+            margin-top:8px;
+            padding:4px 10px;
+            background:#e8f7ee;
+            color:#1b7f4b;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:500;
+        ">
+            {sub}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 page = st.sidebar.radio(
     "Navigate",
     ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History", "ℹ️ Readme: Our Dashboard"]
@@ -960,20 +988,25 @@ if page == "📜 League History":
 
     b1, b2, b3, b4, b5 = st.columns(5)
 
-    if not title_counts.empty:
-        b1.metric("🏅 Most titles", title_counts.index[0], int(title_counts.iloc[0]))
-
-    if not streak_df.empty:
-        b2.metric("🔥 Longest streak", streak_df.iloc[0]["User"], f"{int(streak_df.iloc[0]['Streak'])} months")
-
-    if not prem_no_title.empty:
-        b3.metric("⚔️ Premier runner-ups (no title)", prem_no_title.index[0], int(prem_no_title.iloc[0]))
-
-    if not champ_no_title.empty:
-        b4.metric("⚔️ Championship runner-ups (no title)", champ_no_title.index[0], int(champ_no_title.iloc[0]))
-
-    if dynasties:
-        b5.metric("👑 Dynasty", dynasties[0], "Legend status")
+    with b1:
+        if not title_counts.empty:
+            hall_card("🏅 Most titles", title_counts.index[0], f"↑ {int(title_counts.iloc[0])}")
+    
+    with b2:
+        if not streak_df.empty:
+            hall_card("🔥 Longest streak", streak_df.iloc[0]["User"], f"↑ {int(streak_df.iloc[0]['Streak'])} months")
+    
+    with b3:
+        if not prem_no_title.empty:
+            hall_card("⚔️ Premier runner-ups", prem_no_title.index[0], f"↑ {int(prem_no_title.iloc[0])}")
+    
+    with b4:
+        if not champ_no_title.empty:
+            hall_card("⚔️ Championship runner-ups", champ_no_title.index[0], f"↑ {int(champ_no_title.iloc[0])}")
+    
+    with b5:
+        if dynasties:
+            hall_card("👑 Dynasty", dynasties[0], "Legend status")
 
     st.divider()
 
@@ -1017,8 +1050,8 @@ if page == "📜 League History":
 
     history_df = pd.DataFrame(records)
 
-    prem_hist = history_df[history_df["League"] == "Premier"].drop(columns=["League"]).head(12)
-    champ_hist = history_df[history_df["League"] == "Championship"].drop(columns=["League"]).head(12)
+    prem_hist = history_df[history_df["League"] == "Premier"].drop(columns=["League"])
+    champ_hist = history_df[history_df["League"] == "Championship"].drop(columns=["League"])
 
     st.markdown("#### 🥇 Premier League — Last 12 months")
     st.dataframe(prem_hist, use_container_width=True, hide_index=True, height=460)
