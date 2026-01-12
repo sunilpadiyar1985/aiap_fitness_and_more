@@ -134,18 +134,23 @@ def load_roster():
     ROSTER_GID = "175789419"
 
     url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={ROSTER_GID}"
-    r = pd.read_csv(url)
+
+    r = pd.read_csv(url, dtype=str)   # 👈 force everything as text
 
     r.columns = r.columns.str.strip()
-    r["Active from"] = pd.to_datetime(r["Active from"])
-    r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce", dayfirst=True)
 
-    mask = r["Active till"].isna() & r["Active till"].astype(str).str.strip().ne("")
-    r.loc[mask, "Active till"] = pd.to_datetime(
-        r.loc[mask, "Active till"],
-        format="%d-%b-%Y",
-        errors="coerce"
+    # Clean whitespace
+    r["Active from"] = r["Active from"].astype(str).str.strip()
+    r["Active till"] = r["Active till"].astype(str).str.strip()
+
+    # Convert "empty-like" values to NA
+    r["Active till"] = r["Active till"].replace(
+        ["", "None", "none", "nan", "NaN"], pd.NA
     )
+
+    # Parse dates
+    r["Active from"] = pd.to_datetime(r["Active from"], errors="coerce", dayfirst=True)
+    r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce", dayfirst=True)
 
     return r
 
