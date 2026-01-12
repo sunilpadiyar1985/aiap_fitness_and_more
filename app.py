@@ -968,7 +968,7 @@ if page == "📜 League History":
         b2.metric("🔥 Longest streak", streak_df.iloc[0]["User"], f"{int(streak_df.iloc[0]['Streak'])} months")
 
     if not prem_no_title.empty:
-    b3.metric("⚔️ Premier runner-ups (no title)", prem_no_title.index[0], int(prem_no_title.iloc[0]))
+        b3.metric("⚔️ Premier runner-ups (no title)", prem_no_title.index[0], int(prem_no_title.iloc[0]))
 
     if not champ_no_title.empty:
         b4.metric("⚔️ Championship runner-ups (no title)", champ_no_title.index[0], int(champ_no_title.iloc[0]))
