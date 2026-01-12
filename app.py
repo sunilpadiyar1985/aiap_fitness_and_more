@@ -138,13 +138,27 @@ def load_roster():
 
     r.columns = r.columns.str.strip()
 
-    st.markdown("### 🔍 ROSTER RAW DEBUG")
-    for i, v in enumerate(r["Active till"].astype(str).unique()):
-        st.write(i, repr(v))
+    # 🔧 HARD CLEAN (this is the missing piece)
+    r["Active from"] = (
+        r["Active from"]
+        .astype(str)
+        .str.strip()
+        .replace("nan", None)
+    )
 
-    st.stop()   # ⛔ stop app here so we only debug this
+    r["Active till"] = (
+        r["Active till"]
+        .astype(str)
+        .str.strip()
+        .replace("nan", None)
+    )
+
+    # 🔁 Parse with explicit format + fallback
+    r["Active from"] = pd.to_datetime(r["Active from"], errors="coerce", dayfirst=True)
+    r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce", dayfirst=True)
 
     return r
+
 
 
 #-------------------
@@ -287,21 +301,6 @@ def build_league_history(df, roster_df):
 df = load_data()
 roster_df = load_roster()
 league_history = build_league_history(df, roster_df)
-
-# ---------- TEMP DEBUG ----------
-st.subheader("ROSTER DEBUG")
-st.dataframe(roster_df)
-
-today = pd.Timestamp.today().normalize()
-
-st.subheader("SYSTEM-INACTIVE USERS")
-st.dataframe(
-    roster_df[
-        (roster_df["Active till"].notna()) &
-        (roster_df["Active till"] < today)
-    ][["User", "Active till"]]
-)
-# ---------- TEMP DEBUG ----------
 
 # ----------------------------
 # ACTIVE USERS ENGINE
