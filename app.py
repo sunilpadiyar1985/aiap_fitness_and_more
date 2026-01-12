@@ -4,6 +4,32 @@ import plotly.express as px
 import numpy as np
 
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered")
+
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Poppins', sans-serif;
+}
+
+h1 { font-size: 2.2rem; font-weight: 700; }
+h2 { font-size: 1.7rem; font-weight: 600; }
+h3 { font-size: 1.35rem; font-weight: 600; }
+h4, h5, h6 { font-weight: 500; }
+
+section[data-testid="stSidebar"] {
+    background-color: #fafafa;
+}
+
+div[data-testid="metric-container"] {
+    border-radius: 14px;
+    padding: 12px;
+    background-color: #f7f8fa;
+}
+</style>
+""", unsafe_allow_html=True)
+
 page = st.sidebar.radio(
     "Navigate",
     ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History", "ℹ️ Readme: Our Dashboard"]
@@ -398,7 +424,8 @@ if page == "🏆 Hall of Fame":
     champ_titles = lh[(lh["League"] == "Championship") & (lh["Champion"] == True)]["User"].value_counts()
     
     # Runner-up (Rank 2)
-    runner_up = lh[lh["Rank"] == 2]["User"].value_counts()
+    prem_runner_up = lh[(lh["League"] == "Premier") & (lh["Rank"] == 2)]["User"].value_counts()
+    champ_runner_up = lh[(lh["League"] == "Championship") & (lh["Rank"] == 2)]["User"].value_counts()
     
     # Premier presence
     prem_months = lh[lh["League"] == "Premier"]["User"].value_counts()
@@ -412,7 +439,8 @@ if page == "🏆 Hall of Fame":
 
     record_row("Most Premier titles", "👑", prem_titles, lambda x: f"{int(x)} titles")
     record_row("Most Championship titles", "🏆", champ_titles, lambda x: f"{int(x)} titles")
-    record_row("Most runner-up finishes", "🥈", runner_up, lambda x: f"{int(x)} times")
+    record_row("Most Premier runner-ups", "🥈", prem_runner_up, lambda x: f"{int(x)} times")
+    record_row("Most Championship runner-ups", "🥈", champ_runner_up, lambda x: f"{int(x)} times")
     record_row("Most months in Premier", "🏟️", prem_months, lambda x: f"{int(x)} months")
     record_row("Most promotions", "⬆", promotions, lambda x: f"{int(x)} promotions")
     record_row("Most relegations", "⬇", relegations, lambda x: f"{int(x)} relegations")
@@ -787,17 +815,19 @@ if page == "👤 Player Profile":
 
     prem_titles = player_lh[(player_lh["League"] == "Premier") & (player_lh["Champion"])].shape[0]
     champ_titles = player_lh[(player_lh["League"] == "Championship") & (player_lh["Champion"])].shape[0]
-    runnerups = player_lh[player_lh["Rank"] == 2].shape[0]
+    prem_runnerups = player_lh[(player_lh["League"] == "Premier") & (player_lh["Rank"] == 2)].shape[0]
+    champ_runnerups = player_lh[(player_lh["League"] == "Championship") & (player_lh["Rank"] == 2)].shape[0]
     best_finish = int(player_lh["Rank"].min())
     best_points = int(player_lh["points_display"].max())
 
-    t1, t2, t3, t4, t5 = st.columns(5)
+    t1, t2, t3, t4, t5, t6 = st.columns(6)
 
     t1.metric("👑 Premier titles", prem_titles)
     t2.metric("🏆 Championship titles", champ_titles)
-    t3.metric("🥈 Runner-ups", runnerups)
-    t4.metric("🏅 Best rank", f"#{best_finish}")
-    t5.metric("🚀 Best season", f"{best_points} pts")
+    t3.metric("🥈 Premier runner-ups", prem_runnerups)
+    t4.metric("🥈 Championship runner-ups", champ_runnerups)
+    t5.metric("🏅 Best rank", f"#{best_finish}")
+    t6.metric("🚀 Best season", f"{best_points} pts")
 
     # ----------------------------
     # LEAGUE JOURNEY TABLE
@@ -906,7 +936,16 @@ if page == "📜 League History":
     streak_df = pd.DataFrame(streaks, columns=["User","Streak"]).sort_values("Streak", ascending=False)
 
     # Runner-ups without titles
-    runnerups = lh[lh["Rank"] == 2]["User"].value_counts()
+    prem_runnerups = lh[(lh["League"] == "Premier") & (lh["Rank"] == 2)]["User"].value_counts()
+    champ_runnerups = lh[(lh["League"] == "Championship") & (lh["Rank"] == 2)]["User"].value_counts()
+    
+    prem_no_title = prem_runnerups[~prem_runnerups.index.isin(
+        lh[(lh["League"] == "Premier") & (lh["Champion"])]["User"]
+    )]
+    
+    champ_no_title = champ_runnerups[~champ_runnerups.index.isin(
+        lh[(lh["League"] == "Championship") & (lh["Champion"])]["User"]
+    )]
     # users who never won a title
     no_title = runnerups[~runnerups.index.isin(title_counts.index)]
 
@@ -920,7 +959,7 @@ if page == "📜 League History":
     # =====================================================
     st.markdown("#### 🏟️ Hall of Champions")
 
-    b1, b2, b3, b4 = st.columns(4)
+    b1, b2, b3, b4, b5 = st.columns(5)
 
     if not title_counts.empty:
         b1.metric("🏅 Most titles", title_counts.index[0], int(title_counts.iloc[0]))
@@ -928,11 +967,14 @@ if page == "📜 League History":
     if not streak_df.empty:
         b2.metric("🔥 Longest streak", streak_df.iloc[0]["User"], f"{int(streak_df.iloc[0]['Streak'])} months")
 
-    if not no_title.empty:
-        b3.metric("⚔️ Most runner-ups (no title)", no_title.index[0], int(no_title.iloc[0]))
+    if not prem_no_title.empty:
+    b3.metric("⚔️ Premier runner-ups (no title)", prem_no_title.index[0], int(prem_no_title.iloc[0]))
+
+    if not champ_no_title.empty:
+        b4.metric("⚔️ Championship runner-ups (no title)", champ_no_title.index[0], int(champ_no_title.iloc[0]))
 
     if dynasties:
-        b4.metric("👑 Dynasty", dynasties[0], "Legend status")
+        b5.metric("👑 Dynasty", dynasties[0], "Legend status")
 
     st.divider()
 
