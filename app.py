@@ -138,7 +138,14 @@ def load_roster():
 
     r.columns = r.columns.str.strip()
     r["Active from"] = pd.to_datetime(r["Active from"])
-    r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce")
+    r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce", dayfirst=True)
+
+    mask = r["Active till"].isna() & r["Active till"].astype(str).str.strip().ne("")
+    r.loc[mask, "Active till"] = pd.to_datetime(
+        r.loc[mask, "Active till"],
+        format="%d-%b-%Y",
+        errors="coerce"
+    )
 
     return r
 
