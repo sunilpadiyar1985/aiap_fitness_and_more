@@ -845,7 +845,7 @@ if page == "👤 Player Profile":
     c1, c2, c3 = st.columns(3)
 
     c1.metric("Overall steps", f"{total_steps:,}", "")
-    c1.metric("Your average", f"{avg_steps:,}". "")
+    c1.metric("Your average", f"{avg_steps:,}", "")
     c1.metric("Lowest day (non-zero)", f"{lowest_day:,}", "")
 
     c2.metric("Highest day", f"{best_day_steps:,}", best_day_date)
