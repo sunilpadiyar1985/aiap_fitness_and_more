@@ -138,24 +138,21 @@ def load_roster():
     ROSTER_GID = "175789419"
 
     url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={ROSTER_GID}"
-    
-    # force everything to string first
     r = pd.read_csv(url, dtype=str)
 
     r.columns = r.columns.str.strip()
+    r["User"] = r["User"].astype(str).str.strip()
 
-    # hard clean
     for col in ["Active from", "Active till"]:
         r[col] = (
             r[col]
             .astype(str)
+            .str.replace("\u00a0", "", regex=False)  # hidden nbsp
             .str.strip()
-            .replace(["nan", "NaN", ""], None)
+            .replace(["nan", "NaN", "None", ""], None)
         )
 
         r[col] = pd.to_datetime(r[col], errors="coerce", dayfirst=True)
-
-    r["User"] = r["User"].str.strip()
 
     return r
 
@@ -300,18 +297,21 @@ df = load_data()
 roster_df = load_roster()
 league_history = build_league_history(df, roster_df)
 
-# 🔍 TEMP DEBUG
-st.subheader("🧪 Roster debug")
-st.write(roster_df)
-st.write(roster_df.dtypes)
+st.subheader("🧪 FINAL ROSTER CHECK")
 
 today = pd.Timestamp.today().normalize()
-check = roster_df.copy()
-check["from_ok"] = check["Active from"] <= today
-check["till_blank"] = check["Active till"].isna()
-check["till_ok"] = check["Active till"] >= today
 
-st.write(check[["User","Active from","Active till","from_ok","till_blank","till_ok"]])
+debug = roster_df.copy()
+debug["today"] = today
+debug["is_blank"] = debug["Active till"].isna()
+debug["gte_today"] = debug["Active till"] >= today
+debug["inactive_logic"] = ~(
+    (debug["Active from"] <= today) &
+    (debug["Active till"].isna() | (debug["Active till"] >= today))
+)
+
+st.dataframe(debug)
+st.stop()
 
 # ----------------------------
 # ACTIVE USERS ENGINE
