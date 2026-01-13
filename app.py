@@ -827,61 +827,6 @@ if page == "👤 Player Profile":
         trend_label = "⚠️ Slight decline"
     else:
         trend_label = "➖ Mostly stable"
-
-    st.divider()
-    st.markdown("###### 📈 Current form (last 60 days)")
-    
-    recent = u.sort_values("date").tail(60).copy()
-    
-    recent["rolling"] = recent["steps"].rolling(7).mean()
-    
-    fig = px.line(
-        recent,
-        x="date",
-        y=["steps", "rolling"],
-        labels={"value": "Steps", "variable": "Legend"},
-    )
-    
-    fig.update_layout(
-        height=320,
-        xaxis_title="",
-        yaxis_title="Steps",
-        legend_title="",
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.markdown("###### 🧬 Consistency fingerprint")
-
-    bins = {
-        "No activity": (u["steps"] == 0).mean(),
-        "1–5k": ((u["steps"] > 0) & (u["steps"] < 5000)).mean(),
-        "5k–10k": ((u["steps"] >= 5000) & (u["steps"] < 10000)).mean(),
-        "10k+": (u["steps"] >= 10000).mean()
-    }
-    
-    finger = pd.DataFrame({
-        "Zone": list(bins.keys()),
-        "Share": [v * 100 for v in bins.values()]
-    })
-    
-    fig = px.bar(
-        finger,
-        x="Share",
-        y="Zone",
-        orientation="h",
-        text=finger["Share"].round(1).astype(str) + "%",
-    )
-    
-    fig.update_layout(
-        height=260,
-        xaxis_title="Career distribution",
-        yaxis_title="",
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-
-    
     best_week_steps = int(weekly.max())
     best_week_start = weekly.idxmax()
     best_week_label = f"{best_week_start.strftime('%d %b %Y')}"
@@ -947,6 +892,59 @@ if page == "👤 Player Profile":
     )
 
     st.success(f"📈 **Fitness trend:** {trend_label}")
+
+    st.divider()
+    st.markdown("###### 📈 Current form (last 60 days)")
+    
+    recent = u.sort_values("date").tail(60).copy()
+    
+    recent["rolling"] = recent["steps"].rolling(7).mean()
+    
+    fig = px.line(
+        recent,
+        x="date",
+        y=["steps", "rolling"],
+        labels={"value": "Steps", "variable": "Legend"},
+    )
+    
+    fig.update_layout(
+        height=320,
+        xaxis_title="",
+        yaxis_title="Steps",
+        legend_title="",
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("###### 🧬 Consistency fingerprint")
+
+    bins = {
+        "No activity": (u["steps"] == 0).mean(),
+        "1–5k": ((u["steps"] > 0) & (u["steps"] < 5000)).mean(),
+        "5k–10k": ((u["steps"] >= 5000) & (u["steps"] < 10000)).mean(),
+        "10k+": (u["steps"] >= 10000).mean()
+    }
+    
+    finger = pd.DataFrame({
+        "Zone": list(bins.keys()),
+        "Share": [v * 100 for v in bins.values()]
+    })
+    
+    fig = px.bar(
+        finger,
+        x="Share",
+        y="Zone",
+        orientation="h",
+        text=finger["Share"].round(1).astype(str) + "%",
+    )
+    
+    fig.update_layout(
+        height=260,
+        xaxis_title="Career distribution",
+        yaxis_title="",
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
 
     # ----------------------------
     # LEAGUE CAREER SNAPSHOT
