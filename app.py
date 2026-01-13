@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
-st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered")
+st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered", )
 
 st.markdown("""
 <style>
@@ -60,7 +60,7 @@ def hall_card(title, name, sub):
 
 page = st.sidebar.radio(
     "Navigate",
-    ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History", "ℹ️ Readme: Our Dashboard"]
+    ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History", "🔮 Prediction Lab", "ℹ️ Readme: Our Dashboard"]
 )
 # ----------------------------
 # CONFIG
@@ -321,6 +321,36 @@ def build_league_history(df, roster_df):
 
     history = pd.concat(history_rows, ignore_index=True)
     return history
+
+# -------------------------
+# Era Engine
+# -------------------------
+
+def build_eras(league_history):
+
+    champs = league_history[league_history["Champion"]].sort_values("Month")
+
+    eras = []
+    prev = None
+    start = None
+    count = 0
+
+    for _, row in champs.iterrows():
+        if row["User"] == prev:
+            count += 1
+        else:
+            if prev is not None:
+                eras.append((prev, start, last, count))
+            prev = row["User"]
+            start = row["Month"]
+            count = 1
+        last = row["Month"]
+
+    if prev:
+        eras.append((prev, start, last, count))
+
+    return pd.DataFrame(eras, columns=["Champion","Start","End","Titles"])
+
     
 df = load_data()
 roster_df = load_roster()
@@ -338,8 +368,46 @@ active_users_now = set(
 def name_with_status(name):
     return name if name in active_users_now else f"{name} 💤"
 
+# ----------------------------
+# Prediction Engine
+# ----------------------------
 
-###data load ends###
+def prediction_engine(df, roster_df, lookback=30):
+
+    cutoff = df["date"].max() - pd.Timedelta(days=lookback)
+    recent = df[df["date"] >= cutoff]
+
+    active = roster_df[roster_df["Status"] == "active"]["User"]
+
+    recent = recent[recent["User"].isin(active)]
+
+    pred = recent.groupby("User").agg(
+        avg_steps=("steps","mean"),
+        total_steps=("steps","sum"),
+        days_10k=("steps", lambda x: (x>=10000).sum()),
+        active_days=("steps", lambda x: (x>0).sum())
+    ).reset_index()
+
+    # Form score
+    pred["form_score"] = (
+        pred["avg_steps"] * 0.5 +
+        pred["days_10k"] * 300 +
+        pred["active_days"] * 100
+    )
+
+    pred = pred.sort_values("form_score", ascending=False)
+
+    # Predict premier cutoff (top 6 or >=7k)
+    pred["Predicted league"] = np.where(pred["avg_steps"] >= 7000, "Premier", "Championship")
+
+    if (pred["Predicted league"] == "Premier").sum() < 6:
+        top6 = pred.head(6).index
+        pred.loc[top6, "Predicted league"] = "Premier"
+
+    pred["Predicted rank"] = range(1, len(pred)+1)
+
+    return pred
+
 
 # =========================================================
 # 🏆 HALL OF FAME — ALL TIME RECORDS
@@ -705,7 +773,7 @@ if page == "🏠 Monthly Results":
         values="steps",
         aggfunc="sum"
     ).fillna(0)
-    
+
     # -----------------------------------
     # FILTER ONLY ACTIVE (NON-ZERO) USERS
     # -----------------------------------
@@ -813,6 +881,43 @@ if page == "🏠 Monthly Results":
             use_container_width=True,
             hide_index=True
         )
+
+    st.divider()
+    st.markdown("###### ⚠️ Danger zone")
+    
+    bottom_prem = premier.sort_values("Rank").tail(2)
+    top_champ = championship.sort_values("Rank").head(2)
+    
+    c1, c2 = st.columns(2)
+    
+    with c1:
+        st.error("🔥 Premier relegation risk")
+        for _, r in bottom_prem.iterrows():
+            st.write(f"⬇ {r['User']} — {int(r['points_display'])} pts")
+    
+    with c2:
+        st.success("🚀 Championship promotion push")
+        for _, r in top_champ.iterrows():
+            st.write(f"⬆ {r['User']} — {int(r['points_display'])} pts")
+
+
+    st.divider()
+    st.markdown("###### 📝 Season review")
+    
+    winner = top3.loc[0,"User"]
+    last_place = monthly_totals.iloc[-1]["User"]
+    improver = top_improved.index[0]
+    consistent = top_consistent.index[0]
+    
+    st.info(f"""
+    🏆 **Champion:** {winner} dominated this month.
+    
+    🚀 **Breakout star:** {improver} showed the biggest performance jump.
+    
+    🧱 **Iron walker:** {consistent} delivered the steadiest output.
+    
+    ⚠️ **Needs a comeback:** {last_place} will be hungry next month.
+    """)
 
     
     # ----------------------------
@@ -1413,7 +1518,25 @@ if page == "📜 League History":
                 """, unsafe_allow_html=True)
     
         st.divider()
-
+        
+    st.markdown("#### 📜 League eras")
+    
+    eras = build_eras(league_history)
+    
+    for _, e in eras.sort_values("Titles", ascending=False).iterrows():
+        st.markdown(f"""
+        <div style="
+            background:#f7f9fc;
+            padding:14px;
+            border-radius:14px;
+            margin-bottom:10px;
+            border-left:6px solid #6c8cff;
+        ">
+            👑 <b>{name_with_status(e['Champion'])}</b><br>
+            {e['Start'].strftime("%b %Y")} → {e['End'].strftime("%b %Y")}  
+            🏆 {e['Titles']} consecutive titles
+        </div>
+        """, unsafe_allow_html=True)
 
     # =====================================================
     # 📊 HISTORY TABLES (LAST 12 MONTHS)
@@ -1457,6 +1580,39 @@ if page == "📜 League History":
     st.caption("🏆 Only winners and runner-ups are shown here. Full tables are in Monthly Results.")
 
 
+if page == "🔮 Prediction Lab":
+
+    st.markdown("### 🔮 Prediction Lab")
+    st.caption("Projected outcomes based on recent form (last 30 days)")
+
+    pred = prediction_engine(df, roster_df)
+
+    st.markdown("#### 🧠 Form table")
+
+    st.dataframe(
+        pred[["Predicted rank","User","avg_steps","days_10k","active_days","Predicted league"]]
+          .rename(columns={
+              "Predicted rank":"Rank",
+              "avg_steps":"Avg steps",
+              "days_10k":"10K days",
+              "active_days":"Active days"
+          }),
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.divider()
+    st.markdown("#### 🏟️ Projected leagues")
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+        st.markdown("##### 🥇 Projected Premier")
+        st.success("\n".join(pred[pred["Predicted league"]=="Premier"]["User"].tolist()))
+
+    with c2:
+        st.markdown("##### 🥈 Projected Championship")
+        st.info("\n".join(pred[pred["Predicted league"]=="Championship"]["User"].tolist()))
 
 
 # =========================================================
