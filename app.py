@@ -138,20 +138,24 @@ def load_roster():
     ROSTER_GID = "175789419"
 
     url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={ROSTER_GID}"
-
-    # ⚠️ do NOT force dtype=str
-    r = pd.read_csv(url)
+    r = pd.read_csv(url, dtype=str)
 
     r.columns = r.columns.str.strip()
-    r["User"] = r["User"].astype(str).str.strip()
 
-    # only strip, do NOT replace values
+    # ---- HARD NORMALIZATION ----
     for col in ["Active from", "Active till"]:
-        r[col] = r[col].astype(str).str.strip()
-        r[col] = r[col].replace({"": pd.NaT, "nan": pd.NaT, "NaN": pd.NaT})
+        r[col] = (
+            r[col]
+            .astype(str)
+            .str.strip()
+            .replace("nan", None)
+            .str.replace("June", "Jun", regex=False)   # 🔥 THIS is the missing piece
+        )
+
         r[col] = pd.to_datetime(r[col], errors="coerce", dayfirst=True)
 
     return r
+
 
 
 #-------------------
