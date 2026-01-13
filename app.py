@@ -1523,7 +1523,7 @@ if page == "📜 League History":
     if eras.empty:
         st.info("No true eras yet — the league is still in its early chaos phase 😄")
     else:
-        for _, e in eras.sort_values(["League","Titles"], ascending=[True,False]).iterrows():
+        for _, e in eras.sort_values(["League","Titles"], ascending=[False,False]).iterrows():
     
             bg = "#fff4d6" if e["League"] == "Premier" else "#eef6ff"
             icon = "👑" if e["League"] == "Premier" else "🏆"
