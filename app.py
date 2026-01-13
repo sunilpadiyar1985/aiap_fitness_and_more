@@ -599,6 +599,17 @@ if page == "🏠 Monthly Results":
             """,
             unsafe_allow_html=True
         )
+
+    st.divider()
+    st.markdown("###### 📰 Monthly storylines")
+    
+    dominator = monthly_totals.iloc[0]
+    climber = top_improved.index[0]
+    consistent = top_consistent.index[0]
+    
+    st.success(f"👑 **Dominant force:** {dominator['User']} ruled the month with {int(dominator['steps']):,} steps")
+    st.info(f"🚀 **Biggest momentum:** {climber} showed the strongest improvement trend")
+    st.warning(f"🧱 **Mr Consistent:** {consistent} was the steadiest performer this month")
     
     # ----------------------------
     # MONTHLY HIGHLIGHTS
@@ -817,6 +828,59 @@ if page == "👤 Player Profile":
     else:
         trend_label = "➖ Mostly stable"
 
+    st.divider()
+    st.markdown("###### 📈 Current form (last 60 days)")
+    
+    recent = u.sort_values("date").tail(60).copy()
+    
+    recent["rolling"] = recent["steps"].rolling(7).mean()
+    
+    fig = px.line(
+        recent,
+        x="date",
+        y=["steps", "rolling"],
+        labels={"value": "Steps", "variable": "Legend"},
+    )
+    
+    fig.update_layout(
+        height=320,
+        xaxis_title="",
+        yaxis_title="Steps",
+        legend_title="",
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("###### 🧬 Consistency fingerprint")
+
+    bins = {
+        "No activity": (u["steps"] == 0).mean(),
+        "1–5k": ((u["steps"] > 0) & (u["steps"] < 5000)).mean(),
+        "5k–10k": ((u["steps"] >= 5000) & (u["steps"] < 10000)).mean(),
+        "10k+": (u["steps"] >= 10000).mean()
+    }
+    
+    finger = pd.DataFrame({
+        "Zone": list(bins.keys()),
+        "Share": [v * 100 for v in bins.values()]
+    })
+    
+    fig = px.bar(
+        finger,
+        x="Share",
+        y="Zone",
+        orientation="h",
+        text=finger["Share"].round(1).astype(str) + "%",
+    )
+    
+    fig.update_layout(
+        height=260,
+        xaxis_title="Career distribution",
+        yaxis_title="",
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
     
     best_week_steps = int(weekly.max())
     best_week_start = weekly.idxmax()
@@ -907,6 +971,27 @@ if page == "👤 Player Profile":
     l4.metric("Relegations", relegations)
 
     st.info(f"🗓️ Active career: **{first_month} → {last_month}**")
+
+    st.divider()
+    st.markdown("###### ⚔️ Biggest rivals")
+    
+    rivals = (
+        league_history.groupby(["Month","User"])["points"]
+        .mean()
+        .unstack()
+    )
+    
+    if selected_user in rivals.columns:
+        diffs = rivals.subtract(rivals[selected_user], axis=0).abs().mean().sort_values()
+        top_rivals = diffs.drop(selected_user).head(3).index.tolist()
+    
+        for r in top_rivals:
+            h2h = rivals[[selected_user, r]].dropna()
+            wins = (h2h[selected_user] > h2h[r]).sum()
+            losses = (h2h[selected_user] < h2h[r]).sum()
+    
+            st.info(f"⚔️ **{r}** — {wins} wins vs {losses} losses | {len(h2h)} battles")
+
 
     # ----------------------------
     # TROPHY CABINET
