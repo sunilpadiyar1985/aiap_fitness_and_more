@@ -345,7 +345,7 @@ def build_eras(league_history, min_streak=2):
 
         for _, row in champs.iterrows():
 
-            if row["User"] == prev_user and (row["Month"].to_period("M") - last_month.to_period("M")) == 1:
+            if row["User"] == prev_user:
                 count += 1
             else:
                 if prev_user and count >= min_streak:
@@ -362,7 +362,6 @@ def build_eras(league_history, min_streak=2):
 
             last_month = row["Month"]
 
-        # close last streak
         if prev_user and count >= min_streak:
             eras.append({
                 "League": league,
