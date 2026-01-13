@@ -797,6 +797,26 @@ if page == "👤 Player Profile":
 
     weekly = u.groupby("week")["steps"].sum()
     monthly = u.groupby("month_p")["steps"].sum()
+
+    # 📈 Improvement trend (slope of monthly steps)
+    if len(monthly) >= 2:
+        y = monthly.values
+        x = np.arange(len(y))
+        trend_slope = np.polyfit(x, y, 1)[0]
+    else:
+        trend_slope = 0
+    
+    if trend_slope > 5000:
+        trend_label = "🚀 Strong upward trend"
+    elif trend_slope > 1000:
+        trend_label = "📈 Improving steadily"
+    elif trend_slope < -5000:
+        trend_label = "📉 Strong decline"
+    elif trend_slope < -1000:
+        trend_label = "⚠️ Slight decline"
+    else:
+        trend_label = "➖ Mostly stable"
+
     
     best_week_steps = int(weekly.max())
     best_week_start = weekly.idxmax()
@@ -862,6 +882,8 @@ if page == "👤 Player Profile":
         f"10K: {current_10k_streak} days | 5K: {current_5k_streak} days"
     )
 
+    st.success(f"📈 **Fitness trend:** {trend_label}")
+
     # ----------------------------
     # LEAGUE CAREER SNAPSHOT
     # ----------------------------
@@ -914,7 +936,10 @@ if page == "👤 Player Profile":
     st.divider()
     st.markdown("###### 📜 League journey")
 
-    journey = player_lh[["Month","League","Rank","points_display","Champion","Promoted","Relegated"]].copy()
+    journey = player_lh.sort_values("Month", ascending=False)[
+        ["Month","League","Rank","points_display","Champion","Promoted","Relegated"]
+    ].copy()
+
     journey["Month"] = journey["Month"].dt.strftime("%b %Y")
 
     st.dataframe(
@@ -927,6 +952,52 @@ if page == "👤 Player Profile":
         use_container_width=True,
         hide_index=True
     )
+
+    st.divider()
+    st.markdown("###### 📈 League journey (career path)")
+    
+    chart_df = player_lh.sort_values("Month").copy()
+    
+    # Map leagues to vertical positions
+    chart_df["league_y"] = chart_df["League"].map({
+        "Premier": 1,
+        "Championship": -1
+    })
+    
+    chart_df["MonthLabel"] = chart_df["Month"].dt.strftime("%b %Y")
+    
+    fig = px.line(
+        chart_df,
+        x="Month",
+        y="league_y",
+        markers=True,
+        title=None
+    )
+    
+    fig.update_traces(
+        mode="lines+markers+text",
+        text=chart_df["Rank"].apply(lambda x: f"#{int(x)}"),
+        textposition="top center"
+    )
+    
+    fig.update_layout(
+        height=380,
+        yaxis=dict(
+            tickmode="array",
+            tickvals=[1, -1],
+            ticktext=["Premier League", "Championship"],
+            zeroline=True,
+            zerolinewidth=2,
+            zerolinecolor="#999",
+            range=[-1.5, 1.5],
+            title=""
+        ),
+        xaxis_title="",
+        yaxis_title="",
+        margin=dict(l=20, r=20, t=20, b=20),
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
 
     # ----------------------------
     # MONTH BY MONTH BREAKDOWN
