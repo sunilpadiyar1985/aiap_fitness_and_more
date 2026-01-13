@@ -134,30 +134,27 @@ def load_roster():
     ROSTER_GID = "175789419"
 
     url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={ROSTER_GID}"
+    
+    # force everything to string first
     r = pd.read_csv(url, dtype=str)
 
     r.columns = r.columns.str.strip()
 
-    # 🔧 HARD CLEAN (this is the missing piece)
-    r["Active from"] = (
-        r["Active from"]
-        .astype(str)
-        .str.strip()
-        .replace("nan", None)
-    )
+    # hard clean
+    for col in ["Active from", "Active till"]:
+        r[col] = (
+            r[col]
+            .astype(str)
+            .str.strip()
+            .replace(["nan", "NaN", ""], None)
+        )
 
-    r["Active till"] = (
-        r["Active till"]
-        .astype(str)
-        .str.strip()
-        .replace("nan", None)
-    )
+        r[col] = pd.to_datetime(r[col], errors="coerce", dayfirst=True)
 
-    # 🔁 Parse with explicit format + fallback
-    r["Active from"] = pd.to_datetime(r["Active from"], errors="coerce", dayfirst=True)
-    r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce", dayfirst=True)
+    r["User"] = r["User"].str.strip()
 
     return r
+
 #-------------------
 #League Engine
 #-------------------
