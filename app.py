@@ -1518,7 +1518,7 @@ if page == "📜 League History":
         
     st.markdown("#### 📜 League Eras (periods of dominance)")
 
-    eras = build_eras(league_history, min_streak=2)
+    eras = build_eras(league_history, min_streak=3)
     
     if eras.empty:
         st.info("No true eras yet — the league is still in its early chaos phase 😄")
