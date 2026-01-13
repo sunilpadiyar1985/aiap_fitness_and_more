@@ -1,8 +1,4 @@
 import streamlit as st
-
-st.cache_data.clear()
-st.cache_resource.clear()
-
 import pandas as pd
 import plotly.express as px
 import numpy as np
@@ -150,6 +146,44 @@ def load_roster():
     r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce", dayfirst=True)
 
     return r
+    
+#-------------------
+#Badge Engine
+#-------------------
+
+def generate_badges(user, df, league_history):
+
+    u = df[df["User"] == user].sort_values("date")
+    lh = league_history[league_history["User"] == user]
+
+    badges = []
+
+    # 🥇 Titles
+    if ((lh["Champion"]) & (lh["League"]=="Premier")).any():
+        badges.append("👑 Premier Champion")
+
+    if lh["Champion"].sum() >= 3:
+        badges.append("🏆 Serial Winner")
+
+    # 🔥 Streaks
+    is10 = (u["steps"] >= 10000).tolist()
+    if max_streak(is10) >= 30:
+        badges.append("🔥 Iron Legs (30 day streak)")
+
+    # 🚀 Comeback
+    if lh["Promoted"].sum() >= 2:
+        badges.append("🚀 Comeback King")
+
+    # 🧱 Consistency
+    if (u["steps"] >= 5000).mean() > 0.75:
+        badges.append("🧱 Ultra Consistent")
+
+    # 👣 Longevity
+    if u["date"].dt.to_period("M").nunique() >= 12:
+        badges.append("👣 League Veteran")
+
+    return badges
+
 
 #-------------------
 #League Engine
@@ -483,6 +517,51 @@ if page == "🏆 Hall of Fame":
     record_row("Most promotions", "⬆", promotions, lambda x: f"{int(x)} promotions")
     record_row("Most relegations", "⬇", relegations, lambda x: f"{int(x)} relegations")
     record_row("Best single-season performance", "🚀", best_season, lambda x: f"{round(x*100)} pts")
+
+    st.divider()
+    st.markdown("### 🐐 GOAT Rankings — All-time greats")
+    
+    lh = league_history.copy()
+    
+    goat = lh.groupby("User").agg(
+        seasons=("Month","nunique"),
+        avg_points=("points","mean"),
+        best_season=("points","max"),
+        premier_titles=("Champion", lambda x: ((x) & (lh.loc[x.index,"League"]=="Premier")).sum()),
+        champ_titles=("Champion", lambda x: ((x) & (lh.loc[x.index,"League"]=="Championship")).sum()),
+        premier_months=("League", lambda x: (x=="Premier").sum()),
+        promotions=("Promoted","sum")
+    ).reset_index()
+    
+    # Normalization helper
+    def norm(s):
+        return (s - s.min()) / (s.max() - s.min()) if s.max() > s.min() else 0
+    
+    goat["GOAT_score"] = (
+        norm(goat["premier_titles"]) * 0.30 +
+        norm(goat["champ_titles"])   * 0.10 +
+        norm(goat["avg_points"])     * 0.20 +
+        norm(goat["best_season"])    * 0.15 +
+        norm(goat["premier_months"]) * 0.15 +
+        norm(goat["seasons"])        * 0.05 +
+        norm(goat["promotions"])     * 0.05
+    )
+    
+    goat = goat.sort_values("GOAT_score", ascending=False)
+    goat["Rank"] = range(1, len(goat)+1)
+    goat["Index"] = (goat["GOAT_score"] * 100).round(1)
+    
+    st.dataframe(
+        goat[["Rank","User","Index","premier_titles","champ_titles","premier_months","seasons"]]
+          .rename(columns={
+              "premier_titles":"👑 Premier",
+              "champ_titles":"🏆 Champ",
+              "premier_months":"🏟 Premier months",
+              "seasons":"🗓 Seasons"
+          }),
+        use_container_width=True,
+        hide_index=True
+    )
 
 
 
@@ -1013,6 +1092,17 @@ if page == "👤 Player Profile":
     t5.metric("🏅 Best rank", f"#{best_finish}")
     t6.metric("🚀 Best season", f"{best_points} pts")
 
+    st.divider()
+    st.markdown("###### 🎖️ Badges earned")
+    
+    badges = generate_badges(selected_user, df, league_history)
+    
+    if badges:
+        for b in badges:
+            st.success(b)
+    else:
+        st.info("No badges yet — greatness in progress 😄")
+
     # ----------------------------
     # LEAGUE JOURNEY TABLE
     # ----------------------------
@@ -1125,6 +1215,31 @@ if page == "👤 Player Profile":
 # =========================================================
 if page == "📜 League History":
 
+    st.markdown("### 📊 League flow timeline")
+    
+    flow = league_history.copy()
+    flow["Month"] = pd.to_datetime(flow["Month"])
+    
+    fig = px.line(
+        flow,
+        x="Month",
+        y="Rank",
+        color="User",
+        line_group="User",
+        markers=True
+    )
+    
+    fig.update_yaxes(autorange="reversed", title="Rank (1 = Champion)")
+    fig.update_layout(
+        height=550,
+        xaxis_title="",
+        yaxis_title="League rank",
+        legend_title="Players"
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()
     st.markdown("### 📜 League History")
     st.caption("The official record book of the Steps League")
 
