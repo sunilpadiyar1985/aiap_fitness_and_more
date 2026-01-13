@@ -134,21 +134,22 @@ def load_data():
     
 @st.cache_data
 def load_roster():
+    SHEET_ID = "1DfUJd33T-12UVOavd6SqCfkcNl8_4sVxcqqXHtBeWpw"
+    ROSTER_GID = "175789419"
+
     url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={ROSTER_GID}"
     r = pd.read_csv(url, dtype=str)
 
     r.columns = r.columns.str.strip()
 
-    # normalize status
+    # ✅ normalize Status
     r["Status"] = r["Status"].astype(str).str.strip().str.lower()
 
-    # optional: still parse dates for display/history
+    # optional (safe to keep)
     r["Active from"] = pd.to_datetime(r["Active from"], errors="coerce", dayfirst=True)
     r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce", dayfirst=True)
 
     return r
-
-
 
 #-------------------
 #League Engine
