@@ -159,6 +159,20 @@ def load_roster():
 
     return r
 
+st.subheader("🧪 Roster debug")
+
+st.write(roster_df)
+st.write(roster_df.dtypes)
+
+today = pd.Timestamp.today().normalize()
+st.write("Today:", today)
+
+check = roster_df.copy()
+check["from_ok"] = check["Active from"] <= today
+check["till_blank"] = check["Active till"].isna()
+check["till_ok"] = check["Active till"] >= today
+
+st.write(check[["User","Active from","Active till","from_ok","till_blank","till_ok"]])
 
 
 #-------------------
