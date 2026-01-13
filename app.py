@@ -797,9 +797,14 @@ if page == "👤 Player Profile":
 
     weekly = u.groupby("week")["steps"].sum()
     monthly = u.groupby("month_p")["steps"].sum()
-
+    
     best_week_steps = int(weekly.max())
+    best_week_start = weekly.idxmax()
+    best_week_label = f"{best_week_start.strftime('%d %b %Y')}"
+    
     best_month_steps = int(monthly.max())
+    best_month_period = monthly.idxmax()
+    best_month_label = best_month_period.strftime("%B %Y")
 
     days_total = len(u)
     days_10k = (u["steps"] >= 10000).sum()
@@ -839,17 +844,18 @@ if page == "👤 Player Profile":
 
     c1, c2, c3 = st.columns(3)
 
-    c1.metric("Overall steps", f"{total_steps:,}")
-    c1.metric("Your average", f"{avg_steps:,}")
-    c1.metric("Lowest day (non-zero)", f"{lowest_day:,}")
+    c1.metric("Overall steps", f"{total_steps:,}", "")
+    c1.metric("Your average", f"{avg_steps:,}". "")
+    c1.metric("Lowest day (non-zero)", f"{lowest_day:,}", "")
 
     c2.metric("Highest day", f"{best_day_steps:,}", best_day_date)
-    c2.metric("Highest week", f"{best_week_steps:,}")
-    c2.metric("Highest month", f"{best_month_steps:,}")
+    c2.metric("Highest week", f"{best_week_steps:,}", best_week_label)
+    c2.metric("Highest month", f"{best_month_steps:,}", best_month_label)
 
-    c3.metric("Magic 10K covered", f"{pct_10k}%")
-    c3.metric("10K streak (max)", f"{max_10k_streak} days")
-    c3.metric("5K streak (max)", f"{max_5k_streak} days")
+
+    c3.metric("Magic 10K covered", f"{pct_10k}%", "")
+    c3.metric("10K streak (max)", f"{max_10k_streak} days", "")
+    c3.metric("5K streak (max)", f"{max_5k_streak} days", "")
 
     st.caption(
         f"🔥 Current streaks (as of {last_active_date.strftime('%d %b %Y')}) — "
