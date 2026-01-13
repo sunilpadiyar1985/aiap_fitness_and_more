@@ -326,30 +326,53 @@ def build_league_history(df, roster_df):
 # Era Engine
 # -------------------------
 
-def build_eras(league_history):
+def build_eras(league_history, min_streak=2):
 
-    champs = league_history[league_history["Champion"]].sort_values("Month")
+    lh = league_history.copy()
+    lh["Month"] = pd.to_datetime(lh["Month"])
 
     eras = []
-    prev = None
-    start = None
-    count = 0
 
-    for _, row in champs.iterrows():
-        if row["User"] == prev:
-            count += 1
-        else:
-            if prev is not None:
-                eras.append((prev, start, last, count))
-            prev = row["User"]
-            start = row["Month"]
-            count = 1
-        last = row["Month"]
+    for league in ["Premier", "Championship"]:
 
-    if prev:
-        eras.append((prev, start, last, count))
+        champs = lh[(lh["League"] == league) & (lh["Champion"] == True)] \
+                    .sort_values("Month")
 
-    return pd.DataFrame(eras, columns=["Champion","Start","End","Titles"])
+        prev_user = None
+        start = None
+        count = 0
+        last_month = None
+
+        for _, row in champs.iterrows():
+
+            if row["User"] == prev_user and (row["Month"].to_period("M") - last_month.to_period("M")) == 1:
+                count += 1
+            else:
+                if prev_user and count >= min_streak:
+                    eras.append({
+                        "League": league,
+                        "Champion": prev_user,
+                        "Start": start,
+                        "End": last_month,
+                        "Titles": count
+                    })
+                prev_user = row["User"]
+                start = row["Month"]
+                count = 1
+
+            last_month = row["Month"]
+
+        # close last streak
+        if prev_user and count >= min_streak:
+            eras.append({
+                "League": league,
+                "Champion": prev_user,
+                "Start": start,
+                "End": last_month,
+                "Titles": count
+            })
+
+    return pd.DataFrame(eras)
 
     
 df = load_data()
@@ -1320,31 +1343,6 @@ if page == "👤 Player Profile":
 # =========================================================
 if page == "📜 League History":
 
-    st.markdown("### 📊 League flow timeline")
-    
-    flow = league_history.copy()
-    flow["Month"] = pd.to_datetime(flow["Month"])
-    
-    fig = px.line(
-        flow,
-        x="Month",
-        y="Rank",
-        color="User",
-        line_group="User",
-        markers=True
-    )
-    
-    fig.update_yaxes(autorange="reversed", title="Rank (1 = Champion)")
-    fig.update_layout(
-        height=550,
-        xaxis_title="",
-        yaxis_title="League rank",
-        legend_title="Players"
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.divider()
     st.markdown("### 📜 League History")
     st.caption("The official record book of the Steps League")
 
@@ -1519,24 +1517,31 @@ if page == "📜 League History":
     
         st.divider()
         
-    st.markdown("#### 📜 League eras")
+    st.markdown("#### 📜 League Eras (periods of dominance)")
+
+    eras = build_eras(league_history, min_streak=2)
     
-    eras = build_eras(league_history)
+    if eras.empty:
+        st.info("No true eras yet — the league is still in its early chaos phase 😄")
+    else:
+        for _, e in eras.sort_values(["League","Titles"], ascending=[True,False]).iterrows():
     
-    for _, e in eras.sort_values("Titles", ascending=False).iterrows():
-        st.markdown(f"""
-        <div style="
-            background:#f7f9fc;
-            padding:14px;
-            border-radius:14px;
-            margin-bottom:10px;
-            border-left:6px solid #6c8cff;
-        ">
-            👑 <b>{name_with_status(e['Champion'])}</b><br>
-            {e['Start'].strftime("%b %Y")} → {e['End'].strftime("%b %Y")}  
-            🏆 {e['Titles']} consecutive titles
-        </div>
-        """, unsafe_allow_html=True)
+            bg = "#fff4d6" if e["League"] == "Premier" else "#eef6ff"
+            icon = "👑" if e["League"] == "Premier" else "🏆"
+    
+            st.markdown(f"""
+            <div style="
+                background:{bg};
+                padding:14px;
+                border-radius:14px;
+                margin-bottom:10px;
+                border-left:6px solid #6c8cff;
+            ">
+                {icon} <b>{name_with_status(e['Champion'])}</b> — {e['League']} League<br>
+                {e['Start'].strftime("%b %Y")} → {e['End'].strftime("%b %Y")}  
+                🔥 {e['Titles']} consecutive titles
+            </div>
+            """, unsafe_allow_html=True)
 
     # =====================================================
     # 📊 HISTORY TABLES (LAST 12 MONTHS)
@@ -1578,6 +1583,32 @@ if page == "📜 League History":
     st.dataframe(champ_hist, use_container_width=True, hide_index=True, height=460)
 
     st.caption("🏆 Only winners and runner-ups are shown here. Full tables are in Monthly Results.")
+
+    st.markdown("##### 📊 League flow timeline")
+    
+    flow = league_history.copy()
+    flow["Month"] = pd.to_datetime(flow["Month"])
+    
+    fig = px.line(
+        flow,
+        x="Month",
+        y="Rank",
+        color="User",
+        line_group="User",
+        markers=True
+    )
+    
+    fig.update_yaxes(autorange="reversed", title="Rank (1 = Champion)")
+    fig.update_layout(
+        height=550,
+        xaxis_title="",
+        yaxis_title="League rank",
+        legend_title="Players"
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()
 
 
 if page == "🔮 Prediction Lab":
