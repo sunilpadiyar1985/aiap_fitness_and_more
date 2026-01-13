@@ -292,22 +292,6 @@ df = load_data()
 roster_df = load_roster()
 league_history = build_league_history(df, roster_df)
 
-st.subheader("🧪 FINAL ROSTER CHECK")
-
-today = pd.Timestamp.today().normalize()
-
-debug = roster_df.copy()
-debug["today"] = today
-debug["is_blank"] = debug["Active till"].isna()
-debug["gte_today"] = debug["Active till"] >= today
-debug["inactive_logic"] = ~(
-    (debug["Active from"] <= today) &
-    (debug["Active till"].isna() | (debug["Active till"] >= today))
-)
-
-st.dataframe(debug)
-st.stop()
-
 # ----------------------------
 # ACTIVE USERS ENGINE
 # ----------------------------
