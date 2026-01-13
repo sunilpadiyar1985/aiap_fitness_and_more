@@ -134,25 +134,17 @@ def load_data():
     
 @st.cache_data
 def load_roster():
-    SHEET_ID = "1DfUJd33T-12UVOavd6SqCfkcNl8_4sVxcqqXHtBeWpw"
-    ROSTER_GID = "175789419"
-
     url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={ROSTER_GID}"
     r = pd.read_csv(url, dtype=str)
 
     r.columns = r.columns.str.strip()
 
-    # ---- HARD NORMALIZATION ----
-    for col in ["Active from", "Active till"]:
-        r[col] = (
-            r[col]
-            .astype(str)
-            .str.strip()
-            .replace("nan", None)
-            .str.replace("June", "Jun", regex=False)   # 🔥 THIS is the missing piece
-        )
+    # normalize status
+    r["Status"] = r["Status"].astype(str).str.strip().str.lower()
 
-        r[col] = pd.to_datetime(r[col], errors="coerce", dayfirst=True)
+    # optional: still parse dates for display/history
+    r["Active from"] = pd.to_datetime(r["Active from"], errors="coerce", dayfirst=True)
+    r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce", dayfirst=True)
 
     return r
 
@@ -321,10 +313,7 @@ st.stop()
 today = pd.Timestamp.today().normalize()
 
 active_users_now = set(
-    roster_df[
-        (roster_df["Active from"] <= today) &
-        ((roster_df["Active till"].isna()) | (roster_df["Active till"] >= today))
-    ]["User"]
+    roster_df[roster_df["Status"] == "active"]["User"]
 )
 
 def name_with_status(name):
