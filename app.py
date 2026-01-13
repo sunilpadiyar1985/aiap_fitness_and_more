@@ -326,7 +326,7 @@ def build_league_history(df, roster_df):
 # Era Engine
 # -------------------------
 
-def build_eras(league_history, min_streak=2):
+def build_eras(league_history, min_streak=3):
 
     lh = league_history.copy()
     lh["Month"] = pd.to_datetime(lh["Month"])
