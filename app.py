@@ -926,12 +926,14 @@ if page == "🏠 Monthly Results":
     st.divider()
     st.markdown("###### 📝 Season review")
     
-    winner = top3.loc[0,"User"]
-    last_place = monthly_totals.iloc[-1]["User"]
-    improver = top_improved.index[0]
-    consistent = top_consistent.index[0]
+    if "top_improved" in locals() and not top_improved.empty:
     
-    st.info(f"""
+        winner = top3.loc[0,"User"]
+        last_place = monthly_totals.iloc[-1]["User"]
+        improver = top_improved.index[0]
+        consistent = top_consistent.index[0]
+    
+        st.info(f"""
     🏆 **Champion:** {winner} dominated this month.
     
     🚀 **Breakout star:** {improver} showed the biggest performance jump.
@@ -940,6 +942,8 @@ if page == "🏠 Monthly Results":
     
     ⚠️ **Needs a comeback:** {last_place} will be hungry next month.
     """)
+    else:
+        st.caption("Season story will appear once enough activity data is available.")
 
     
     # ----------------------------
