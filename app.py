@@ -958,26 +958,6 @@ if page == "🏠 Monthly Results":
     monthly_totals.insert(0, "Rank", range(1, len(monthly_totals) + 1))
     
     st.markdown(f"#### Results for {selected_month.strftime('%B %Y')} ⭐")
-
-    # ----------------------------
-    # 🔥 STREAK RECORD CHECK (month-scoped)
-    # ----------------------------
-    
-    before_df = df[df["date"] < month_start]
-    upto_df   = df[df["date"] <= month_end]
-    
-    all_time_before = longest_10k_streak_by_user(before_df)
-    all_time_upto   = longest_10k_streak_by_user(upto_df)
-    
-    prev_record = all_time_before.max() if not all_time_before.empty else 0
-    current_record = all_time_upto.max()
-    
-    if current_record > prev_record:
-        holder = all_time_upto.idxmax()
-        st.error(
-            f"🔥 **NEW ALL-TIME RECORD!** {name_with_status(holder)} "
-            f"just set the longest 10K streak ever — {current_record} days!"
-        )
         
     # ----------------------------
     # 🚨 League moments (NEW)
