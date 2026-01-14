@@ -791,6 +791,7 @@ def show_global_league_moments(events_df):
     breaking = (
         events_df[events_df["Month"] == current_month]
         .sort_values("date", ascending=False)
+        .drop_duplicates(subset=["type"], keep="first")  # ✅ de-dup here
         .head(5)
     )
 
@@ -800,40 +801,37 @@ def show_global_league_moments(events_df):
     messages = []
     for _, r in breaking.iterrows():
         messages.append(
-            f"{r['title']} — {name_with_status(r['User'])} set {r['value']:,}"
+            f"🔥 {r['title']} — {name_with_status(r['User'])} set {r['value']:,}"
         )
 
-    ticker_text = " ⚡️ ".join(messages)
+    ticker_text = "   |   ".join(messages)
 
     st.markdown(f"""
     <style>
-    .league-ticker {{
-        background: #fff4f4;
-        border: 1px solid #ffd6d6;
-        border-radius: 999px;
-        padding: 6px 14px;
-        margin: 4px 0 10px 0;
-        font-size: 14px;
-        font-weight: 500;
-        overflow: hidden;
-        height: 36px;
-        display: flex;
-        align-items: center;
+    .ticker-box {{
+        background:#fff4f4;
+        border-radius:14px;
+        padding:8px 14px;
+        margin-top:4px;
+        margin-bottom:12px;
+        font-size:14px;
+        font-weight:500;
+        border:1px solid #ffd6d6;
+        overflow:hidden;
     }}
 
-    .league-ticker marquee {{
+    .ticker-box marquee {{
         white-space: nowrap;
-        line-height: 1;
+        line-height: 1.4;
     }}
     </style>
 
-    <div class="league-ticker">
-        <marquee behavior="scroll" direction="left" scrollamount="4">
+    <div class="ticker-box">
+        <marquee behavior="scroll" direction="left" scrollamount="5">
             🚨 {ticker_text}
         </marquee>
     </div>
     """, unsafe_allow_html=True)
-
 
 
 league_events = build_league_events(df, league_history)
