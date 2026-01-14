@@ -381,11 +381,6 @@ def build_eras(league_history, min_streak=3):
 
     return pd.DataFrame(eras)
 
-    
-df = load_data()
-roster_df = load_roster()
-league_history = build_league_history(df, roster_df)
-
 # ----------------------------
 # ACTIVE USERS ENGINE
 # ----------------------------
@@ -525,6 +520,114 @@ def recent_record_breaks(records_df, current_month, window_days=7):
 
     return fresh.sort_values("date", ascending=False)
 
+# ----------------------------
+# breaking moments Engine
+# ----------------------------
+@st.cache_data
+def build_league_events(df):
+
+    d = df.sort_values(["date", "User"]).copy()
+    d["is_10k"] = d["steps"] >= 10000
+    d["is_5k"]  = d["steps"] >= 5000
+
+    events = []
+
+    # -------------------------
+    # 🔥 10K STREAK RECORDS
+    # -------------------------
+    streaks = {}
+    global_record = 0
+
+    for _, row in d.iterrows():
+        u = row["User"]
+        date = row["date"]
+
+        if u not in streaks:
+            streaks[u] = 0
+
+        if row["is_10k"]:
+            streaks[u] += 1
+        else:
+            streaks[u] = 0
+
+        if streaks[u] > global_record:
+            global_record = streaks[u]
+            events.append({
+                "date": date,
+                "Month": date.to_period("M").to_timestamp(),
+                "User": u,
+                "type": "streak_10k",
+                "value": global_record,
+                "title": "Longest 10K streak ever"
+            })
+
+    # -------------------------
+    # 🚀 BEST SINGLE DAY EVER
+    # -------------------------
+    best_day = 0
+
+    for _, row in d.iterrows():
+        if row["steps"] > best_day:
+            best_day = row["steps"]
+            events.append({
+                "date": row["date"],
+                "Month": row["date"].to_period("M").to_timestamp(),
+                "User": row["User"],
+                "type": "best_day",
+                "value": int(best_day),
+                "title": "Highest steps in a single day ever"
+            })
+
+    # -------------------------
+    # 📆 BEST SINGLE MONTH EVER
+    # -------------------------
+    monthly = (
+        d.groupby(["User", d["date"].dt.to_period("M")])["steps"]
+         .sum()
+         .reset_index()
+         .rename(columns={"date": "Month", "steps": "total"})
+    )
+
+    best_month = 0
+
+    for _, row in monthly.sort_values("Month").iterrows():
+        if row["total"] > best_month:
+            best_month = row["total"]
+            events.append({
+                "date": row["Month"].to_timestamp("M"),
+                "Month": row["Month"].to_timestamp(),
+                "User": row["User"],
+                "type": "best_month",
+                "value": int(best_month),
+                "title": "Highest steps in a month ever"
+            })
+
+    return pd.DataFrame(events)
+    
+df = load_data()
+roster_df = load_roster()
+league_history = build_league_history(df, roster_df)
+league_events = build_league_events(df)
+
+
+# Data Load Fineshes...
+
+# =========================================================
+# 🚨 GLOBAL LEAGUE MOMENTS
+# =========================================================
+
+current_month = df["date"].max().to_period("M").to_timestamp()
+
+breaking = league_events[league_events["Month"] == current_month]
+
+if not breaking.empty:
+    st.markdown("## 🚨 League moments")
+
+    for _, r in breaking.iterrows():
+        st.error(
+            f"🔥 **NEW RECORD!** {r['title']} — "
+            f"{name_with_status(r['User'])} just set {int(r['value']):,}"
+        )
 
 # =========================================================
 # 🏆 HALL OF FAME — ALL TIME RECORDS
