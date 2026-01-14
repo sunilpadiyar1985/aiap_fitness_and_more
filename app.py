@@ -438,6 +438,70 @@ def prediction_engine(df, roster_df, lookback=30):
 
     return pred
 
+# ----------------------------
+# all_time_record Engine
+# ----------------------------
+
+def detect_all_time_records(df):
+
+    d = df.copy().sort_values("date")
+
+    records = []
+
+    # -------- Highest single day --------
+    best_day = d.loc[d["steps"].idxmax()]
+    records.append({
+        "type": "single_day",
+        "title": "Highest single-day steps",
+        "User": best_day["User"],
+        "value": int(best_day["steps"]),
+        "date": best_day["date"]
+    })
+
+    # -------- Highest week --------
+    d["week"] = d["date"].dt.to_period("W").apply(lambda r: r.start_time)
+    weekly = d.groupby(["User","week"])["steps"].sum().reset_index()
+    best_week = weekly.loc[weekly["steps"].idxmax()]
+
+    records.append({
+        "type": "single_week",
+        "title": "Highest single-week steps",
+        "User": best_week["User"],
+        "value": int(best_week["steps"]),
+        "date": best_week["week"]
+    })
+
+    # -------- Highest month --------
+    d["month_p"] = d["date"].dt.to_period("M")
+    monthly = d.groupby(["User","month_p"])["steps"].sum().reset_index()
+    best_month = monthly.loc[monthly["steps"].idxmax()]
+
+    records.append({
+        "type": "single_month",
+        "title": "Highest single-month steps",
+        "User": best_month["User"],
+        "value": int(best_month["steps"]),
+        "date": best_month["month_p"].to_timestamp()
+    })
+
+    return pd.DataFrame(records)
+# ----------------------------
+# breaking moments Engine
+# ----------------------------
+
+def recent_record_breaks(records_df, current_month, window_days=7):
+
+    now = pd.Timestamp.today().normalize()
+
+    df = records_df.copy()
+    df["date"] = pd.to_datetime(df["date"])
+
+    this_month = df[df["date"].dt.to_period("M") == current_month]
+
+    fresh = this_month[(now - this_month["date"]).dt.days <= window_days]
+
+    return fresh.sort_values("date", ascending=False)
+
 
 # =========================================================
 # 🏆 HALL OF FAME — ALL TIME RECORDS
@@ -662,7 +726,6 @@ if page == "🏆 Hall of Fame":
     )
 
 
-
 if page == "🏠 Monthly Results":
     
     st.markdown("### 🏃 Steps League – Monthly Results")
@@ -724,6 +787,22 @@ if page == "🏠 Monthly Results":
     monthly_totals.insert(0, "Rank", range(1, len(monthly_totals) + 1))
     
     st.markdown(f"#### Results for {selected_month.strftime('%B %Y')} ⭐")
+    # ----------------------------
+    # 🚨 League moments (NEW)
+    # ----------------------------
+    
+    records = detect_all_time_records(df)
+    breaking = recent_record_breaks(records, selected_month)
+    
+    if not breaking.empty:
+        st.markdown("## 🚨 League moments")
+    
+        for _, r in breaking.iterrows():
+            st.error(
+                f"🔥 **NEW RECORD!** {r['title']} — "
+                f"{name_with_status(r['User'])} with {r['value']:,}"
+            )
+
     
     # ----------------------------
     # PODIUM
