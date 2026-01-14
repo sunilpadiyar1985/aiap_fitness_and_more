@@ -796,7 +796,15 @@ if page == "🏠 Monthly Results":
     if pivot_active.empty:
         st.info("No activity recorded yet for this month.")
         st.stop()
-    
+    # ----------------------------
+    # SAFE INITIALIZATION (important for Streamlit reruns)
+    # ----------------------------
+    top_consistent = pd.Series(dtype=float)
+    top_active = pd.Series(dtype=float)
+    top_10k = pd.Series(dtype=int)
+    top_5k = pd.Series(dtype=int)
+    top_improved = pd.Series(dtype=float)
+
     # ----------------------------
     # MONTHLY HIGHLIGHTS (CLEAN)
     # ----------------------------
@@ -915,7 +923,7 @@ if page == "🏠 Monthly Results":
     st.divider()
     st.markdown("###### 📝 Season review")
     
-    if "top_improved" in locals() and not top_improved.empty:
+    if not top_improved.empty and not top_consistent.empty:
     
         winner = top3.loc[0,"User"]
         last_place = monthly_totals.iloc[-1]["User"]
