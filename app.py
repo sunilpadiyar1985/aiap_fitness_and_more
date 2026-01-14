@@ -658,14 +658,12 @@ if page == "🏆 Hall of Fame":
 if page == "🏠 Monthly Results":
     
     st.markdown("### 🏃 Steps League – Monthly Results")
-    # ----------------------------
-    # GLOBAL SAFE DEFAULTS (prevents NameError on reruns)
-    # ----------------------------
+    # ✅ HARD GUARANTEED DEFAULTS (must be before any st.stop)
     top_consistent = pd.Series(dtype=float)
-    top_active = pd.Series(dtype=float)
-    top_10k = pd.Series(dtype=int)
-    top_5k = pd.Series(dtype=int)
-    top_improved = pd.Series(dtype=float)
+    top_active     = pd.Series(dtype=float)
+    top_10k        = pd.Series(dtype=int)
+    top_5k         = pd.Series(dtype=int)
+    top_improved   = pd.Series(dtype=float)
 
     # ----------------------------
     # MONTH SELECTOR (ONLY REAL MONTHS, LAST 6)
