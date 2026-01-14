@@ -644,17 +644,12 @@ def show_global_league_moments(events_df):
     # ✅ MUST be aligned here (not indented further)
     st.markdown(f"""
     <style>
-    /* Pull whole app up slightly */
-    .block-container {{
-        padding-top: 1.2rem !important;
-    }}
-    
-    /* Ticker styling */
     .ticker-box {{
         background:#fff4f4;
         border-radius:14px;
         padding:8px 14px;
-        margin-bottom:10px;
+        margin-top:4px;
+        margin-bottom:12px;
         font-size:14px;
         font-weight:500;
         border:1px solid #ffd6d6;
@@ -663,6 +658,7 @@ def show_global_league_moments(events_df):
     
     .ticker-box marquee {{
         white-space: nowrap;
+        line-height: 1.4;
     }}
     </style>
     
@@ -672,8 +668,6 @@ def show_global_league_moments(events_df):
         </marquee>
     </div>
     """, unsafe_allow_html=True)
-
-
 
 league_events = build_league_events(df)
 show_global_league_moments(league_events)
