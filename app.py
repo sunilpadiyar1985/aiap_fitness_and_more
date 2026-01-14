@@ -643,16 +643,25 @@ def show_global_league_moments(events_df):
 
     # ✅ MUST be aligned here (not indented further)
     st.markdown(f"""
-    <div style="
+    <style>
+    .ticker-box {{
         background:#fff4f4;
         border-radius:14px;
-        padding:10px 16px;
-        margin-bottom:14px;
-        font-size:15px;
+        padding:8px 14px;
+        margin-top:-10px;
+        margin-bottom:12px;
+        font-size:14px;
         font-weight:500;
-        overflow:hidden;
         border:1px solid #ffd6d6;
-    ">
+    }}
+    
+    .ticker-box marquee {{
+        white-space: nowrap;
+        display: block;
+    }}
+    </style>
+    
+    <div class="ticker-box">
         🚨 <marquee behavior="scroll" direction="left" scrollamount="5">
             {ticker_text}
         </marquee>
