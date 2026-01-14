@@ -381,6 +381,10 @@ def build_eras(league_history, min_streak=3):
 
     return pd.DataFrame(eras)
 
+df = load_data()
+roster_df = load_roster()
+league_history = build_league_history(df, roster_df)
+
 # ----------------------------
 # ACTIVE USERS ENGINE
 # ----------------------------
@@ -604,9 +608,6 @@ def build_league_events(df):
 
     return pd.DataFrame(events)
     
-df = load_data()
-roster_df = load_roster()
-league_history = build_league_history(df, roster_df)
 league_events = build_league_events(df)
 
 
