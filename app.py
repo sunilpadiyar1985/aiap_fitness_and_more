@@ -634,16 +634,6 @@ def show_global_league_moments(events_df, max_items=5):
 
     if breaking.empty:
         return
-
-    st.markdown("## 🚨 League moments")
-
-    for _, r in breaking.iterrows():
-        st.error(
-            f"🔥 **NEW RECORD!** {r['title']} — "
-            f"{name_with_status(r['User'])} just set {r['value']:,}"
-        )
-
-
 league_events = build_league_events(df)
 show_global_league_moments(league_events)
 
