@@ -629,10 +629,17 @@ if not breaking.empty:
             f"{name_with_status(r['User'])} just set {int(r['value']):,}"
         )
 
+st.write("Detected current month:", current_month)
+st.write("Event months:", league_events["Month"].unique())
+
+
 # =========================================================
 # 🏆 HALL OF FAME — ALL TIME RECORDS
 # =========================================================
 if page == "🏆 Hall of Fame":
+
+    st.write("Total league events:", len(league_events))
+    st.dataframe(league_events.tail(10))
 
     st.markdown("### 🏆 Hall of Fame — All Time Records")
     st.caption("Since the inception of the Steps League")
