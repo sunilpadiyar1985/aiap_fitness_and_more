@@ -3,6 +3,14 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
+# ============================
+# GLOBAL SAFE DEFAULTS
+# ============================
+top_consistent = pd.Series(dtype=float)
+top_active     = pd.Series(dtype=float)
+top_10k        = pd.Series(dtype=int)
+top_5k         = pd.Series(dtype=int)
+top_improved   = pd.Series(dtype=float)
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered", )
 
 st.markdown("""
@@ -658,12 +666,6 @@ if page == "🏆 Hall of Fame":
 if page == "🏠 Monthly Results":
     
     st.markdown("### 🏃 Steps League – Monthly Results")
-    # ✅ HARD GUARANTEED DEFAULTS (must be before any st.stop)
-    top_consistent = pd.Series(dtype=float)
-    top_active     = pd.Series(dtype=float)
-    top_10k        = pd.Series(dtype=int)
-    top_5k         = pd.Series(dtype=int)
-    top_improved   = pd.Series(dtype=float)
 
     # ----------------------------
     # MONTH SELECTOR (ONLY REAL MONTHS, LAST 6)
