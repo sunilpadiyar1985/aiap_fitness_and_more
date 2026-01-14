@@ -575,6 +575,33 @@ def build_league_events(df):
             })
 
     # -------------------------
+    # 🗓️ BEST SINGLE WEEK EVER
+    # -------------------------
+    d["week"] = d["date"].dt.to_period("W").apply(lambda r: r.start_time)
+    
+    weekly = (
+        d.groupby(["User", "week"])["steps"]
+         .sum()
+         .reset_index()
+         .sort_values("week")
+    )
+    
+    best_week = 0
+    
+    for _, row in weekly.iterrows():
+        if row["steps"] > best_week:
+            best_week = row["steps"]
+            events.append({
+                "date": row["week"],
+                "Month": row["week"].to_period("M").to_timestamp(),
+                "User": row["User"],
+                "type": "best_week",
+                "value": int(best_week),
+                "title": "Highest steps in a week ever"
+            })
+
+
+    # -------------------------
     # 🚀 BEST SINGLE DAY EVER
     # -------------------------
     best_day = 0
@@ -589,6 +616,35 @@ def build_league_events(df):
                 "type": "best_day",
                 "value": int(best_day),
                 "title": "Highest steps in a single day ever"
+            })
+
+    # -------------------------
+    # 💪 LONGEST 5K STREAK EVER
+    # -------------------------
+    streaks_5k = {}
+    global_record_5k = 0
+    
+    for _, row in d.iterrows():
+        u = row["User"]
+        date = row["date"]
+    
+        if u not in streaks_5k:
+            streaks_5k[u] = 0
+    
+        if row["is_5k"]:
+            streaks_5k[u] += 1
+        else:
+            streaks_5k[u] = 0
+    
+        if streaks_5k[u] > global_record_5k:
+            global_record_5k = streaks_5k[u]
+            events.append({
+                "date": date,
+                "Month": date.to_period("M").to_timestamp(),
+                "User": u,
+                "type": "streak_5k",
+                "value": global_record_5k,
+                "title": "Longest 5K streak ever"
             })
 
     # -------------------------
@@ -615,6 +671,7 @@ def build_league_events(df):
                 "title": "Highest steps in a month ever"
             })
 
+    events_df = pd.DataFrame(events).sort_values("date")
     return pd.DataFrame(events)
     
 def show_global_league_moments(events_df):
