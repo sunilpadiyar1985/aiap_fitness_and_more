@@ -658,7 +658,15 @@ if page == "🏆 Hall of Fame":
 if page == "🏠 Monthly Results":
     
     st.markdown("### 🏃 Steps League – Monthly Results")
-    
+    # ----------------------------
+    # GLOBAL SAFE DEFAULTS (prevents NameError on reruns)
+    # ----------------------------
+    top_consistent = pd.Series(dtype=float)
+    top_active = pd.Series(dtype=float)
+    top_10k = pd.Series(dtype=int)
+    top_5k = pd.Series(dtype=int)
+    top_improved = pd.Series(dtype=float)
+
     # ----------------------------
     # MONTH SELECTOR (ONLY REAL MONTHS, LAST 6)
     # ----------------------------
@@ -948,7 +956,7 @@ if page == "🏠 Monthly Results":
     if "top_improved" in locals() and not top_improved.empty and not top_consistent.empty:
     
         dominator = monthly_totals.iloc[0]
-        climber = top_improved.index[0]
+        climber = top_improved.index[0] if len(top_improved) > 0 else "—"
         consistent = top_consistent.index[0]
         last_place = monthly_totals.iloc[-1]["User"]
     
