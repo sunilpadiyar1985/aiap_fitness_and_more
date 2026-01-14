@@ -617,23 +617,48 @@ def build_league_events(df):
 
     return pd.DataFrame(events)
     
-def show_global_league_moments(events_df, max_items=5):
-    """
-    Shows global league record moments as a banner block.
-    Only shows events from the current month.
-    """
+def show_global_league_moments(events_df):
 
     if events_df is None or events_df.empty:
         return
 
     current_month = pd.Timestamp.today().to_period("M").to_timestamp()
 
-    breaking = events_df[events_df["Month"] == current_month] \
-                    .sort_values("date", ascending=False) \
-                    .head(max_items)
+    breaking = (
+        events_df[events_df["Month"] == current_month]
+        .sort_values("date", ascending=False)
+        .head(5)
+    )
 
     if breaking.empty:
         return
+
+    messages = []
+    for _, r in breaking.iterrows():
+        messages.append(
+            f"🔥 {r['title']} — {name_with_status(r['User'])} set {r['value']:,}"
+        )
+
+    ticker_text = "   |   ".join(messages)
+
+    # ✅ MUST be aligned here (not indented further)
+    st.markdown(f"""
+    <div style="
+        background:#fff4f4;
+        border-radius:14px;
+        padding:10px 16px;
+        margin-bottom:14px;
+        font-size:15px;
+        font-weight:500;
+        overflow:hidden;
+        border:1px solid #ffd6d6;
+    ">
+        🚨 <marquee behavior="scroll" direction="left" scrollamount="5">
+            {ticker_text}
+        </marquee>
+    </div>
+    """, unsafe_allow_html=True)
+
 league_events = build_league_events(df)
 show_global_league_moments(league_events)
 
