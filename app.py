@@ -525,7 +525,7 @@ def recent_record_breaks(records_df, current_month, window_days=7):
     return fresh.sort_values("date", ascending=False)
 
 # ----------------------------
-# league event Engine
+# 🧠 LEAGUE EVENTS + NARRATIVE ENGINE
 # ----------------------------
 @st.cache_data
 def build_league_events(df, league_history):
@@ -536,20 +536,20 @@ def build_league_events(df, league_history):
 
     events = []
 
-    # -------------------------
-    # 🔥 10K STREAK RECORDS (STORY MODE)
-    # -------------------------
-    
+    # ======================================================
+    # 🔥 LONGEST 10K STREAK EVER (story mode, per user)
+    # ======================================================
+
     global_record = 0
-    
+    MIN_STREAK = 5
+
     for user, u in d.groupby("User"):
-    
         u = u.sort_values("date")
-    
+
         streak = 0
         best_for_user = 0
         best_date = None
-    
+
         for _, row in u.iterrows():
             if row["steps"] >= 10000:
                 streak += 1
@@ -558,13 +558,9 @@ def build_league_events(df, league_history):
                     best_date = row["date"]
             else:
                 streak = 0
-    
-        # Only log ONE event if this user ever beat history
-        MIN_STREAK = 5   # or 7 / 10 if you want stricter
 
         if best_for_user >= MIN_STREAK and best_for_user > global_record:
             global_record = best_for_user
-    
             events.append({
                 "date": best_date,
                 "Month": best_date.to_period("M").to_timestamp(),
@@ -574,20 +570,14 @@ def build_league_events(df, league_history):
                 "title": "Longest 10K streak ever"
             })
 
-    # -------------------------
+    # ======================================================
     # 🗓️ BEST SINGLE WEEK EVER
-    # -------------------------
+    # ======================================================
+
     d["week"] = d["date"].dt.to_period("W").apply(lambda r: r.start_time)
-    
-    weekly = (
-        d.groupby(["User", "week"])["steps"]
-         .sum()
-         .reset_index()
-         .sort_values("week")
-    )
-    
+    weekly = d.groupby(["User", "week"])["steps"].sum().reset_index().sort_values("week")
+
     best_week = 0
-    
     for _, row in weekly.iterrows():
         if row["steps"] > best_week:
             best_week = row["steps"]
@@ -600,12 +590,11 @@ def build_league_events(df, league_history):
                 "title": "Highest steps in a week ever"
             })
 
-
-    # -------------------------
+    # ======================================================
     # 🚀 BEST SINGLE DAY EVER
-    # -------------------------
-    best_day = 0
+    # ======================================================
 
+    best_day = 0
     for _, row in d.iterrows():
         if row["steps"] > best_day:
             best_day = row["steps"]
@@ -618,119 +607,45 @@ def build_league_events(df, league_history):
                 "title": "Highest steps in a single day ever"
             })
 
-    # -------------------------
+    # ======================================================
     # 💪 LONGEST 5K STREAK EVER
-    # -------------------------
+    # ======================================================
+
     streaks_5k = {}
     global_record_5k = 0
-    
+
     for _, row in d.iterrows():
         u = row["User"]
-        date = row["date"]
-    
-        if u not in streaks_5k:
-            streaks_5k[u] = 0
-    
+
         if row["is_5k"]:
-            streaks_5k[u] += 1
+            streaks_5k[u] = streaks_5k.get(u, 0) + 1
         else:
             streaks_5k[u] = 0
-    
+
         if streaks_5k[u] > global_record_5k:
             global_record_5k = streaks_5k[u]
             events.append({
-                "date": date,
-                "Month": date.to_period("M").to_timestamp(),
+                "date": row["date"],
+                "Month": row["date"].to_period("M").to_timestamp(),
                 "User": u,
                 "type": "streak_5k",
-                "value": global_record_5k,
+                "value": int(global_record_5k),
                 "title": "Longest 5K streak ever"
             })
 
-
-    # -------------------------
-    # 👑 MOST PREMIER TITLES EVER
-    # -------------------------
-    prem = league_history[
-        (league_history["League"] == "Premier") & (league_history["Champion"])
-    ].sort_values("Month")
-
-    prem_counts = {}
-    prem_record = 0
-
-    for _, row in prem.iterrows():
-        u = row["User"]
-        prem_counts[u] = prem_counts.get(u, 0) + 1
-
-        if prem_counts[u] > prem_record:
-            prem_record = prem_counts[u]
-            events.append({
-                "date": row["Month"],
-                "Month": row["Month"].to_period("M").to_timestamp(),
-                "User": u,
-                "type": "prem_titles",
-                "value": prem_record,
-                "title": "Most Premier League titles ever"
-            })
-
-    # -------------------------
-    # 🏆 MOST CHAMP TITLES EVER
-    # -------------------------
-    champ = league_history[
-        (league_history["League"] == "Championship") & (league_history["Champion"])
-    ].sort_values("Month")
-
-    champ_counts = {}
-    champ_record = 0
-
-    for _, row in champ.iterrows():
-        u = row["User"]
-        champ_counts[u] = champ_counts.get(u, 0) + 1
-
-        if champ_counts[u] > champ_record:
-            champ_record = champ_counts[u]
-            events.append({
-                "date": row["Month"],
-                "Month": row["Month"].to_period("M").to_timestamp(),
-                "User": u,
-                "type": "champ_titles",
-                "value": champ_record,
-                "title": "Most Championship titles ever"
-            })
-
-    # -------------------------
-    # 🚀 BEST POINTS SEASON EVER
-    # -------------------------
-    best_points = 0
-
-    lh_sorted = league_history.sort_values("Month")
-
-    for _, row in lh_sorted.iterrows():
-        if row["points"] > best_points:
-            best_points = row["points"]
-            events.append({
-                "date": row["Month"],
-                "Month": row["Month"].to_period("M").to_timestamp(),
-                "User": row["User"],
-                "type": "best_points",
-                "value": int(row["points"] * 100),
-                "title": f"Best season performance ever ({row['League']})"
-            })
-
-    
-    # -------------------------
+    # ======================================================
     # 📆 BEST SINGLE MONTH EVER
-    # -------------------------
+    # ======================================================
+
     monthly = (
         d.groupby(["User", d["date"].dt.to_period("M")])["steps"]
-         .sum()
-         .reset_index()
+         .sum().reset_index()
          .rename(columns={"date": "Month", "steps": "total"})
+         .sort_values("Month")
     )
 
     best_month = 0
-
-    for _, row in monthly.sort_values("Month").iterrows():
+    for _, row in monthly.iterrows():
         if row["total"] > best_month:
             best_month = row["total"]
             events.append({
@@ -742,8 +657,129 @@ def build_league_events(df, league_history):
                 "title": "Highest steps in a month ever"
             })
 
-    events_df = pd.DataFrame(events).sort_values("date")
-    return pd.DataFrame(events)
+    # ======================================================
+    # 👑 PREMIER TITLES RECORD
+    # ======================================================
+
+    prem = league_history[(league_history["League"]=="Premier") & (league_history["Champion"])].sort_values("Month")
+    prem_counts, prem_record = {}, 0
+
+    for _, row in prem.iterrows():
+        u = row["User"]
+        prem_counts[u] = prem_counts.get(u, 0) + 1
+        if prem_counts[u] > prem_record:
+            prem_record = prem_counts[u]
+            events.append({
+                "date": row["Month"],
+                "Month": row["Month"].to_period("M").to_timestamp(),
+                "User": u,
+                "type": "prem_titles",
+                "value": prem_record,
+                "title": "Most Premier League titles ever"
+            })
+
+    # ======================================================
+    # 🏆 CHAMPIONSHIP TITLES RECORD
+    # ======================================================
+
+    champ = league_history[(league_history["League"]=="Championship") & (league_history["Champion"])].sort_values("Month")
+    champ_counts, champ_record = {}, 0
+
+    for _, row in champ.iterrows():
+        u = row["User"]
+        champ_counts[u] = champ_counts.get(u, 0) + 1
+        if champ_counts[u] > champ_record:
+            champ_record = champ_counts[u]
+            events.append({
+                "date": row["Month"],
+                "Month": row["Month"].to_period("M").to_timestamp(),
+                "User": u,
+                "type": "champ_titles",
+                "value": champ_record,
+                "title": "Most Championship titles ever"
+            })
+
+    # ======================================================
+    # 🚀 BEST POINTS SEASON EVER
+    # ======================================================
+
+    best_points = 0
+    for _, row in league_history.sort_values("Month").iterrows():
+        if row["points"] > best_points:
+            best_points = row["points"]
+            events.append({
+                "date": row["Month"],
+                "Month": row["Month"].to_period("M").to_timestamp(),
+                "User": row["User"],
+                "type": "best_points",
+                "value": int(best_points * 100),
+                "title": f"Best season performance ever ({row['League']})"
+            })
+
+    # ======================================================
+    # 👑 ALL-TIME STEPS LEADER CHANGE (narrative)
+    # ======================================================
+
+    totals, current_leader, current_best = {}, None, 0
+
+    for _, row in d.sort_values("date").iterrows():
+        u = row["User"]
+        totals[u] = totals.get(u, 0) + row["steps"]
+
+        if totals[u] > current_best and u != current_leader:
+            prev = current_leader
+            current_leader = u
+            current_best = totals[u]
+
+            if prev:
+                events.append({
+                    "date": row["date"],
+                    "Month": row["date"].to_period("M").to_timestamp(),
+                    "User": u,
+                    "type": "leader_change",
+                    "value": int(current_best),
+                    "title": f"Overtakes {prev} as all-time steps leader"
+                })
+
+    # ======================================================
+    # 🔥 LONGEST ACTIVE 10K STREAK
+    # ======================================================
+
+    active, best_active = {}, 0
+
+    for _, row in d.sort_values("date").iterrows():
+        u = row["User"]
+        active[u] = active.get(u, 0) + 1 if row["steps"] >= 10000 else 0
+
+        if active[u] > best_active:
+            best_active = active[u]
+            events.append({
+                "date": row["date"],
+                "Month": row["date"].to_period("M").to_timestamp(),
+                "User": u,
+                "type": "active_streak",
+                "value": int(best_active),
+                "title": "New longest active 10K streak"
+            })
+
+    # ======================================================
+    # 🏆 FIRST EVER 100K DAY
+    # ======================================================
+
+    first_100k = False
+    for _, row in d.iterrows():
+        if row["steps"] >= 100000 and not first_100k:
+            first_100k = True
+            events.append({
+                "date": row["date"],
+                "Month": row["date"].to_period("M").to_timestamp(),
+                "User": row["User"],
+                "type": "first_100k_day",
+                "value": int(row["steps"]),
+                "title": "First ever 100K steps day"
+            })
+
+    return pd.DataFrame(events).sort_values("date")
     
 def show_global_league_moments(events_df):
 
