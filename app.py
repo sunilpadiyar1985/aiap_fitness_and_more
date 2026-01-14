@@ -787,7 +787,18 @@ def show_global_league_moments(events_df):
         return
 
     current_month = pd.Timestamp.today().to_period("M").to_timestamp()
-
+    # remove active streak if it equals the all-time record
+    if "streak_10k" in events_df["type"].values:
+        latest_record = (
+            events_df[events_df["type"] == "streak_10k"]
+            .sort_values("date")
+            .iloc[-1]["value"]
+        )
+    
+        events_df = events_df[
+            ~((events_df["type"] == "active_streak") & (events_df["value"] >= latest_record))
+        ]
+    
     breaking = (
         events_df[events_df["Month"] == current_month]
           .sort_values("date", ascending=False)
@@ -804,7 +815,8 @@ def show_global_league_moments(events_df):
 
 
     ticker_text = "   ⚡   ".join(messages)
-    ticker_text = "⠀" * 50 + ticker_text + "⠀" * 50
+    pad = "&nbsp;" * 50
+    ticker_text = pad + ticker_text + pad
 
     # ✅ MUST be aligned here (not indented further)
     st.markdown(f"""
@@ -823,7 +835,7 @@ def show_global_league_moments(events_df):
     
     .ticker-box marquee {{
         white-space: nowrap;
-        line-height: 1.4;
+        line-height: 1.2;
     }}
     </style>
     
