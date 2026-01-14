@@ -560,7 +560,9 @@ def build_league_events(df):
                 streak = 0
     
         # Only log ONE event if this user ever beat history
-        if best_for_user > global_record:
+        MIN_STREAK = 5   # or 7 / 10 if you want stricter
+
+        if best_for_user >= MIN_STREAK and best_for_user > global_record:
             global_record = best_for_user
     
             events.append({
@@ -616,7 +618,7 @@ def build_league_events(df):
     return pd.DataFrame(events)
     
 league_events = build_league_events(df)
-
+show_global_league_moments(league_events)
 
 # Data Load Fineshes...
 
@@ -637,17 +639,10 @@ if not breaking.empty:
             f"{name_with_status(r['User'])} just set {int(r['value']):,}"
         )
 
-st.write("Detected current month:", current_month)
-st.write("Event months:", league_events["Month"].unique())
-
-
 # =========================================================
 # 🏆 HALL OF FAME — ALL TIME RECORDS
 # =========================================================
 if page == "🏆 Hall of Fame":
-
-    st.write("Total league events:", len(league_events))
-    st.dataframe(league_events.tail(10))
 
     st.markdown("### 🏆 Hall of Fame — All Time Records")
     st.caption("Since the inception of the Steps League")
