@@ -617,6 +617,33 @@ def build_league_events(df):
 
     return pd.DataFrame(events)
     
+    def show_global_league_moments(events_df, max_items=5):
+        """
+        Shows global league record moments as a banner block.
+        Only shows events from the current month.
+        """
+    
+        if events_df is None or events_df.empty:
+            return
+    
+        current_month = pd.Timestamp.today().to_period("M").to_timestamp()
+    
+        breaking = events_df[events_df["Month"] == current_month] \
+                        .sort_values("date", ascending=False) \
+                        .head(max_items)
+    
+        if breaking.empty:
+            return
+    
+        st.markdown("## 🚨 League moments")
+    
+        for _, r in breaking.iterrows():
+            st.error(
+                f"🔥 **NEW RECORD!** {r['title']} — "
+                f"{name_with_status(r['User'])} just set {r['value']:,}"
+            )
+
+
 league_events = build_league_events(df)
 show_global_league_moments(league_events)
 
