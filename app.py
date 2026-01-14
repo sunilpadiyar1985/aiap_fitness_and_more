@@ -790,20 +790,21 @@ def show_global_league_moments(events_df):
 
     breaking = (
         events_df[events_df["Month"] == current_month]
-        .sort_values("date", ascending=False)
-        .head(5)
+          .sort_values("date", ascending=False)
+          .drop_duplicates(subset=["type"], keep="first")
+          .head(5)
     )
-
     if breaking.empty:
         return
 
-    messages = []
-    for _, r in breaking.iterrows():
-        messages.append(
-            f"🔥 {r['title']} — {name_with_status(r['User'])} set {r['value']:,}"
-        )
+    messages = [
+        f"{name_with_status(r['User'])} — {r['title']} ({r['value']:,})"
+        for _, r in breaking.iterrows()
+    ]
 
-    ticker_text = "   |   ".join(messages)
+
+    ticker_text = "   ⚡   ".join(messages)
+    ticker_text = "⠀" * 50 + ticker_text + "⠀" * 50
 
     # ✅ MUST be aligned here (not indented further)
     st.markdown(f"""
