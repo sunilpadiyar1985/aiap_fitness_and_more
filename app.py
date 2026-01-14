@@ -508,7 +508,7 @@ def longest_10k_streak_by_user(df):
 
 
 # ----------------------------
-# breaking moments Engine
+# recent record moments Engine
 # ----------------------------
 
 def recent_record_breaks(records_df, current_month, window_days=7):
@@ -525,10 +525,10 @@ def recent_record_breaks(records_df, current_month, window_days=7):
     return fresh.sort_values("date", ascending=False)
 
 # ----------------------------
-# breaking moments Engine
+# league event Engine
 # ----------------------------
 @st.cache_data
-def build_league_events(df):
+def build_league_events(df, league_history):
 
     d = df.sort_values(["date", "User"]).copy()
     d["is_10k"] = d["steps"] >= 10000
@@ -647,6 +647,77 @@ def build_league_events(df):
                 "title": "Longest 5K streak ever"
             })
 
+
+    # -------------------------
+    # 👑 MOST PREMIER TITLES EVER
+    # -------------------------
+    prem = league_history[
+        (league_history["League"] == "Premier") & (league_history["Champion"])
+    ].sort_values("Month")
+
+    prem_counts = {}
+    prem_record = 0
+
+    for _, row in prem.iterrows():
+        u = row["User"]
+        prem_counts[u] = prem_counts.get(u, 0) + 1
+
+        if prem_counts[u] > prem_record:
+            prem_record = prem_counts[u]
+            events.append({
+                "date": row["Month"],
+                "Month": row["Month"].to_period("M").to_timestamp(),
+                "User": u,
+                "type": "prem_titles",
+                "value": prem_record,
+                "title": "Most Premier League titles ever"
+            })
+
+    # -------------------------
+    # 🏆 MOST CHAMP TITLES EVER
+    # -------------------------
+    champ = league_history[
+        (league_history["League"] == "Championship") & (league_history["Champion"])
+    ].sort_values("Month")
+
+    champ_counts = {}
+    champ_record = 0
+
+    for _, row in champ.iterrows():
+        u = row["User"]
+        champ_counts[u] = champ_counts.get(u, 0) + 1
+
+        if champ_counts[u] > champ_record:
+            champ_record = champ_counts[u]
+            events.append({
+                "date": row["Month"],
+                "Month": row["Month"].to_period("M").to_timestamp(),
+                "User": u,
+                "type": "champ_titles",
+                "value": champ_record,
+                "title": "Most Championship titles ever"
+            })
+
+    # -------------------------
+    # 🚀 BEST POINTS SEASON EVER
+    # -------------------------
+    best_points = 0
+
+    lh_sorted = league_history.sort_values("Month")
+
+    for _, row in lh_sorted.iterrows():
+        if row["points"] > best_points:
+            best_points = row["points"]
+            events.append({
+                "date": row["Month"],
+                "Month": row["Month"].to_period("M").to_timestamp(),
+                "User": row["User"],
+                "type": "best_points",
+                "value": int(row["points"] * 100),
+                "title": f"Best season performance ever ({row['League']})"
+            })
+
+    
     # -------------------------
     # 📆 BEST SINGLE MONTH EVER
     # -------------------------
@@ -726,7 +797,7 @@ def show_global_league_moments(events_df):
     </div>
     """, unsafe_allow_html=True)
 
-league_events = build_league_events(df)
+league_events = build_league_events(df, league_history)
 show_global_league_moments(league_events)
 
 # Data Load Fineshes...
