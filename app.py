@@ -772,13 +772,21 @@ if page == "🏠 Monthly Results":
     st.divider()
     st.markdown("###### 📰 Monthly storylines")
     
-    dominator = monthly_totals.iloc[0]
-    climber = top_improved.index[0]
-    consistent = top_consistent.index[0]
+    if "top_improved" in locals() and not top_improved.empty and not top_consistent.empty:
     
-    st.success(f"👑 **Dominant force:** {dominator['User']} ruled the month with {int(dominator['steps']):,} steps")
-    st.info(f"🚀 **Biggest momentum:** {climber} showed the strongest improvement trend")
-    st.warning(f"🧱 **Mr Consistent:** {consistent} was the steadiest performer this month")
+        dominator = monthly_totals.iloc[0]
+        climber = top_improved.index[0]
+        consistent = top_consistent.index[0]
+        last_place = monthly_totals.iloc[-1]["User"]
+    
+        st.success(f"👑 **Dominant force:** {dominator['User']} ruled the month with {int(dominator['steps']):,} steps")
+        st.info(f"🚀 **Biggest momentum:** {climber} showed the strongest improvement trend")
+        st.warning(f"🧱 **Mr Consistent:** {consistent} was the steadiest performer this month")
+        st.error(f"⚠️ **Needs a comeback:** {last_place} will be hungry next month")
+    
+    else:
+        st.caption("Monthly storylines will appear once enough activity data is available.")
+
     
     # ----------------------------
     # MONTHLY HIGHLIGHTS
