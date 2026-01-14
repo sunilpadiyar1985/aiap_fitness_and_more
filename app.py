@@ -787,24 +787,27 @@ def show_global_league_moments(events_df):
         return
 
     current_month = pd.Timestamp.today().to_period("M").to_timestamp()
-    # remove active streak if it equals the all-time record
-    if "streak_10k" in events_df["type"].values:
+
+    df = events_df.copy()
+
+    # 🧹 remove noisy active streak if it already equals all-time record
+    if "streak_10k" in df["type"].values:
         latest_record = (
-            events_df[events_df["type"] == "streak_10k"]
+            df[df["type"] == "streak_10k"]
             .sort_values("date")
             .iloc[-1]["value"]
         )
-    
-        events_df = events_df[
-            ~((events_df["type"] == "active_streak") & (events_df["value"] >= latest_record))
-        ]
-    
+
+        df = df[~((df["type"] == "active_streak") & (df["value"] >= latest_record))]
+
+    # 📰 headline selection
     breaking = (
-        events_df[events_df["Month"] == current_month]
-          .sort_values("date", ascending=False)
-          .drop_duplicates(subset=["type"], keep="first")
-          .head(5)
+        df[df["Month"] == current_month]
+        .sort_values("date", ascending=False)
+        .drop_duplicates(subset=["type"], keep="first")
+        .head(5)
     )
+
     if breaking.empty:
         return
 
@@ -813,12 +816,10 @@ def show_global_league_moments(events_df):
         for _, r in breaking.iterrows()
     ]
 
-
-    ticker_text = "   ⚡   ".join(messages)
+    ticker_text = " ⚡ ".join(messages)
     pad = "&nbsp;" * 50
     ticker_text = pad + ticker_text + pad
 
-    # ✅ MUST be aligned here (not indented further)
     st.markdown(f"""
     <style>
     .ticker-box {{
@@ -838,13 +839,14 @@ def show_global_league_moments(events_df):
         line-height: 1.2;
     }}
     </style>
-    
+
     <div class="ticker-box">
-        <marquee behavior="scroll" direction="left" scrollamount="5">
+        <marquee behavior="scroll" direction="left" scrollamount="4">
             🚨 {ticker_text}
         </marquee>
     </div>
     """, unsafe_allow_html=True)
+
 
 league_events = build_league_events(df, league_history)
 show_global_league_moments(league_events)
