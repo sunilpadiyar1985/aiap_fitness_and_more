@@ -788,64 +788,52 @@ def show_global_league_moments(events_df):
 
     current_month = pd.Timestamp.today().to_period("M").to_timestamp()
 
-    df = events_df.copy()
-
-    # 🧹 remove noisy active streak if it already equals all-time record
-    if "streak_10k" in df["type"].values:
-        latest_record = (
-            df[df["type"] == "streak_10k"]
-            .sort_values("date")
-            .iloc[-1]["value"]
-        )
-
-        df = df[~((df["type"] == "active_streak") & (df["value"] >= latest_record))]
-
-    # 📰 headline selection
     breaking = (
-        df[df["Month"] == current_month]
+        events_df[events_df["Month"] == current_month]
         .sort_values("date", ascending=False)
-        .drop_duplicates(subset=["type"], keep="first")
         .head(5)
     )
 
     if breaking.empty:
         return
 
-    messages = [
-        f"{name_with_status(r['User'])} — {r['title']} ({r['value']:,})"
-        for _, r in breaking.iterrows()
-    ]
+    messages = []
+    for _, r in breaking.iterrows():
+        messages.append(
+            f"{r['title']} — {name_with_status(r['User'])} set {r['value']:,}"
+        )
 
-    ticker_text = " ⚡ ".join(messages)
-    pad = "&nbsp;" * 50
-    ticker_text = pad + ticker_text + pad
+    ticker_text = " ⚡️ ".join(messages)
 
     st.markdown(f"""
     <style>
-    .ticker-box {{
-        background:#fff4f4;
-        border-radius:14px;
-        padding:8px 14px;
-        margin-top:4px;
-        margin-bottom:12px;
-        font-size:14px;
-        font-weight:500;
-        border:1px solid #ffd6d6;
-        overflow:hidden;
+    .league-ticker {{
+        background: #fff4f4;
+        border: 1px solid #ffd6d6;
+        border-radius: 999px;
+        padding: 6px 14px;
+        margin: 4px 0 10px 0;
+        font-size: 14px;
+        font-weight: 500;
+        overflow: hidden;
+        height: 36px;
+        display: flex;
+        align-items: center;
     }}
-    
-    .ticker-box marquee {{
+
+    .league-ticker marquee {{
         white-space: nowrap;
-        line-height: 1.2;
+        line-height: 1;
     }}
     </style>
 
-    <div class="ticker-box">
+    <div class="league-ticker">
         <marquee behavior="scroll" direction="left" scrollamount="4">
             🚨 {ticker_text}
         </marquee>
     </div>
     """, unsafe_allow_html=True)
+
 
 
 league_events = build_league_events(df, league_history)
