@@ -665,23 +665,6 @@ show_global_league_moments(league_events)
 # Data Load Fineshes...
 
 # =========================================================
-# 🚨 GLOBAL LEAGUE MOMENTS
-# =========================================================
-
-current_month = df["date"].max().to_period("M").to_timestamp()
-
-breaking = league_events[league_events["Month"] == current_month]
-
-if not breaking.empty:
-    st.markdown("## 🚨 League moments")
-
-    for _, r in breaking.iterrows():
-        st.error(
-            f"🔥 **NEW RECORD!** {r['title']} — "
-            f"{name_with_status(r['User'])} just set {int(r['value']):,}"
-        )
-
-# =========================================================
 # 🏆 HALL OF FAME — ALL TIME RECORDS
 # =========================================================
 if page == "🏆 Hall of Fame":
