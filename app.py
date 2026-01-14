@@ -537,31 +537,38 @@ def build_league_events(df):
     events = []
 
     # -------------------------
-    # 🔥 10K STREAK RECORDS
+    # 🔥 10K STREAK RECORDS (STORY MODE)
     # -------------------------
-    streaks = {}
+    
     global_record = 0
-
-    for _, row in d.iterrows():
-        u = row["User"]
-        date = row["date"]
-
-        if u not in streaks:
-            streaks[u] = 0
-
-        if row["is_10k"]:
-            streaks[u] += 1
-        else:
-            streaks[u] = 0
-
-        if streaks[u] > global_record:
-            global_record = streaks[u]
+    
+    for user, u in d.groupby("User"):
+    
+        u = u.sort_values("date")
+    
+        streak = 0
+        best_for_user = 0
+        best_date = None
+    
+        for _, row in u.iterrows():
+            if row["steps"] >= 10000:
+                streak += 1
+                if streak > best_for_user:
+                    best_for_user = streak
+                    best_date = row["date"]
+            else:
+                streak = 0
+    
+        # Only log ONE event if this user ever beat history
+        if best_for_user > global_record:
+            global_record = best_for_user
+    
             events.append({
-                "date": date,
-                "Month": date.to_period("M").to_timestamp(),
-                "User": u,
+                "date": best_date,
+                "Month": best_date.to_period("M").to_timestamp(),
+                "User": user,
                 "type": "streak_10k",
-                "value": global_record,
+                "value": int(best_for_user),
                 "title": "Longest 10K streak ever"
             })
 
