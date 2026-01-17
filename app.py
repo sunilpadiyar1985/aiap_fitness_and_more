@@ -532,7 +532,7 @@ def build_league_events(df, league_history):
 
     d = df.sort_values(["date", "User"]).copy()
     d["is_10k"] = d["steps"] >= 10000
-    d["is_5k"]  = d["steps"] >= 5000
+    d["is_5k_zone"] = (d["steps"] >= 5000) & (d["steps"] < 10000)
 
     events = []
 
@@ -607,30 +607,31 @@ def build_league_events(df, league_history):
                 "title": "Highest steps in a single day ever"
             })
 
-    # ======================================================
-    # 💪 LONGEST 5K STREAK EVER
-    # ======================================================
-
+    # -------------------------
+    # 🟦 LONGEST 5K ZONE STREAK EVER (5000–9999)
+    # -------------------------
+    
     streaks_5k = {}
     global_record_5k = 0
+    MIN_5K_STREAK = 5
 
-    for _, row in d.iterrows():
+    for _, row in d.sort_values("date").iterrows():
         u = row["User"]
-
-        if row["is_5k"]:
+    
+        if row["is_5k_zone"]:
             streaks_5k[u] = streaks_5k.get(u, 0) + 1
         else:
             streaks_5k[u] = 0
-
-        if streaks_5k[u] > global_record_5k:
+    
+        if streaks_5k[u] >= MIN_5K_STREAK and streaks_5k[u] > global_record_5k:
             global_record_5k = streaks_5k[u]
             events.append({
                 "date": row["date"],
                 "Month": row["date"].to_period("M").to_timestamp(),
                 "User": u,
-                "type": "streak_5k",
+                "type": "streak_5k_zone",
                 "value": int(global_record_5k),
-                "title": "Longest 5K streak ever"
+                "title": "Longest 5K consistency streak ever"
             })
 
     # ======================================================
@@ -916,7 +917,7 @@ if page == "🏆 Hall of Fame":
         u = u.sort_values("date")
 
         is10 = (u["steps"] >= 10000).tolist()
-        is5 = (u["steps"] >= 5000).tolist()
+        is5 = ((u["steps"] >= 5000) & (u["steps"] < 10000)).tolist()
 
         streak_10k[user] = max_streak(is10)
         streak_5k[user] = max_streak(is5)
@@ -1250,7 +1251,7 @@ if page == "🏠 Monthly Results":
     days_10k = (pivot_active >= 10000).sum(axis=1).sort_values(ascending=False)
     top_10k = days_10k.head(3)
     
-    days_5k = (pivot_active >= 5000).sum(axis=1).sort_values(ascending=False)
+    days_5k = ((pivot_active >= 5000) & (pivot_active < 10000)).sum(axis=1).sort_values(ascending=False)
     top_5k = days_5k.head(3)
     
     def slope(row):
@@ -1499,7 +1500,7 @@ if page == "👤 Player Profile":
         return cur
 
     is_10k = (u["steps"] >= 10000).tolist()
-    is_5k = (u["steps"] >= 5000).tolist()
+    is_5k = ((u["steps"] >= 5000) & (u["steps"] < 10000)).tolist()
 
     max_10k_streak = max_streak(is_10k)
     max_5k_streak = max_streak(is_5k)
