@@ -1066,7 +1066,6 @@ if page == "🏠 Monthly Results":
     
     st.markdown("### 🏃 Steps League – Monthly Results")
     current_month = pd.Timestamp.today().to_period("M")
-    is_current_month = (selected_month == current_month)
     
     # ----------------------------
     # MONTH SELECTOR (ONLY REAL MONTHS, LAST 6)
@@ -1089,6 +1088,8 @@ if page == "🏠 Monthly Results":
         available_months[::-1],
         format_func=lambda x: x.strftime("%B %Y")
     )
+
+    is_current_month = (selected_month == current_month)
     month_start = selected_month.to_timestamp()
     month_end = selected_month.to_timestamp("M")
     
