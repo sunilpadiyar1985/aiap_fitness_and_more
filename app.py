@@ -635,6 +635,32 @@ def build_league_events(df, league_history):
             })
 
     # ======================================================
+    # 💪 LONGEST ACTIVE 5K+ HABIT STREAK (NEW CORE CATEGORY)
+    # ======================================================
+    
+    active5, best_active5 = {}, 0
+    MIN_ACTIVE5 = 7   # don’t fire stories for tiny streaks
+    
+    for _, row in d.sort_values("date").iterrows():
+        u = row["User"]
+    
+        if row["steps"] >= 5000:
+            active5[u] = active5.get(u, 0) + 1
+        else:
+            active5[u] = 0
+    
+        if active5[u] >= MIN_ACTIVE5 and active5[u] > best_active5:
+            best_active5 = active5[u]
+            events.append({
+                "date": row["date"],
+                "Month": row["date"].to_period("M").to_timestamp(),
+                "User": u,
+                "type": "active_5k_habit",
+                "value": int(best_active5),
+                "title": "New longest active 5K+ habit streak"
+            })
+
+    # ======================================================
     # 📆 BEST SINGLE MONTH EVER
     # ======================================================
 
@@ -928,6 +954,18 @@ if page == "🏆 Hall of Fame":
     streak_10k = pd.Series(streak_10k)
     streak_5k = pd.Series(streak_5k)
 
+    streak_active5 = {}
+    current_active5 = {}
+    
+    for user, u in d.groupby("User"):
+        u = u.sort_values("date")
+        is_active5 = (u["steps"] >= 5000).tolist()
+    
+        streak_active5[user] = max_streak(is_active5)
+        current_active5[user] = current_streak(is_active5)
+    
+    streak_active5 = pd.Series(streak_active5)
+
     # -------------------------
     # STREAK DISPLAY SERIES (🔥 if active)
     # -------------------------
@@ -989,8 +1027,9 @@ if page == "🏆 Hall of Fame":
     record_row("Highest 5K days (all-time)", "🥈", fivek_days, lambda x: f"{int(x)} days")
     record_row("Highest 10K %completion", "🏅", tenk_pct, lambda x: f"{x:.2f}%")
     record_row("Highest 5K %completion", "📈", fivek_pct, lambda x: f"{x:.2f}%")
-    record_row("Longest 10K streak", "⚡", streak_10k_display, lambda x: f"{int(x)} days")
-    record_row("Longest 5K streak", "💪", streak_5k_display, lambda x: f"{int(x)} days")
+    record_row("Longest 10K streak - elite streaks", "⚡", streak_10k_display, lambda x: f"{int(x)} days")
+    record_row("Longest active 5K+ habit streak", "💪", streak_active5, lambda x: f"{int(x)} days")
+    record_row("Longest 5K streak - zone streaks (5K-only)", "🟦", streak_5k_display, lambda x: f"{int(x)} days")
 
     st.divider()
     st.markdown("###### 🏟️ League Hall of Fame")
@@ -1501,6 +1540,9 @@ if page == "👤 Player Profile":
 
     is_10k = (u["steps"] >= 10000).tolist()
     is_5k = ((u["steps"] >= 5000) & (u["steps"] < 10000)).tolist()
+    is_active5 = (u["steps"] >= 5000).tolist()
+    max_active5 = max_streak(is_active5)
+    current_active5 = current_streak(is_active5)
 
     max_10k_streak = max_streak(is_10k)
     max_5k_streak = max_streak(is_5k)
@@ -1519,12 +1561,13 @@ if page == "👤 Player Profile":
 
 
     c3.metric("Magic 10K covered", f"{pct_10k}%", "")
-    c3.metric("10K streak (max)", f"{max_10k_streak} days", "")
-    c3.metric("5K streak (max)", f"{max_5k_streak} days", "")
+    c3.metric("10K streak - elite (max)", f"{max_10k_streak} days", "")
+    c3.metric("5K+ habit streak (max)", f"{max_active5} days", "")
+    c3.metric("Only 5K streak (max)", f"{max_5k_streak} days", "")
 
     st.caption(
         f"🔥 Current streaks (as of {last_active_date.strftime('%d %b %Y')}) — "
-        f"10K: {current_10k_streak} days | 5K: {current_5k_streak} days"
+        f"10K: {current_10k_streak} | 5K+ habit: {current_active5} | 5K zone: {current_5k_streak}"
     )
 
     st.success(f"📈 **Fitness trend:** {trend_label}")
