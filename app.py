@@ -1065,7 +1065,9 @@ if page == "🏆 Hall of Fame":
 if page == "🏠 Monthly Results":
     
     st.markdown("### 🏃 Steps League – Monthly Results")
-
+    current_month = pd.Timestamp.today().to_period("M")
+    is_current_month = (selected_month == current_month)
+    
     # ----------------------------
     # MONTH SELECTOR (ONLY REAL MONTHS, LAST 6)
     # ----------------------------
@@ -1123,6 +1125,9 @@ if page == "🏠 Monthly Results":
     monthly_totals.insert(0, "Rank", range(1, len(monthly_totals) + 1))
     
     st.markdown(f"#### Results for {selected_month.strftime('%B %Y')} ⭐")
+    if is_current_month:
+        st.info("🕒 **Live month in progress** — standings are based on current data and may change before month end.")
+
         
     # ----------------------------
     # 🚨 League moments (NEW)
@@ -1140,7 +1145,10 @@ if page == "🏠 Monthly Results":
                 f"{name_with_status(r['User'])} with {r['value']:,}"
             )
 
-    
+    if is_current_month:
+        crown_text = "🗳️ Current leader"
+    else:
+        crown_text = "👑 Champion of the month"
     # ----------------------------
     # PODIUM
     # ----------------------------
@@ -1150,7 +1158,7 @@ if page == "🏠 Monthly Results":
         
     top3 = monthly_totals.head(3).reset_index(drop=True)
     
-    st.markdown("###### 🏆 This month's podium")
+    st.markdown("###### 🏆 This month's podium" if not is_current_month else "###### 🏁 Current standings")
     p1, p2, p3 = st.columns([1.1, 1.4, 1.1])
     
     # 🥈 SECOND
@@ -1174,7 +1182,7 @@ if page == "🏠 Monthly Results":
                 <div style="font-size:20px">🥇 Winner</div>
                 <div style="font-size:24px;font-weight:700;margin-top:6px">{name_with_status(top3.loc[0,'User'])}</div>
                 <div style="font-size:17px;color:#444">{int(top3.loc[0,'steps']):,} steps</div>
-                <div style="font-size:13px;color:#777;margin-top:4px">👑 Champion of the month</div>
+                <div style="font-size:13px;color:#777;margin-top:4px">{crown_text}</div>
             </div>
             """,
             unsafe_allow_html=True
