@@ -3,6 +3,9 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
+st.cache_data.clear()
+st.cache_resource.clear()
+
 # ============================
 # GLOBAL SAFE DEFAULTS
 # ============================
@@ -534,67 +537,69 @@ def current_streak_from_bool(series):
             break
     return cur
 
+def analyze_streaks(series, dates):
+    max_len = 0
+    cur_len = 0
+
+    max_end = None
+    max_start = None
+
+    cur_start = None
+
+    for i, v in enumerate(series):
+        if v:
+            if cur_len == 0:
+                cur_start = dates[i]
+            cur_len += 1
+
+            if cur_len > max_len:
+                max_len = cur_len
+                max_end = dates[i]
+                max_start = cur_start
+        else:
+            cur_len = 0
+            cur_start = None
+
+    # current streak (from end)
+    cur_len2 = 0
+    cur_start2 = None
+
+    for i in range(len(series)-1, -1, -1):
+        if series[i]:
+            if cur_len2 == 0:
+                cur_start2 = dates[i]
+            cur_len2 += 1
+        else:
+            break
+
+    cur_end2 = dates[-1] if cur_len2 > 0 else None
+
+    return {
+        "max": max_len,
+        "max_start": max_start,
+        "max_end": max_end,
+        "current": cur_len2,
+        "current_start": cur_start2,
+        "current_end": cur_end2
+    }
 
 def compute_user_streaks(df, user):
-    """
-    Returns:
-    {
-      '10k_max', '10k_current',
-      '5k_zone_max', '5k_zone_current',
-      'active5_max', 'active5_current'
-    }
-    """
 
     u = build_user_calendar(df, user)
-
     if u.empty:
         return None
 
-    is10 = (u["steps"] >= 10000).tolist()
-    is5_zone = ((u["steps"] >= 5000) & (u["steps"] < 10000)).tolist()
-    is_active5 = (u["steps"] >= 5000).tolist()
+    dates = u["date"].tolist()
+
+    s10 = analyze_streaks((u["steps"] >= 10000).tolist(), dates)
+    s5z = analyze_streaks(((u["steps"] >= 5000) & (u["steps"] < 10000)).tolist(), dates)
+    s5a = analyze_streaks((u["steps"] >= 5000).tolist(), dates)
 
     return {
-        "10k_max": max_streak_from_bool(is10),
-        "10k_current": current_streak_from_bool(is10),
-        "5k_zone_max": max_streak_from_bool(is5_zone),
-        "5k_zone_current": current_streak_from_bool(is5_zone),
-        "active5_max": max_streak_from_bool(is_active5),
-        "active5_current": current_streak_from_bool(is_active5),
+        "10k": s10,
+        "5k_zone": s5z,
+        "active5": s5a
     }
-
-    max_possible = (u["steps"] > 0).sum()
-
-    if best > max_possible:
-        best = max_possible
-    
-    # ===== DEBUG SANJU =====
-    sanju = build_user_calendar(df, "Sanju")
-    
-    sanju["is_active5"] = sanju["steps"] >= 5000
-    
-    # find longest active5 block
-    blocks = []
-    cur = 0
-    start = None
-    
-    for _, r in sanju.iterrows():
-        if r["is_active5"]:
-            if cur == 0:
-                start = r["date"]
-            cur += 1
-        else:
-            if cur > 0:
-                blocks.append((start, prev, cur))
-            cur = 0
-        prev = r["date"]
-    
-    if cur > 0:
-        blocks.append((start, prev, cur))
-    
-    st.write("Sanju active5 streak blocks:", blocks[-5:])
-    st.write("Max:", max([b[2] for b in blocks]) if blocks else 0)
-    st.dataframe(sanju.tail(120))
 
 # ----------------------------
 # recent record moments Engine
@@ -622,119 +627,87 @@ def build_league_events(df, league_history):
     d = df.copy()
     d = d.sort_values(["User", "date"])
     d = d[d["date"].notna()]
-
     events = []
 
     # ======================================================
-    # 🔥 LONGEST 10K STREAK EVER
+    # 🔥 STREAK RECORDS — CANONICAL & ISOLATED
     # ======================================================
-
-    global_best = 0
-
+    
+    best_10k = 0
+    best_5k_zone = 0
+    best_active5 = 0
+    
     for user in d["User"].unique():
-
-        u = build_user_calendar(d, user)
-        if u.empty:
+    
+        s = compute_user_streaks(d, user)
+        if not s:
             continue
+    
+        # ----------------------
+        # 🔥 10K ELITE STREAK
+        # ----------------------
+        cur = s["10k"]["max"]
+        if cur >= 5 and cur > best_10k:
+    
+            best_10k = cur
+            end_date = s["10k"]["max_end"]
+            start_date = s["10k"]["max_start"]
+    
+            if pd.notna(end_date):
+                events.append({
+                    "date": end_date,
+                    "Month": end_date.to_period("M").to_timestamp(),
+                    "User": user,
+                    "type": "streak_10k",
+                    "value": int(cur),
+                    "title": f"Longest 10K streak ever ({cur} days)",
+                    "meta": f"{start_date.strftime('%d %b')} → {end_date.strftime('%d %b')}"
+                })
+    
+        # ----------------------
+        # 🟦 5K ZONE STREAK
+        # ----------------------
+        cur = s["5k_zone"]["max"]
+        if cur >= 5 and cur > best_5k_zone:
+    
+            best_5k_zone = cur
+            end_date = s["5k_zone"]["max_end"]
+            start_date = s["5k_zone"]["max_start"]
+    
+            if pd.notna(end_date):
+                events.append({
+                    "date": end_date,
+                    "Month": end_date.to_period("M").to_timestamp(),
+                    "User": user,
+                    "type": "streak_5k_zone",
+                    "value": int(cur),
+                    "title": f"Longest 5K-zone streak ever ({cur} days)",
+                    "meta": f"{start_date.strftime('%d %b')} → {end_date.strftime('%d %b')}"
+                })
+    
+        # ----------------------
+        # 💪 ACTIVE 5K+ HABIT
+        # ----------------------
+        cur = s["active5"]["max"]
+        if cur >= 7 and cur > best_active5:
+    
+            best_active5 = cur
+            end_date = s["active5"]["max_end"]
+            start_date = s["active5"]["max_start"]
+    
+            if pd.notna(end_date):
+                events.append({
+                    "date": end_date,
+                    "Month": end_date.to_period("M").to_timestamp(),
+                    "User": user,
+                    "type": "active_5k_habit",
+                    "value": int(cur),
+                    "title": f"Longest active 5K+ habit streak ever ({cur} days)",
+                    "meta": f"{start_date.strftime('%d %b')} → {end_date.strftime('%d %b')}"
+                })
 
-        is10 = (u["steps"] >= 10000).tolist()
 
-        streak = best = 0
-        best_date = None
-
-        for i, v in enumerate(is10):
-            if v:
-                streak += 1
-                if streak > best:
-                    best = streak
-                    best_date = u.iloc[i]["date"]
-            else:
-                streak = 0
-
-        if best >= 5 and best > global_best:
-            global_best = best
-            events.append({
-                "date": best_date,
-                "Month": best_date.to_period("M").to_timestamp(),
-                "User": user,
-                "type": "streak_10k",
-                "value": int(best),
-                "title": "Longest 10K streak ever"
-            })
-
-    # ======================================================
-    # 🟦 LONGEST 5K ZONE STREAK EVER (5000–9999)
-    # ======================================================
-
-    global_best = 0
-
-    for user in d["User"].unique():
-
-        u = build_user_calendar(d, user)
-        if u.empty:
-            continue
-
-        is5 = ((u["steps"] >= 5000) & (u["steps"] < 10000)).tolist()
-
-        streak = best = 0
-        best_date = None
-
-        for i, v in enumerate(is5):
-            if v:
-                streak += 1
-                if streak > best:
-                    best = streak
-                    best_date = u.iloc[i]["date"]
-            else:
-                streak = 0
-
-        if best >= 5 and best > global_best:
-            global_best = best
-            events.append({
-                "date": best_date,
-                "Month": best_date.to_period("M").to_timestamp(),
-                "User": user,
-                "type": "streak_5k_zone",
-                "value": int(best),
-                "title": "Longest 5K-zone streak ever"
-            })
-
-    # ======================================================
-    # 💪 LONGEST ACTIVE 5K+ HABIT STREAK EVER
-    # ======================================================
-
-    global_best = 0
-
-    for user in d["User"].unique():
-
-        u = build_user_calendar(d, user)
-        if u.empty:
-            continue
-
-        is_active5 = (u["steps"] >= 5000).tolist()
-
-        streak = best = 0
-        best_date = None
-
-        for i, v in enumerate(is_active5):
-            if v:
-                streak += 1
-                if streak > best:
-                    best = streak
-                    best_date = u.iloc[i]["date"]
-            else:
-                streak = 0
-
-        if best >= 7 and best > global_best:
-            global_best = best
-            events.append({
-                "date": best_date,
-                "Month": best_date.to_period("M").to_timestamp(),
-                "User": user,
-                "type": "active_5k_habit",
-                "value": int(best),
-                "title": "Longest active 5K+ habit streak ever"
-            })
+    
 
     # ======================================================
     # 🚀 BEST SINGLE DAY EVER
@@ -772,93 +745,6 @@ def build_league_events(df, league_history):
                 "type": "best_week",
                 "value": int(best_week),
                 "title": "Highest steps in a week ever"
-            })
-
-    return pd.DataFrame(events).sort_values("date")
-
-
-    # ======================================================
-    # 🚀 BEST SINGLE DAY EVER
-    # ======================================================
-
-    best_day = 0
-    for _, row in d.iterrows():
-        if row["steps"] > best_day:
-            best_day = row["steps"]
-            events.append({
-                "date": row["date"],
-                "Month": row["date"].to_period("M").to_timestamp(),
-                "User": row["User"],
-                "type": "best_day",
-                "value": int(best_day),
-                "title": "Highest steps in a single day ever"
-            })
-
-    # ======================================================
-    # 🟦 LONGEST 5K ZONE STREAK EVER
-    # ======================================================
-    
-    global_best = 0
-    for user in d["User"].unique():
-    
-        u = build_user_calendar(d, user)
-        is5 = ((u["steps"] >= 5000) & (u["steps"] < 10000)).tolist()
-    
-        streak = best = 0
-        best_date = None
-    
-        for i, v in enumerate(is5):
-            if v:
-                streak += 1
-                if streak > best:
-                    best = streak
-                    best_date = u.iloc[i]["date"]
-            else:
-                streak = 0
-    
-        if best >= 5 and best > global_best:
-            global_best = best
-            events.append({
-                "date": best_date,
-                "Month": best_date.to_period("M").to_timestamp(),
-                "User": user,
-                "type": "streak_5k_zone",
-                "value": int(best),
-                "title": "Longest 5K-zone streak ever"
-            })
-    
-    
-    # ======================================================
-    # 💪 LONGEST ACTIVE 5K+ HABIT STREAK EVER
-    # ======================================================
-    
-    global_best = 0
-    for user in d["User"].unique():
-    
-        u = build_user_calendar(d, user)
-        is_active5 = (u["steps"] >= 5000).tolist()
-    
-        streak = best = 0
-        best_date = None
-    
-        for i, v in enumerate(is_active5):
-            if v:
-                streak += 1
-                if streak > best:
-                    best = streak
-                    best_date = u.iloc[i]["date"]
-            else:
-                streak = 0
-    
-        if best >= 7 and best > global_best:
-            global_best = best
-            events.append({
-                "date": best_date,
-                "Month": best_date.to_period("M").to_timestamp(),
-                "User": user,
-                "type": "active_5k_habit",
-                "value": int(best),
-                "title": "Longest active 5K+ habit streak ever"
             })
 
     # ======================================================
@@ -1006,7 +892,7 @@ def build_league_events(df, league_history):
                 "value": int(row["steps"]),
                 "title": "First ever 100K steps day"
             })
-
+            
     return pd.DataFrame(events).sort_values("date")
     
 def show_global_league_moments(events_df):
@@ -1132,14 +1018,14 @@ if page == "🏆 Hall of Fame":
         if not s:
             continue
     
-        streak_10k[user] = s["10k_max"]
-        streak_5k_zone[user] = s["5k_zone_max"]
-        streak_active5[user] = s["active5_max"]
-    
-        current_10k[user] = s["10k_current"]
-        current_5k_zone[user] = s["5k_zone_current"]
-        current_active5[user] = s["active5_current"]
-    
+        streak_10k[user] = s["10k"]["max"]
+        streak_5k_zone[user] = s["5k_zone"]["max"]
+        streak_active5[user] = s["active5"]["max"]
+        
+        current_10k[user] = s["10k"]["current"]
+        current_5k_zone[user] = s["5k_zone"]["current"]
+        current_active5[user] = s["active5"]["current"]
+
     streak_10k = pd.Series(streak_10k)
     streak_5k_zone = pd.Series(streak_5k_zone)
     streak_active5 = pd.Series(streak_active5)
@@ -1701,14 +1587,14 @@ if page == "👤 Player Profile":
     
     s = compute_user_streaks(df, selected_user)
 
-    max_10k_streak = s["10k_max"]
-    current_10k_streak = s["10k_current"]
+    max_10k_streak = s["10k"]["max"]
+    current_10k_streak = s["10k"]["current"]
     
-    max_5k_streak = s["5k_zone_max"]
-    current_5k_streak = s["5k_zone_current"]
+    max_5k_streak = s["5k_zone"]["max"]
+    current_5k_streak = s["5k_zone"]["current"]
     
-    max_active5 = s["active5_max"]
-    current_active5 = s["active5_current"]
+    max_active5 = s["active5"]["max"]
+    current_active5 = s["active5"]["current"]
 
 
     c1, c2, c3 = st.columns(3)
