@@ -563,6 +563,11 @@ def compute_user_streaks(df, user):
         "active5_current": current_streak_from_bool(is_active5),
     }
 
+    max_possible = (u["steps"] > 0).sum()
+
+    if best > max_possible:
+        best = max_possible
+    
     # ===== DEBUG SANJU =====
     sanju = build_user_calendar(df, "Sanju")
     
@@ -627,7 +632,7 @@ def build_league_events(df, league_history):
     global_record = 0
     MIN_STREAK = 5
 
-    for user, u in d.groupby("User"):
+    for user in d["User"].unique():
         u = u.sort_values("date")
 
         streak = 0
