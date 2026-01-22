@@ -934,30 +934,6 @@ show_global_league_moments(league_events)
 # =========================================================
 if page == "🏆 Hall of Fame":
 
-    cal = build_user_calendar(df, "Sanju")
-    mask = cal["steps"] >= 5000
-    
-    # Find actual longest block
-    runs = []
-    current = []
-    
-    for d, ok in zip(cal["date"], mask):
-        if ok:
-            current.append(d)
-        else:
-            if current:
-                runs.append(current)
-            current = []
-    if current:
-        runs.append(current)
-    
-    longest = max(runs, key=len)
-    
-    st.write("Longest active5 streak length:", len(longest))
-    st.write("From:", longest[0])
-    st.write("To:", longest[-1])
-    st.dataframe(cal[(cal["date"] >= longest[0]) & (cal["date"] <= longest[-1])])
-
     st.markdown("### 🏆 Hall of Fame — All Time Records")
     st.caption("Since the inception of the Steps League")
 
