@@ -494,26 +494,26 @@ def detect_all_time_records(df):
 # ======================================================
 
 def build_user_calendar(df, user):
-    """Return continuous daily calendar for one user, trimmed to last active day."""
-
     u = df[df["User"] == user][["date","steps"]].copy()
-
     if u.empty:
         return pd.DataFrame(columns=["date","steps"])
 
-    # ✅ Only keep up to last non-zero activity
-    if (u["steps"] > 0).any():
-        last_active = u.loc[u["steps"] > 0, "date"].max()
-        u = u[u["date"] <= last_active]
-    else:
+    u = u.sort_values("date")
+
+    # ✅ only days where user ever existed in the league
+    first_active = u.loc[u["steps"] > 0, "date"].min()
+    last_active  = u.loc[u["steps"] > 0, "date"].max()
+
+    if pd.isna(first_active) or pd.isna(last_active):
         return pd.DataFrame(columns=["date","steps"])
 
-    u = u.sort_values("date").set_index("date")
+    u = u[(u["date"] >= first_active) & (u["date"] <= last_active)]
+    u = u.set_index("date")
 
-    full_range = pd.date_range(u.index.min(), u.index.max(), freq="D")
+    full_range = pd.date_range(first_active, last_active, freq="D")
 
     u = u.reindex(full_range, fill_value=0).reset_index()
-    u = u.rename(columns={"index": "date"})
+    u = u.rename(columns={"index":"date"})
 
     return u
 
@@ -625,10 +625,11 @@ def recent_record_breaks(records_df, current_month, window_days=7):
 def build_league_events(df, league_history):
 
     d = df.copy()
-    d = d.sort_values(["User", "date"])
     d = d[d["date"].notna()]
+    d = d.sort_values("date")
+    
     events = []
-
+    
     # ======================================================
     # 🔥 STREAK RECORDS — CANONICAL & ISOLATED
     # ======================================================
@@ -638,8 +639,8 @@ def build_league_events(df, league_history):
     best_active5 = 0
     
     for user in d["User"].unique():
-    
-        s = compute_user_streaks(d, user)
+        u = d[d["User"] == user].sort_values("date")
+        s = compute_user_streaks(d, u)
         if not s:
             continue
     
@@ -705,9 +706,6 @@ def build_league_events(df, league_history):
                     "title": f"Longest active 5K+ habit streak ever ({cur} days)",
                     "meta": f"{start_date.strftime('%d %b')} → {end_date.strftime('%d %b')}"
                 })
-
-
-    
 
     # ======================================================
     # 🚀 BEST SINGLE DAY EVER
@@ -856,27 +854,6 @@ def build_league_events(df, league_history):
                 })
 
     # ======================================================
-    # 🔥 LONGEST ACTIVE 10K STREAK
-    # ======================================================
-
-    active, best_active = {}, 0
-
-    for _, row in d.sort_values("date").iterrows():
-        u = row["User"]
-        active[u] = active.get(u, 0) + 1 if row["steps"] >= 10000 else 0
-
-        if active[u] > best_active:
-            best_active = active[u]
-            events.append({
-                "date": row["date"],
-                "Month": row["date"].to_period("M").to_timestamp(),
-                "User": u,
-                "type": "active_streak",
-                "value": int(best_active),
-                "title": "New longest active 10K streak"
-            })
-
-    # ======================================================
     # 🏆 FIRST EVER 100K DAY
     # ======================================================
 
@@ -1013,7 +990,6 @@ if page == "🏆 Hall of Fame":
     current_active5 = {}
     
     for user in d["User"].unique():
-    
         s = compute_user_streaks(d, user)
         if not s:
             continue
