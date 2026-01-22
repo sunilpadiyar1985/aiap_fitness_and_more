@@ -639,8 +639,7 @@ def build_league_events(df, league_history):
     best_active5 = 0
     
     for user in d["User"].unique():
-        u = d[d["User"] == user].sort_values("date")
-        s = compute_user_streaks(d, u)
+        s = compute_user_streaks(d, user)
         if not s:
             continue
     
