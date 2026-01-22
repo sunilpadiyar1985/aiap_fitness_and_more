@@ -157,30 +157,71 @@ def load_roster():
     r["Active till"] = pd.to_datetime(r["Active till"], errors="coerce", dayfirst=True)
 
     return r
-    
+
+st.markdown("""
+<style>
+.badge-card {
+    transition: all 0.25s ease;
+}
+
+.badge-card:hover {
+    transform: scale(1.08);
+    box-shadow: 0 12px 26px rgba(0,0,0,0.18);
+    z-index: 10;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 #-------------------
 #Badge Engine
 #-------------------
 BADGE_CATALOG = [
 # ---------------- BRONZE ----------------
+{"id":"active_7","name":"First Steps","emoji":"👣","tier":"Bronze","desc":"7 active days","color":"#cd7f32"},
 {"id":"active_30","name":"Active Starter","emoji":"🚶","tier":"Bronze","desc":"30 active days","color":"#cd7f32"},
+{"id":"fivek_3","name":"5K Spark","emoji":"🟦","tier":"Bronze","desc":"3 day 5K streak","color":"#cd7f32"},
 {"id":"fivek_7","name":"5K Rookie","emoji":"🟦","tier":"Bronze","desc":"7 day 5K streak","color":"#cd7f32"},
-{"id":"tenk_3","name":"First 10K","emoji":"🔥","tier":"Bronze","desc":"3 day 10K streak","color":"#cd7f32"},
+{"id":"tenk_1","name":"First 10K","emoji":"🔥","tier":"Bronze","desc":"First 10K day","color":"#cd7f32"},
+{"id":"tenk_3","name":"Heating Up","emoji":"🔥","tier":"Bronze","desc":"3 day 10K streak","color":"#cd7f32"},
+{"id":"single_20k","name":"Power Surge","emoji":"⚡","tier":"Bronze","desc":"20K steps in a day","color":"#cd7f32"},
+{"id":"week_50k","name":"Busy Week","emoji":"🗓️","tier":"Bronze","desc":"50K steps in a week","color":"#cd7f32"},
+{"id":"month_200k","name":"Monthly Mover","emoji":"📆","tier":"Bronze","desc":"200K steps in a month","color":"#cd7f32"},
+{"id":"consistent_50","name":"Steady Walker","emoji":"🧱","tier":"Bronze","desc":"50% days ≥5K","color":"#cd7f32"},
+{"id":"comeback_1","name":"Bounce Back","emoji":"🔄","tier":"Bronze","desc":"First promotion","color":"#cd7f32"},
+{"id":"profile_complete","name":"League Citizen","emoji":"🧍","tier":"Bronze","desc":"Profile active 3 months","color":"#cd7f32"},
+
 
 # ---------------- SILVER ----------------
-{"id":"fivek_30","name":"Habit Builder","emoji":"💪","tier":"Silver","desc":"30 day 5K+ streak","color":"#c0c0c0"},
+{"id":"fivek_21","name":"Habit Formed","emoji":"💪","tier":"Silver","desc":"21 day 5K streak","color":"#c0c0c0"},
+{"id":"fivek_30","name":"Habit Builder","emoji":"💪","tier":"Silver","desc":"30 day 5K streak","color":"#c0c0c0"},
+{"id":"tenk_7","name":"Endurance Mode","emoji":"⚡","tier":"Silver","desc":"7 day 10K streak","color":"#c0c0c0"},
 {"id":"tenk_14","name":"Iron Legs","emoji":"🔥","tier":"Silver","desc":"14 day 10K streak","color":"#c0c0c0"},
-{"id":"consistent","name":"Ultra Consistent","emoji":"🧱","tier":"Silver","desc":"75% days ≥5K","color":"#c0c0c0"},
+{"id":"single_30k","name":"Beast Day","emoji":"🦾","tier":"Silver","desc":"30K steps in a day","color":"#c0c0c0"},
+{"id":"week_100k","name":"Grind Week","emoji":"🗓️","tier":"Silver","desc":"100K steps in a week","color":"#c0c0c0"},
+{"id":"month_300k","name":"Serious Business","emoji":"📈","tier":"Silver","desc":"300K steps in a month","color":"#c0c0c0"},
+{"id":"consistent_75","name":"Ultra Consistent","emoji":"🧱","tier":"Silver","desc":"75% days ≥5K","color":"#c0c0c0"},
+{"id":"prem_title","name":"Top of the League","emoji":"👑","tier":"Silver","desc":"First Premier title","color":"#c0c0c0"},
+{"id":"active_180","name":"Half-Year Hero","emoji":"🛡️","tier":"Silver","desc":"180 active days","color":"#c0c0c0"},
 
 # ---------------- GOLD ----------------
+{"id":"fivek_60","name":"Habit Beast","emoji":"🦾","tier":"Gold","desc":"60 day 5K streak","color":"#ffd700"},
 {"id":"tenk_30","name":"Elite Grinder","emoji":"⚡","tier":"Gold","desc":"30 day 10K streak","color":"#ffd700"},
-{"id":"fivek_60","name":"Habit Beast","emoji":"🦾","tier":"Gold","desc":"60 day 5K+ streak","color":"#ffd700"},
+{"id":"tenk_45","name":"Relentless","emoji":"🔥","tier":"Gold","desc":"45 day 10K streak","color":"#ffd700"},
+{"id":"single_40k","name":"Superhuman Day","emoji":"🚀","tier":"Gold","desc":"40K steps in a day","color":"#ffd700"},
+{"id":"week_150k","name":"Engine Room","emoji":"🏭","tier":"Gold","desc":"150K steps in a week","color":"#ffd700"},
+{"id":"month_400k","name":"Monster Month","emoji":"🏔️","tier":"Gold","desc":"400K steps in a month","color":"#ffd700"},
 {"id":"prem_3","name":"Champion Core","emoji":"👑","tier":"Gold","desc":"3 Premier titles","color":"#ffd700"},
+{"id":"active_365","name":"One Year Strong","emoji":"🎖️","tier":"Gold","desc":"365 active days","color":"#ffd700"},
 
 # ---------------- LEGENDARY ----------------
 {"id":"tenk_60","name":"Mythic Engine","emoji":"🐉","tier":"Legendary","desc":"60 day 10K streak","color":"#9b59ff"},
+{"id":"tenk_90","name":"Unbreakable","emoji":"☄️","tier":"Legendary","desc":"90 day 10K streak","color":"#9b59ff"},
+{"id":"fivek_120","name":"Habit God","emoji":"🧬","tier":"Legendary","desc":"120 day 5K streak","color":"#9b59ff"},
 {"id":"prem_5","name":"League Legend","emoji":"🏆","tier":"Legendary","desc":"5 Premier titles","color":"#9b59ff"},
-{"id":"longevity_18","name":"Immortal","emoji":"🐐","tier":"Legendary","desc":"18 active months","color":"#9b59ff"},
+{"id":"longevity_24","name":"Immortal","emoji":"🐐","tier":"Legendary","desc":"24 active months","color":"#9b59ff"},
+{"id":"single_50k","name":"One in a Million","emoji":"🌋","tier":"Legendary","desc":"50K steps in a day","color":"#9b59ff"},
+
 ]
 
 def generate_badges(user, df, league_history):
@@ -190,6 +231,8 @@ def generate_badges(user, df, league_history):
     u = df[df["User"] == user].sort_values("date")
     lh = league_history[league_history["User"] == user]
     s = compute_user_streaks(df, user)
+    if not s:
+        return earned
 
     # Activity
     if (u["steps"] > 0).sum() >= 30:
@@ -227,6 +270,12 @@ def generate_badges(user, df, league_history):
     # Longevity
     if u["date"].dt.to_period("M").nunique() >= 18:
         earned.add("longevity_18")
+
+    # Meta
+    if len(earned) >= 10:
+        earned.add("collector_10")
+    if len(earned) >= 20:
+        earned.add("collector_20")
 
     return earned
     
