@@ -943,6 +943,10 @@ if page == "🏆 Hall of Fame":
     st.write("Sample low days:")
     st.dataframe(cal[cal["steps"] < 5000].head(20))
 
+    s = compute_user_streaks(df, "Sanju")
+    st.write("Sanju active5 max:", s["active5"]["max"])
+    st.write("Sanju <5k days:", (build_user_calendar(df,"Sanju")["steps"] < 5000).sum())
+
     st.markdown("### 🏆 Hall of Fame — All Time Records")
     st.caption("Since the inception of the Steps League")
 
