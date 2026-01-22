@@ -1021,11 +1021,12 @@ if page == "🏆 Hall of Fame":
         for u in streak_10k.index
     ]
 
-    streak_5k_display = streak_5k.copy()
+    streak_5k_display = streak_5k_zone.copy()
     streak_5k_display.index = [
-        streak_name(u, current_5k.get(u, 0) > 0)
-        for u in streak_5k.index
+        streak_name(u, current_5k_zone.get(u, 0) > 0)
+        for u in streak_5k_zone.index
     ]
+
 
     # -------------------------
     # RECORD ROW UI
