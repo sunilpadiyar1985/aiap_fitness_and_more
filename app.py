@@ -491,22 +491,28 @@ def detect_all_time_records(df):
 # ======================================================
 
 def build_user_calendar(df, user):
-    """Return continuous daily calendar for one user."""
+    """Return continuous daily calendar for one user, trimmed to last active day."""
+
     u = df[df["User"] == user][["date","steps"]].copy()
 
     if u.empty:
         return pd.DataFrame(columns=["date","steps"])
 
-    u = u.sort_values("date")
-    u = u.set_index("date")
+    # ✅ Only keep up to last non-zero activity
+    if (u["steps"] > 0).any():
+        last_active = u.loc[u["steps"] > 0, "date"].max()
+        u = u[u["date"] <= last_active]
+    else:
+        return pd.DataFrame(columns=["date","steps"])
+
+    u = u.sort_values("date").set_index("date")
 
     full_range = pd.date_range(u.index.min(), u.index.max(), freq="D")
 
     u = u.reindex(full_range, fill_value=0).reset_index()
-    u = u.rename(columns={"index":"date"})
+    u = u.rename(columns={"index": "date"})
 
     return u
-
 
 def max_streak_from_bool(series):
     max_s = cur = 0
