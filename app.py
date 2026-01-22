@@ -277,6 +277,112 @@ def generate_badges(user, df, league_history):
     if len(earned) >= 20:
         earned.add("collector_20")
 
+    # Active days
+    if (u["steps"] > 0).sum() >= 7:
+        earned.add("active_7")
+    if (u["steps"] > 0).sum() >= 30:
+        earned.add("active_30")
+    
+    # First 10K ever
+    if (u["steps"] >= 10000).any():
+        earned.add("tenk_1")
+    
+    # First 5K streak (3 days)
+    if s["active5"]["max"] >= 3:
+        earned.add("fivek_3")
+    if s["active5"]["max"] >= 7:
+        earned.add("fivek_7")
+
+    # Single day
+    if u["steps"].max() >= 20000:
+        earned.add("single_20k")
+    
+    # Weekly volume
+    w = u.copy()
+    w["week"] = w["date"].dt.to_period("W")
+    weekly = w.groupby("week")["steps"].sum()
+    if weekly.max() >= 50000:
+        earned.add("week_50k")
+    
+    # Monthly volume
+    m = u.copy()
+    m["month"] = m["date"].dt.to_period("M")
+    monthly = m.groupby("month")["steps"].sum()
+    if monthly.max() >= 200000:
+        earned.add("month_200k")
+
+    # Consistency 50%
+    if (u["steps"] >= 5000).mean() >= 0.50:
+        earned.add("consistent_50")
+    
+    # First promotion
+    if lh["Promoted"].sum() >= 1:
+        earned.add("comeback_1")
+    
+    # Active 3 months
+    if u["date"].dt.to_period("M").nunique() >= 3:
+        earned.add("profile_complete")
+
+    # Consistency 50%
+    if (u["steps"] >= 5000).mean() >= 0.50:
+        earned.add("consistent_50")
+    
+    # First promotion
+    if lh["Promoted"].sum() >= 1:
+        earned.add("comeback_1")
+    
+    # Active 3 months
+    if u["date"].dt.to_period("M").nunique() >= 3:
+        earned.add("profile_complete")
+
+    # Higher volume days
+    if u["steps"].max() >= 30000:
+        earned.add("single_30k")
+    
+    # Weekly
+    if weekly.max() >= 100000:
+        earned.add("week_100k")
+    
+    # Monthly
+    if monthly.max() >= 300000:
+        earned.add("month_300k")
+    
+    # Premier title
+    if prem_titles >= 1:
+        earned.add("prem_title")
+    
+    # Half year activity
+    if (u["steps"] > 0).sum() >= 180:
+        earned.add("active_180")
+    
+    # Consistency 75%
+    if (u["steps"] >= 5000).mean() >= 0.75:
+        earned.add("consistent_75")
+
+    if u["steps"].max() >= 40000:
+        earned.add("single_40k")
+    
+    if weekly.max() >= 150000:
+        earned.add("week_150k")
+    
+    if monthly.max() >= 400000:
+        earned.add("month_400k")
+    
+    if (u["steps"] > 0).sum() >= 365:
+        earned.add("active_365")
+
+    if s["10k"]["max"] >= 90:
+        earned.add("tenk_90")
+
+    if s["active5"]["max"] >= 120:
+        earned.add("fivek_120")
+    
+    if u["steps"].max() >= 50000:
+        earned.add("single_50k")
+    
+    if u["date"].dt.to_period("M").nunique() >= 24:
+        earned.add("longevity_24")
+
     return earned
     
 def render_badge_section(title, tier, earned_ids):
