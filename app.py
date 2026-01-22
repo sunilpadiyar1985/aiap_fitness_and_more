@@ -71,7 +71,7 @@ def hall_card(title, name, sub):
 
 page = st.sidebar.radio(
     "Navigate",
-    ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History", "🔮 Prediction Lab", "ℹ️ Readme: Our Dashboard"]
+    ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History", "ℹ️ Readme: Our Dashboard"]
 )
 # ----------------------------
 # CONFIG
@@ -399,46 +399,6 @@ active_users_now = set(
 
 def name_with_status(name):
     return name if name in active_users_now else f"{name} 💤"
-
-# ----------------------------
-# Prediction Engine
-# ----------------------------
-
-def prediction_engine(df, roster_df, lookback=30):
-
-    cutoff = df["date"].max() - pd.Timedelta(days=lookback)
-    recent = df[df["date"] >= cutoff]
-
-    active = roster_df[roster_df["Status"] == "active"]["User"]
-
-    recent = recent[recent["User"].isin(active)]
-
-    pred = recent.groupby("User").agg(
-        avg_steps=("steps","mean"),
-        total_steps=("steps","sum"),
-        days_10k=("steps", lambda x: (x>=10000).sum()),
-        active_days=("steps", lambda x: (x>0).sum())
-    ).reset_index()
-
-    # Form score
-    pred["form_score"] = (
-        pred["avg_steps"] * 0.5 +
-        pred["days_10k"] * 300 +
-        pred["active_days"] * 100
-    )
-
-    pred = pred.sort_values("form_score", ascending=False)
-
-    # Predict premier cutoff (top 6 or >=7k)
-    pred["Predicted league"] = np.where(pred["avg_steps"] >= 7000, "Premier", "Championship")
-
-    if (pred["Predicted league"] == "Premier").sum() < 6:
-        top6 = pred.head(6).index
-        pred.loc[top6, "Predicted league"] = "Premier"
-
-    pred["Predicted rank"] = range(1, len(pred)+1)
-
-    return pred
 
 # ----------------------------
 # all_time_record Engine
@@ -2104,42 +2064,6 @@ if page == "📜 League History":
     st.plotly_chart(fig, use_container_width=True)
 
     st.divider()
-
-
-if page == "🔮 Prediction Lab":
-
-    st.markdown("### 🔮 Prediction Lab")
-    st.caption("Projected outcomes based on recent form (last 30 days)")
-
-    pred = prediction_engine(df, roster_df)
-
-    st.markdown("#### 🧠 Form table")
-
-    st.dataframe(
-        pred[["Predicted rank","User","avg_steps","days_10k","active_days","Predicted league"]]
-          .rename(columns={
-              "Predicted rank":"Rank",
-              "avg_steps":"Avg steps",
-              "days_10k":"10K days",
-              "active_days":"Active days"
-          }),
-        use_container_width=True,
-        hide_index=True
-    )
-
-    st.divider()
-    st.markdown("#### 🏟️ Projected leagues")
-
-    c1, c2 = st.columns(2)
-
-    with c1:
-        st.markdown("##### 🥇 Projected Premier")
-        st.success("\n".join(pred[pred["Predicted league"]=="Premier"]["User"].tolist()))
-
-    with c2:
-        st.markdown("##### 🥈 Projected Championship")
-        st.info("\n".join(pred[pred["Predicted league"]=="Championship"]["User"].tolist()))
-
 
 # =========================================================
 # ℹ️ ABOUT — STEPS LEAGUE README
