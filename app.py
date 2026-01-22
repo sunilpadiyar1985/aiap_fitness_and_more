@@ -563,6 +563,34 @@ def compute_user_streaks(df, user):
         "active5_current": current_streak_from_bool(is_active5),
     }
 
+    # ===== DEBUG SANJU =====
+    sanju = build_user_calendar(df, "Sanju")
+    
+    sanju["is_active5"] = sanju["steps"] >= 5000
+    
+    # find longest active5 block
+    blocks = []
+    cur = 0
+    start = None
+    
+    for _, r in sanju.iterrows():
+        if r["is_active5"]:
+            if cur == 0:
+                start = r["date"]
+            cur += 1
+        else:
+            if cur > 0:
+                blocks.append((start, prev, cur))
+            cur = 0
+        prev = r["date"]
+    
+    if cur > 0:
+        blocks.append((start, prev, cur))
+    
+    st.write("Sanju active5 streak blocks:", blocks[-5:])
+    st.write("Max:", max([b[2] for b in blocks]) if blocks else 0)
+    st.dataframe(sanju.tail(120))
+
 # ----------------------------
 # recent record moments Engine
 # ----------------------------
