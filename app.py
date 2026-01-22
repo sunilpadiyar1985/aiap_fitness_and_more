@@ -619,44 +619,139 @@ def recent_record_breaks(records_df, current_month, window_days=7):
 @st.cache_data
 def build_league_events(df, league_history):
 
-    d = df.sort_values(["date", "User"]).copy()
-    d["is_10k"] = d["steps"] >= 10000
-    d["is_5k_zone"] = (d["steps"] >= 5000) & (d["steps"] < 10000)
+    d = df.copy()
+    d = d.sort_values(["User", "date"])
+    d = d[d["date"].notna()]
 
     events = []
 
     # ======================================================
-    # 🔥 LONGEST 10K STREAK EVER (story mode, per user)
+    # 🔥 LONGEST 10K STREAK EVER
     # ======================================================
 
-    global_record = 0
-    MIN_STREAK = 5
+    global_best = 0
 
     for user in d["User"].unique():
-        u = u.sort_values("date")
 
-        streak = 0
-        best_for_user = 0
+        u = build_user_calendar(d, user)
+        if u.empty:
+            continue
+
+        is10 = (u["steps"] >= 10000).tolist()
+
+        streak = best = 0
         best_date = None
 
-        for _, row in u.iterrows():
-            if row["steps"] >= 10000:
+        for i, v in enumerate(is10):
+            if v:
                 streak += 1
-                if streak > best_for_user:
-                    best_for_user = streak
-                    best_date = row["date"]
+                if streak > best:
+                    best = streak
+                    best_date = u.iloc[i]["date"]
             else:
                 streak = 0
 
-        if best_for_user >= MIN_STREAK and best_for_user > global_record:
-            global_record = best_for_user
+        if best >= 5 and best > global_best:
+            global_best = best
             events.append({
                 "date": best_date,
                 "Month": best_date.to_period("M").to_timestamp(),
                 "User": user,
                 "type": "streak_10k",
-                "value": int(best_for_user),
+                "value": int(best),
                 "title": "Longest 10K streak ever"
+            })
+
+    # ======================================================
+    # 🟦 LONGEST 5K ZONE STREAK EVER (5000–9999)
+    # ======================================================
+
+    global_best = 0
+
+    for user in d["User"].unique():
+
+        u = build_user_calendar(d, user)
+        if u.empty:
+            continue
+
+        is5 = ((u["steps"] >= 5000) & (u["steps"] < 10000)).tolist()
+
+        streak = best = 0
+        best_date = None
+
+        for i, v in enumerate(is5):
+            if v:
+                streak += 1
+                if streak > best:
+                    best = streak
+                    best_date = u.iloc[i]["date"]
+            else:
+                streak = 0
+
+        if best >= 5 and best > global_best:
+            global_best = best
+            events.append({
+                "date": best_date,
+                "Month": best_date.to_period("M").to_timestamp(),
+                "User": user,
+                "type": "streak_5k_zone",
+                "value": int(best),
+                "title": "Longest 5K-zone streak ever"
+            })
+
+    # ======================================================
+    # 💪 LONGEST ACTIVE 5K+ HABIT STREAK EVER
+    # ======================================================
+
+    global_best = 0
+
+    for user in d["User"].unique():
+
+        u = build_user_calendar(d, user)
+        if u.empty:
+            continue
+
+        is_active5 = (u["steps"] >= 5000).tolist()
+
+        streak = best = 0
+        best_date = None
+
+        for i, v in enumerate(is_active5):
+            if v:
+                streak += 1
+                if streak > best:
+                    best = streak
+                    best_date = u.iloc[i]["date"]
+            else:
+                streak = 0
+
+        if best >= 7 and best > global_best:
+            global_best = best
+            events.append({
+                "date": best_date,
+                "Month": best_date.to_period("M").to_timestamp(),
+                "User": user,
+                "type": "active_5k_habit",
+                "value": int(best),
+                "title": "Longest active 5K+ habit streak ever"
+            })
+
+    # ======================================================
+    # 🚀 BEST SINGLE DAY EVER
+    # ======================================================
+
+    best_day = 0
+
+    for _, row in d.iterrows():
+        if row["steps"] > best_day:
+            best_day = row["steps"]
+            events.append({
+                "date": row["date"],
+                "Month": row["date"].to_period("M").to_timestamp(),
+                "User": row["User"],
+                "type": "best_day",
+                "value": int(best_day),
+                "title": "Highest steps in a single day ever"
             })
 
     # ======================================================
@@ -664,10 +759,10 @@ def build_league_events(df, league_history):
     # ======================================================
 
     d["week"] = d["date"].dt.to_period("W").apply(lambda r: r.start_time)
-    weekly = d.groupby(["User", "week"])["steps"].sum().reset_index().sort_values("week")
+    weekly = d.groupby(["User", "week"])["steps"].sum().reset_index()
 
     best_week = 0
-    for _, row in weekly.iterrows():
+    for _, row in weekly.sort_values("week").iterrows():
         if row["steps"] > best_week:
             best_week = row["steps"]
             events.append({
@@ -678,6 +773,9 @@ def build_league_events(df, league_history):
                 "value": int(best_week),
                 "title": "Highest steps in a week ever"
             })
+
+    return pd.DataFrame(events).sort_values("date")
+
 
     # ======================================================
     # 🚀 BEST SINGLE DAY EVER
