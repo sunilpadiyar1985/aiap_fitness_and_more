@@ -934,6 +934,15 @@ show_global_league_moments(league_events)
 # =========================================================
 if page == "🏆 Hall of Fame":
 
+    cal = build_user_calendar(df, "Sanju")
+
+    st.write("Total days:", len(cal))
+    st.write("Days <5000:", (cal["steps"] < 5000).sum())
+    st.write("First 20 days:")
+    st.dataframe(cal.head(20))
+    st.write("Sample low days:")
+    st.dataframe(cal[cal["steps"] < 5000].head(20))
+
     st.markdown("### 🏆 Hall of Fame — All Time Records")
     st.caption("Since the inception of the Steps League")
 
