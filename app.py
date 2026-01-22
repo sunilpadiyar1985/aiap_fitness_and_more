@@ -203,6 +203,8 @@ BADGE_CATALOG = [
 {"id":"consistent_75","name":"Ultra Consistent","emoji":"🧱","tier":"Silver","desc":"75% days ≥5K","color":"#c0c0c0"},
 {"id":"prem_title","name":"Top of the League","emoji":"👑","tier":"Silver","desc":"First Premier title","color":"#c0c0c0"},
 {"id":"active_180","name":"Half-Year Hero","emoji":"🛡️","tier":"Silver","desc":"180 active days","color":"#c0c0c0"},
+{"id":"comeback_3","name":"Comeback Master","emoji":"🔁","tier":"Silver","desc":"Promoted 3 times","color":"#c0c0c0"},
+{"id":"double_streak","name":"Double Engine","emoji":"⚙️","tier":"Silver","desc":"Strong 5K+ habit + 10K endurance","color":"#c0c0c0"},
 
 # ---------------- GOLD ----------------
 {"id":"fivek_60","name":"Habit Beast","emoji":"🦾","tier":"Gold","desc":"60 day 5K streak","color":"#ffd700"},
@@ -213,6 +215,15 @@ BADGE_CATALOG = [
 {"id":"month_400k","name":"Monster Month","emoji":"🏔️","tier":"Gold","desc":"400K steps in a month","color":"#ffd700"},
 {"id":"prem_3","name":"Champion Core","emoji":"👑","tier":"Gold","desc":"3 Premier titles","color":"#ffd700"},
 {"id":"active_365","name":"One Year Strong","emoji":"🎖️","tier":"Gold","desc":"365 active days","color":"#ffd700"},
+{"id":"month_500k","name":"Marathon Month","emoji":"🏃","tier":"Gold","desc":"500K steps in a month","color":"#ffd700"},
+{"id":"consistent_85","name":"Unshakeable","emoji":"🧱","tier":"Gold","desc":"85% days ≥5K","color":"#ffd700"},
+{"id":"prem_5_runnerup","name":"Elite Presence","emoji":"🎩","tier":"Gold","desc":"5 Premier top-3 finishes","color":"#ffd700"},
+{"id":"active_500","name":"Iron Calendar","emoji":"🗓️","tier":"Gold","desc":"500 active days","color":"#ffd700"},
+{"id":"month_500k","name":"Marathon Month","emoji":"🏃","tier":"Gold","desc":"500K steps in a month","color":"#ffd700"},
+{"id":"consistent_85","name":"Unshakeable","emoji":"🧱","tier":"Gold","desc":"85% days ≥5K","color":"#ffd700"},
+{"id":"prem_5_runnerup","name":"Elite Presence","emoji":"🎩","tier":"Gold","desc":"5 Premier top-3 finishes","color":"#ffd700"},
+{"id":"active_500","name":"Iron Calendar","emoji":"🗓️","tier":"Gold","desc":"500 active days","color":"#ffd700"},
+
 
 # ---------------- LEGENDARY ----------------
 {"id":"tenk_60","name":"Mythic Engine","emoji":"🐉","tier":"Legendary","desc":"60 day 10K streak","color":"#9b59ff"},
@@ -221,6 +232,13 @@ BADGE_CATALOG = [
 {"id":"prem_5","name":"League Legend","emoji":"🏆","tier":"Legendary","desc":"5 Premier titles","color":"#9b59ff"},
 {"id":"longevity_24","name":"Immortal","emoji":"🐐","tier":"Legendary","desc":"24 active months","color":"#9b59ff"},
 {"id":"single_50k","name":"One in a Million","emoji":"🌋","tier":"Legendary","desc":"50K steps in a day","color":"#9b59ff"},
+{"id":"prem_7","name":"Dynasty","emoji":"👑","tier":"Legendary","desc":"7 Premier titles","color":"#9b59ff"},
+{"id":"fivek_180","name":"Habit Immortal","emoji":"🧬","tier":"Legendary","desc":"180 day 5K+ streak","color":"#9b59ff"},
+{"id":"tenk_120","name":"Machine Mode","emoji":"☄️","tier":"Legendary","desc":"120 day 10K streak","color":"#9b59ff"},
+{"id":"month_600k","name":"Million Step Month","emoji":"🌍","tier":"Legendary","desc":"600K steps in a month","color":"#9b59ff"},
+{"id":"single_60000","name":"Summit Day","emoji":"🏔️","tier":"Legendary","desc":"60K steps in a day","color":"#9b59ff"},
+{"id":"hall_of_fame","name":"The Untouchable","emoji":"🐐","tier":"Legendary","desc":"Holds 3 all-time records","color":"#9b59ff"},
+
 
 ]
 
@@ -327,6 +345,48 @@ def generate_badges(user, df, league_history):
     # -----------------
     if len(earned) >= 10: earned.add("collector_10")
     if len(earned) >= 20: earned.add("collector_20")
+
+    # ---------- SILVER ----------
+    if lh["Promoted"].sum() >= 3:
+        earned.add("comeback_3")
+    
+    if s["10k"]["max"] >= 14 and s["active5"]["max"] >= 30:
+        earned.add("double_streak")
+    
+    # ---------- GOLD ----------
+    if monthly.max() >= 500000:
+        earned.add("month_500k")
+    
+    if (u["steps"] >= 5000).mean() >= 0.85:
+        earned.add("consistent_85")
+    
+    top3 = ((lh["League"]=="Premier") & (lh["Rank"]<=3)).sum()
+    if top3 >= 5:
+        earned.add("prem_5_runnerup")
+    
+    if (u["steps"] > 0).sum() >= 500:
+        earned.add("active_500")
+    
+    # ---------- LEGENDARY ----------
+    if prem_titles >= 7:
+        earned.add("prem_7")
+    
+    if s["active5"]["max"] >= 180:
+        earned.add("fivek_180")
+    
+    if s["10k"]["max"] >= 120:
+        earned.add("tenk_120")
+    
+    if monthly.max() >= 600000:
+        earned.add("month_600k")
+    
+    if u["steps"].max() >= 60000:
+        earned.add("single_60000")
+    
+    # Needs your all-time records table
+    # if user_all_time_records >= 3:
+    #     earned.add("hall_of_fame")
+
 
     return earned
 
