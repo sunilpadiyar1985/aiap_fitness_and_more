@@ -232,7 +232,7 @@ def generate_badges(user, df, league_history):
     
 def render_badge_section(title, tier, earned_ids):
 
-    st.markdown(f"## {title}")
+    st.markdown(f"##### {title}")
 
     tier_badges = [b for b in BADGE_CATALOG if b["tier"] == tier]
     cols = st.columns(6)
