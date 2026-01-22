@@ -161,39 +161,120 @@ def load_roster():
 #-------------------
 #Badge Engine
 #-------------------
+BADGE_CATALOG = [
+# ---------------- BRONZE ----------------
+{"id":"active_30","name":"Active Starter","emoji":"🚶","tier":"Bronze","desc":"30 active days","color":"#cd7f32"},
+{"id":"fivek_7","name":"5K Rookie","emoji":"🟦","tier":"Bronze","desc":"7 day 5K streak","color":"#cd7f32"},
+{"id":"tenk_3","name":"First 10K","emoji":"🔥","tier":"Bronze","desc":"3 day 10K streak","color":"#cd7f32"},
+
+# ---------------- SILVER ----------------
+{"id":"fivek_30","name":"Habit Builder","emoji":"💪","tier":"Silver","desc":"30 day 5K+ streak","color":"#c0c0c0"},
+{"id":"tenk_14","name":"Iron Legs","emoji":"🔥","tier":"Silver","desc":"14 day 10K streak","color":"#c0c0c0"},
+{"id":"consistent","name":"Ultra Consistent","emoji":"🧱","tier":"Silver","desc":"75% days ≥5K","color":"#c0c0c0"},
+
+# ---------------- GOLD ----------------
+{"id":"tenk_30","name":"Elite Grinder","emoji":"⚡","tier":"Gold","desc":"30 day 10K streak","color":"#ffd700"},
+{"id":"fivek_60","name":"Habit Beast","emoji":"🦾","tier":"Gold","desc":"60 day 5K+ streak","color":"#ffd700"},
+{"id":"prem_3","name":"Champion Core","emoji":"👑","tier":"Gold","desc":"3 Premier titles","color":"#ffd700"},
+
+# ---------------- LEGENDARY ----------------
+{"id":"tenk_60","name":"Mythic Engine","emoji":"🐉","tier":"Legendary","desc":"60 day 10K streak","color":"#9b59ff"},
+{"id":"prem_5","name":"League Legend","emoji":"🏆","tier":"Legendary","desc":"5 Premier titles","color":"#9b59ff"},
+{"id":"longevity_18","name":"Immortal","emoji":"🐐","tier":"Legendary","desc":"18 active months","color":"#9b59ff"},
+]
 
 def generate_badges(user, df, league_history):
 
+    earned = set()
+
     u = df[df["User"] == user].sort_values("date")
     lh = league_history[league_history["User"] == user]
-
-    badges = []
-
-    # 🥇 Titles
-    if ((lh["Champion"]) & (lh["League"]=="Premier")).any():
-        badges.append("👑 Premier Champion")
-
-    if lh["Champion"].sum() >= 3:
-        badges.append("🏆 Serial Winner")
-
-    # 🔥 Streaks
     s = compute_user_streaks(df, user)
-    if s and s["10k_max"] >= 30:
-        badges.append("🔥 Iron Legs (30 day streak)")
 
-    # 🚀 Comeback
-    if lh["Promoted"].sum() >= 2:
-        badges.append("🚀 Comeback King")
+    # Activity
+    if (u["steps"] > 0).sum() >= 30:
+        earned.add("active_30")
 
-    # 🧱 Consistency
-    if (u["steps"] >= 5000).mean() > 0.75:
-        badges.append("🧱 Ultra Consistent")
+    # 5K streaks
+    if s and s["active5"]["max"] >= 7:
+        earned.add("fivek_7")
+    if s and s["active5"]["max"] >= 30:
+        earned.add("fivek_30")
+    if s and s["active5"]["max"] >= 60:
+        earned.add("fivek_60")
 
-    # 👣 Longevity
-    if u["date"].dt.to_period("M").nunique() >= 12:
-        badges.append("👣 League Veteran")
+    # 10K streaks
+    if s and s["10k"]["max"] >= 3:
+        earned.add("tenk_3")
+    if s and s["10k"]["max"] >= 14:
+        earned.add("tenk_14")
+    if s and s["10k"]["max"] >= 30:
+        earned.add("tenk_30")
+    if s and s["10k"]["max"] >= 60:
+        earned.add("tenk_60")
 
-    return badges
+    # Consistency
+    if (u["steps"] >= 5000).mean() >= 0.75:
+        earned.add("consistent")
+
+    # Titles
+    prem_titles = ((lh["Champion"]) & (lh["League"]=="Premier")).sum()
+    if prem_titles >= 3:
+        earned.add("prem_3")
+    if prem_titles >= 5:
+        earned.add("prem_5")
+
+    # Longevity
+    if u["date"].dt.to_period("M").nunique() >= 18:
+        earned.add("longevity_18")
+
+    return earned
+    
+def render_badge_section(title, tier, earned_ids):
+
+    st.markdown(f"## {title}")
+
+    tier_badges = [b for b in BADGE_CATALOG if b["tier"] == tier]
+    cols = st.columns(6)
+
+    for i, badge in enumerate(tier_badges):
+        owned = badge["id"] in earned_ids
+
+        color = badge["color"]
+        bg = f"linear-gradient(135deg, {color}, #ffffff)" if owned else "#f0f0f0"
+        opacity = "1" if owned else "0.35"
+        filter_fx = "none" if owned else "grayscale(100%)"
+        crown = "👑" if (tier=="Legendary" and owned) else ""
+
+        glow = "0 0 18px rgba(255,215,0,0.6)" if owned else "none"
+
+        with cols[i % 6]:
+            st.markdown(f"""
+            <div style="
+                background:{bg};
+                opacity:{opacity};
+                filter:{filter_fx};
+                padding:14px;
+                border-radius:18px;
+                text-align:center;
+                margin-bottom:14px;
+                box-shadow:{glow};
+                transition: all 0.25s ease;
+            "
+            onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 10px 22px rgba(0,0,0,0.18)'"
+            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='{glow}'"
+            >
+                <div style="font-size:34px">{badge['emoji']}</div>
+                <div style="font-size:14px;font-weight:700">{badge['name']} {crown}</div>
+                <div style="font-size:11px;color:#333">{badge['desc']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+def render_badge_cabinet(earned_ids):
+    render_badge_section("🥉 Bronze", "Bronze", earned_ids)
+    render_badge_section("🥈 Silver", "Silver", earned_ids)
+    render_badge_section("🥇 Gold", "Gold", earned_ids)
+    render_badge_section("💎 Legendary", "Legendary", earned_ids)
 
 
 #-------------------
@@ -1608,6 +1689,35 @@ if page == "👤 Player Profile":
     
     st.plotly_chart(fig, use_container_width=True)
 
+    st.markdown("###### 🎖️ Badges earned")
+    
+    earned = generate_badges(selected_user, df, league_history)
+    render_badge_cabinet(earned)
+    st.divider()
+    # ----------------------------
+    # TROPHY CABINET
+    # ----------------------------
+    
+    st.markdown("###### 🏆 Trophy cabinet")
+
+    prem_titles = player_lh[(player_lh["League"] == "Premier") & (player_lh["Champion"])].shape[0]
+    champ_titles = player_lh[(player_lh["League"] == "Championship") & (player_lh["Champion"])].shape[0]
+    prem_runnerups = player_lh[(player_lh["League"] == "Premier") & (player_lh["Rank"] == 2)].shape[0]
+    champ_runnerups = player_lh[(player_lh["League"] == "Championship") & (player_lh["Rank"] == 2)].shape[0]
+    best_finish = int(player_lh["Rank"].min())
+    best_points = int(player_lh["points_display"].max())
+
+    t1, t2, t3, t4, t5, t6 = st.columns(6)
+
+    t1.metric("👑 Premier titles", prem_titles)
+    t2.metric("🏆 Championship titles", champ_titles)
+    t3.metric("🥈 Premier runner-ups", prem_runnerups)
+    t4.metric("🥈 Championship runner-ups", champ_runnerups)
+    t5.metric("🏅 Best rank", f"#{best_finish}")
+    t6.metric("🚀 Best season", f"{best_points} pts")
+
+    st.divider()
+    
     # ----------------------------
     # LEAGUE CAREER SNAPSHOT
     # ----------------------------
@@ -1652,39 +1762,7 @@ if page == "👤 Player Profile":
     
             st.info(f"⚔️ **{r}** — {wins} wins vs {losses} losses | {len(h2h)} battles")
 
-
-    # ----------------------------
-    # TROPHY CABINET
-    # ----------------------------
     st.divider()
-    st.markdown("###### 🏆 Trophy cabinet")
-
-    prem_titles = player_lh[(player_lh["League"] == "Premier") & (player_lh["Champion"])].shape[0]
-    champ_titles = player_lh[(player_lh["League"] == "Championship") & (player_lh["Champion"])].shape[0]
-    prem_runnerups = player_lh[(player_lh["League"] == "Premier") & (player_lh["Rank"] == 2)].shape[0]
-    champ_runnerups = player_lh[(player_lh["League"] == "Championship") & (player_lh["Rank"] == 2)].shape[0]
-    best_finish = int(player_lh["Rank"].min())
-    best_points = int(player_lh["points_display"].max())
-
-    t1, t2, t3, t4, t5, t6 = st.columns(6)
-
-    t1.metric("👑 Premier titles", prem_titles)
-    t2.metric("🏆 Championship titles", champ_titles)
-    t3.metric("🥈 Premier runner-ups", prem_runnerups)
-    t4.metric("🥈 Championship runner-ups", champ_runnerups)
-    t5.metric("🏅 Best rank", f"#{best_finish}")
-    t6.metric("🚀 Best season", f"{best_points} pts")
-
-    st.divider()
-    st.markdown("###### 🎖️ Badges earned")
-    
-    badges = generate_badges(selected_user, df, league_history)
-    
-    if badges:
-        for b in badges:
-            st.success(b)
-    else:
-        st.info("No badges yet — greatness in progress 😄")
 
     # ----------------------------
     # LEAGUE JOURNEY TABLE
