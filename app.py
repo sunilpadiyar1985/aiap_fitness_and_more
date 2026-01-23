@@ -2500,7 +2500,7 @@ if page == "ℹ️ Readme: Our Dashboard":
     
     > *Move more. Stay consistent. Make fitness a game.*
     
-    The **Steps League** is a community-driven fitness league that transforms everyday walking and running into a living, competitive ecosystem — complete with leagues, seasons, promotions, records, badges, and legends.
+    The **Steps League** is a community driven fitness league that transforms everyday walking and running into a living, competitive ecosystem complete with leagues, seasons, promotions, records, badges, and legends.
     
     Think of it as:  
     **Fantasy Football × Strava × Habit Building** 😄
