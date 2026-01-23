@@ -2497,210 +2497,205 @@ if page == "📜 League History":
 if page == "ℹ️ Readme: Our Dashboard":
 
     # ℹ️ About the Steps League
-    
-    > *Move more. Stay consistent. Make fitness a game.*
-    
-    The **Steps League** is a community driven fitness league that transforms everyday walking and running into a living, competitive ecosystem complete with leagues, seasons, promotions, records, badges, and legends.
-    
-    Think of it as:  
-    **Fantasy Football × Strava × Habit Building** 😄
-    
-    ---
-    
-    # 🚶 What is this dashboard?
-    
-    This dashboard automatically tracks daily steps and turns them into:
-    
-    • monthly seasons  
-    • league tables (Premier & Championship)  
-    • promotions & relegations  
-    • personal fitness profiles  
-    • streaks, records & achievements  
-    • historical league archives  
-    • hall of fame & GOAT rankings  
-    
-    It is not just about who walked the most — it’s about who built the strongest **fitness engine**.
-    
-    ---
-    
-    # 🏟️ The League System
-    
-    There are two divisions:
-    
-    🥇 **Premier League** – the top division  
-    🥈 **Championship** – the challenger division  
-    
-    ### How league placement works
-    
-    • At the very beginning of the league → **everyone starts in Premier**  
-    • After that → leagues **persist month to month**  
-    • Every month, players earn **league points**  
-    • Based on league results:  
-      - ⬆ Top Championship players are **promoted**  
-      - ⬇ Bottom Premier players are **relegated**  
-    • New players always start in **Championship**
-    
-    This creates a living system where:
-    
-    • Premier is hard to stay in  
-    • Championship is hungry and competitive  
-    • Every month has **real stakes**
-    
-    ---
-    
-    # 🧮 How league points are calculated
-    
-    Monthly league positions are **NOT decided only by total steps.**
-    
-    Each player earns points based on **six performance dimensions**:
-    
-    ### 🧠 The Six Engines
-    
-    • **Total steps** → overall output  
-    • **Average steps** → baseline quality  
-    • **10K days** → discipline & intensity  
-    • **5K days** → consistency & habit strength  
-    • **Best week** → peak performance  
-    • **Daily wins** → dominance on individual days  
-    
-    All metrics are **normalized within the month** and combined using weighted scoring.
-    
-    ### ⚖️ Current scoring model
-    
-    • 40% → Total steps  
-    • 15% → Average steps  
-    • 15% → 10K days  
-    • 10% → 5K days  
-    • 10% → Best week  
-    • 10% → Daily wins  
-    
-    This ensures the league rewards:
-    
-    ✔ consistency  
-    ✔ sustained effort  
-    ✔ not missing days  
-    ✔ strong weeks  
-    ✔ competitive dominance  
-    ✔ not just a few lucky spikes  
-    
-    So someone who shows up daily can beat someone who only had a few huge days.
-    
-    ---
-    
-    # 🏅 Badges & Achievements
-    
-    Beyond leagues, players earn **badges** across four tiers:
-    
-    🥉 Bronze – foundations & early habits  
-    🥈 Silver – strong routines & growth  
-    🥇 Gold – elite consistency & volume  
-    💎 Legendary – rare long-term dominance  
-    
-    Badges are awarded for:
-    
-    • streaks (5K, 10K, habit streaks)  
-    • volume (days, weeks, months)  
-    • consistency levels  
-    • league success  
-    • longevity  
-    • elite performances  
-    
-    Badges represent **who you are becoming**, not just what you won.
-    
-    ---
-    
-    # 🏆 Records & Hall of Fame
-    
-    The system permanently tracks:
-    
-    • highest single days  
-    • highest weeks  
-    • highest months  
-    • longest streaks  
-    • league title records  
-    • eras & dynasties  
-    • all-time leaders  
-    • GOAT rankings  
-    
-    This is the **history book** of the league.
-    
-    Once set, records become targets for everyone else.
-    
-    ---
-    
-    # 👤 Player Profiles
-    
-    Every player gets a full career page with:
-    
-    • lifetime step stats  
-    • best performances  
-    • streak engines  
-    • fitness trend analysis  
-    • league career path  
-    • trophy cabinet  
-    • badges earned  
-    • rivals & head-to-heads  
-    
-    This turns the league from a leaderboard into a **personal growth system**.
-    
-    ---
-    
-    # 📄 What each page shows
-    
-    ### 🏠 Monthly Results
-    • Monthly podium  
-    • League tables  
-    • Promotions & relegations  
-    • Highlights & records  
-    • Storylines & momentum  
-    • Team statistics  
-    
-    ### 👤 Player Profile  
-    • Career overview  
-    • Streak engines  
-    • Trend analysis  
-    • Trophies & badges  
-    • League journey  
-    
-    ### 🏆 Hall of Fame  
-    • All-time step records  
-    • Elite streaks  
-    • League legends  
-    • GOAT rankings  
-    
-    ### 📜 League History  
-    • Champions archive  
-    • Dynasties & eras  
-    • Historical tables  
-    • League evolution  
-    
-    ---
-    
-    # ❤️ Why this league exists
-    
-    This league exists to:
-    
-    • make walking addictive  
-    • reward showing up  
-    • celebrate consistency  
-    • visualize improvement  
-    • build long-term habits  
-    • create a healthy competitive culture  
-    
-    Whether someone is chasing trophies or just building a daily routine —  
-    **every step matters.**
-    
-    ---
-    
-    # 🧭 Core philosophy
-    
-    > This is not a step counter.  
-    > This is a **habit engine.**
-    
-    The real win condition is not podiums.
-    
-    The real win condition is:  
-    **showing up month after month.** 👣🔥
+
+Move more. Stay consistent. Make fitness a game.
+
+The Steps League is a community-driven fitness league that turns daily walking and running into a living system of leagues, seasons, records, badges, and champions.
+
+Think of it as:
+Fantasy Football + Strava + Habit Building
+
+---
+
+# 🚶 What is this dashboard?
+
+This dashboard automatically tracks daily steps and turns them into:
+
+- monthly seasons  
+- league tables (Premier and Championship)  
+- promotions and relegations  
+- personal fitness profiles  
+- streaks, records, and achievements  
+- historical league archives  
+- hall of fame and GOAT rankings  
+
+It is not only about who walked the most.
+It is about who built the strongest fitness engine.
+
+---
+
+# 🏟️ The League System
+
+There are two divisions:
+
+Premier League - the top division  
+Championship - the challenger division  
+
+### How league placement works
+
+- At the very beginning of the league, everyone starts in Premier  
+- After that, leagues persist month to month  
+- Every month, players earn league points  
+- Based on league results:  
+  - Top Championship players are promoted  
+  - Bottom Premier players are relegated  
+- New players always start in Championship  
+
+This creates a living system where:
+
+- Premier is hard to stay in  
+- Championship is hungry and competitive  
+- Every month has real stakes  
+
+---
+
+# 🧮 How league points are calculated
+
+Monthly league positions are not decided only by total steps.
+
+Each player earns points based on six performance dimensions.
+
+### The six engines
+
+- Total steps (overall output)  
+- Average steps (baseline quality)  
+- 10K days (discipline and intensity)  
+- 5K days (consistency and habit strength)  
+- Best week (peak performance)  
+- Daily wins (day-level dominance)  
+
+All metrics are normalized within the month and combined using weighted scoring.
+
+### Current scoring model
+
+- 40% total steps  
+- 15% average steps  
+- 15% 10K days  
+- 10% 5K days  
+- 10% best week  
+- 10% daily wins  
+
+This ensures the league rewards:
+
+- consistency  
+- sustained effort  
+- not missing days  
+- strong weeks  
+- competitive dominance  
+- not just a few lucky spikes  
+
+---
+
+# 🏅 Badges and achievements
+
+Beyond leagues, players earn badges across four tiers:
+
+Bronze - foundations and early habits  
+Silver - strong routines and growth  
+Gold - elite consistency and volume  
+Legendary - rare long-term dominance  
+
+Badges are awarded for:
+
+- streaks  
+- volume milestones  
+- consistency levels  
+- league success  
+- longevity  
+- elite performances  
+
+Badges represent who you are becoming, not just what you won.
+
+---
+
+# 🏆 Records and Hall of Fame
+
+The system permanently tracks:
+
+- highest single days  
+- highest weeks  
+- highest months  
+- longest streaks  
+- league title records  
+- eras and dynasties  
+- all-time leaders  
+- GOAT rankings  
+
+This is the history book of the league.
+
+---
+
+# 👤 Player Profiles
+
+Every player gets a full career page with:
+
+- lifetime step stats  
+- best performances  
+- streak engines  
+- fitness trend analysis  
+- league career path  
+- trophy cabinet  
+- badges earned  
+- rivals and head-to-heads  
+
+---
+
+# 📄 What each page shows
+
+### Monthly Results
+- Monthly podium  
+- League tables  
+- Promotions and relegations  
+- Highlights and records  
+- Storylines and momentum  
+- Team statistics  
+
+### Player Profile
+- Career overview  
+- Streak engines  
+- Trend analysis  
+- Trophies and badges  
+- League journey  
+
+### Hall of Fame
+- All-time step records  
+- Elite streaks  
+- League legends  
+- GOAT rankings  
+
+### League History
+- Champions archive  
+- Dynasties and eras  
+- Historical tables  
+- League evolution  
+
+---
+
+# ❤️ Why this league exists
+
+This league exists to:
+
+- make walking addictive  
+- reward showing up  
+- celebrate consistency  
+- visualize improvement  
+- build long-term habits  
+- create a healthy competitive culture  
+
+Whether someone is chasing trophies or just building a routine,
+every step matters.
+
+---
+
+# 🧭 Core philosophy
+
+This is not a step counter.  
+This is a habit engine.
+
+The real win condition is not podiums.
+
+The real win condition is showing up month after month.
+
 
 
 
