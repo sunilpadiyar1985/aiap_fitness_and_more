@@ -563,13 +563,13 @@ def build_league_history(df, roster_df):
             premier = kpi[kpi["League"] == "Premier"].sort_values("points", ascending=False)
             champ   = kpi[kpi["League"] == "Championship"].sort_values("points", ascending=False)
 
-            MOVE_N = 3
+            MOVE_N = 2
             PREMIER_SIZE = 10
 
-            # bottom 3 active Premier
+            # bottom 2 active Premier
             relegated = premier.tail(MOVE_N)["User"].tolist()
 
-            # top 3 active Championship
+            # top 2 active Championship
             promoted = champ.head(MOVE_N)["User"].tolist()
 
             # apply moves to registry
