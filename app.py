@@ -2183,49 +2183,85 @@ if page == "👤 Player Profile":
 
     st.divider()
     st.markdown("###### 📈 League journey (career path)")
-    
+
     chart_df = player_lh.sort_values("Month").copy()
     
-    # Map leagues to vertical positions
-    chart_df["league_y"] = chart_df["League"].map({
-        "Premier": 1,
-        "Championship": -1
-    })
+    PREMIER_SIZE = 10  # keep in sync with league engine
     
-    chart_df["MonthLabel"] = chart_df["Month"].dt.strftime("%b %Y")
+    # ------------------------------------------------
+    # Build continuous rank axis (Premier + Championship)
+    # ------------------------------------------------
+    chart_df["plot_rank"] = np.where(
+        chart_df["League"] == "Premier",
+        chart_df["Rank"],
+        chart_df["Rank"] + PREMIER_SIZE
+    )
     
+    chart_df["RankLabel"] = chart_df["Rank"].apply(lambda x: f"#{int(x)}")
+    
+    # ------------------------------------------------
+    # Plot
+    # ------------------------------------------------
     fig = px.line(
         chart_df,
         x="Month",
-        y="league_y",
-        markers=True,
-        title=None
+        y="plot_rank",
+        markers=True
     )
     
     fig.update_traces(
         mode="lines+markers+text",
-        text=chart_df["Rank"].apply(lambda x: f"#{int(x)}"),
-        textposition="top center"
+        text=chart_df["RankLabel"],
+        textposition="top center",
+        line=dict(width=3),
+        marker=dict(size=9)
+    )
+    
+    # ------------------------------------------------
+    # Premier / Championship zones
+    # ------------------------------------------------
+    fig.add_hrect(
+        y0=0.5, y1=PREMIER_SIZE + 0.5,
+        fillcolor="rgba(0, 200, 0, 0.08)",
+        layer="below",
+        line_width=0
+    )
+    
+    fig.add_hrect(
+        y0=PREMIER_SIZE + 0.5, y1=PREMIER_SIZE + 20,
+        fillcolor="rgba(0, 120, 255, 0.05)",
+        layer="below",
+        line_width=0
+    )
+    
+    # Relegation cut line
+    fig.add_hline(
+        y=PREMIER_SIZE + 0.5,
+        line_dash="dash",
+        line_color="#888"
+    )
+    
+    # ------------------------------------------------
+    # Axis styling
+    # ------------------------------------------------
+    fig.update_yaxes(
+        autorange="reversed",
+        title="",
+        tickmode="array",
+        tickvals=[1, 5, 10, 12, 15],
+        ticktext=["#1", "#5", "#10 (Premier cut)", "#2 Champ", "#5 Champ"]
     )
     
     fig.update_layout(
-        height=380,
-        yaxis=dict(
-            tickmode="array",
-            tickvals=[1, -1],
-            ticktext=["Premier League", "Championship"],
-            zeroline=True,
-            zerolinewidth=2,
-            zerolinecolor="#999",
-            range=[-1.5, 1.5],
-            title=""
-        ),
+        height=420,
         xaxis_title="",
         yaxis_title="",
         margin=dict(l=20, r=20, t=20, b=20),
+        showlegend=False
     )
     
     st.plotly_chart(fig, use_container_width=True)
+
 
     # ----------------------------
     # MONTH BY MONTH BREAKDOWN
