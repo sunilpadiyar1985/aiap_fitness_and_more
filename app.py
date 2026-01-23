@@ -473,7 +473,7 @@ def render_badge_cabinet(earned_ids):
 #League Engine
 #-------------------
 
-def build_league_history(df, roster_df):
+def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
 
     df = df.copy()
     df["month"] = df["date"].dt.to_period("M")
@@ -483,29 +483,25 @@ def build_league_history(df, roster_df):
     roster_df["Active from"] = pd.to_datetime(roster_df["Active from"])
     roster_df["Active till"] = pd.to_datetime(roster_df["Active till"], errors="coerce")
 
-    # months with any activity
-    monthly_activity = df.groupby("month")["steps"].sum()
-    all_months = sorted(monthly_activity[monthly_activity > 0].index)
+    all_months = sorted(df[df["steps"] > 0]["month"].unique())
 
     history_rows = []
-
-    # 🔐 persistent league registry
-    league_registry = {}
+    prev_league = {}
 
     for i, month in enumerate(all_months):
 
         month_start = month.to_timestamp()
-        month_end = month.to_timestamp("M")
+        month_end   = month.to_timestamp("M")
 
         # -------------------------
-        # Active roster this month
+        # ACTIVE ROSTER FOR MONTH
         # -------------------------
-        active_roster = roster_df[
+        active = roster_df[
             (roster_df["Active from"] <= month_end) &
             ((roster_df["Active till"].isna()) | (roster_df["Active till"] >= month_start))
         ]["User"].unique().tolist()
 
-        month_df = df[(df["month"] == month) & (df["User"].isin(active_roster))]
+        month_df = df[(df["month"] == month) & (df["User"].isin(active))]
 
         if month_df.empty or month_df["steps"].sum() == 0:
             continue
@@ -518,29 +514,19 @@ def build_league_history(df, roster_df):
         month_df["daily_win"] = (month_df["steps"] == daily_max) & (month_df["steps"] > 0)
 
         # -------------------------
-        # KPIs (only people who played)
+        # KPIs
         # -------------------------
         kpi = month_df.groupby("User").agg(
             total_steps=("steps", "sum"),
             avg_steps=("steps", "mean"),
-            best_day=("steps", "max"),
             tenk_days=("steps", lambda x: (x >= 10000).sum()),
             fivek_days=("steps", lambda x: (x >= 5000).sum()),
             daily_wins=("daily_win", "sum")
         ).reset_index()
 
-        # only actual participants
-        kpi = kpi[kpi["total_steps"] > 0]
-
-        if kpi.empty:
-            continue
-
-        # -------------------------
-        # BEST WEEK
-        # -------------------------
         month_df["week"] = month_df["date"].dt.to_period("W").apply(lambda r: r.start_time)
         best_week = (
-            month_df.groupby(["User", "week"])["steps"]
+            month_df.groupby(["User","week"])["steps"]
             .sum()
             .groupby("User")
             .max()
@@ -557,7 +543,7 @@ def build_league_history(df, roster_df):
             kpi[col + "_score"] = kpi[col] / max_val if max_val > 0 else 0
 
         # -------------------------
-        # 🧮 POINTS
+        # 🧮 POINTS (NEW SYSTEM)
         # -------------------------
         kpi["points"] = (
             kpi["total_steps_score"] * 0.40 +
@@ -570,92 +556,62 @@ def build_league_history(df, roster_df):
 
         kpi["points_display"] = (kpi["points"] * 100).round(0).astype(int)
 
-        participants = kpi["User"].tolist()
-
         # -------------------------
-        # LEAGUE ASSIGNMENT
+        # LEAGUE CARRY FORWARD
         # -------------------------
         if i == 0:
-            # bootstrap: everyone who played is Premier
-            for u in participants:
-                league_registry[u] = "Premier"
+            kpi["League"] = "Premier"
         else:
-            # new users always start in Championship
-            for u in participants:
-                if u not in league_registry:
-                    league_registry[u] = "Championship"
+            kpi["League"] = kpi["User"].map(prev_league).fillna("Championship")
 
-        kpi["League"] = kpi["User"].map(league_registry)
-
-        # -------------------------
-        # PROMOTION / RELEGATION (only among active players)
-        # -------------------------
         kpi["Promoted"] = False
         kpi["Relegated"] = False
 
-        if i > 0:
+        # -------------------------
+        # 🏟️ SEAT BALANCING — FILL PREMIER
+        # -------------------------
+        premier = kpi[kpi["League"] == "Premier"]
+        champ   = kpi[kpi["League"] == "Championship"]
 
-            premier = kpi[kpi["League"] == "Premier"].sort_values("points", ascending=False)
-            champ   = kpi[kpi["League"] == "Championship"].sort_values("points", ascending=False)
+        if len(premier) < PREMIER_SIZE and not champ.empty:
+            need = PREMIER_SIZE - len(premier)
+            fillers = champ.sort_values("points", ascending=False).head(need)["User"].tolist()
 
-            MOVE_N = 2
-            PREMIER_SIZE = 10
-            
-            current_prem_size = len([u for u,v in league_registry.items() if v == "Premier"])
-            
-            # always promote
-            promoted = champ.head(MOVE_N)["User"].tolist()
-            for u in promoted:
-                league_registry[u] = "Premier"
-            
-            kpi.loc[kpi["User"].isin(promoted), "Promoted"] = True
-            
-            # only relegate AFTER Premier is full
-            relegated = []
-            if current_prem_size >= PREMIER_SIZE:
-            
-                relegated = premier.tail(MOVE_N)["User"].tolist()
-                for u in relegated:
-                    league_registry[u] = "Championship"
-            
-                kpi.loc[kpi["User"].isin(relegated), "Relegated"] = True
-
-            kpi.loc[kpi["User"].isin(promoted), "Promoted"] = True
-            kpi.loc[kpi["User"].isin(relegated), "Relegated"] = True
-
-            # enforce Premier cap (only active evaluated)
-            premier_after = [u for u,v in league_registry.items() if v=="Premier"]
-
-            if len(premier_after) > PREMIER_SIZE:
-
-                active_points = (
-                    kpi.set_index("User")["points"]
-                    .reindex(premier_after)
-                    .fillna(-1)  # inactive sink
-                )
-
-                overflow = active_points.sort_values().head(len(premier_after) - PREMIER_SIZE).index.tolist()
-
-                for u in overflow:
-                    league_registry[u] = "Championship"
-                    if u in participants:
-                        kpi.loc[kpi["User"] == u, "Relegated"] = True
+            kpi.loc[kpi["User"].isin(fillers), "League"] = "Premier"
+            kpi.loc[kpi["User"].isin(fillers), "Promoted"] = True
 
         # -------------------------
-        # FINAL RANKING (active only)
+        # 🔁 PROMOTION / RELEGATION (ONLY IF FULL)
+        # -------------------------
+        premier = kpi[kpi["League"] == "Premier"].sort_values("points", ascending=False)
+        champ   = kpi[kpi["League"] == "Championship"].sort_values("points", ascending=False)
+
+        if len(premier) == PREMIER_SIZE and len(champ) >= MOVE_N:
+
+            relegated = premier.tail(MOVE_N)["User"].tolist()
+            promoted  = champ.head(MOVE_N)["User"].tolist()
+
+            kpi.loc[kpi["User"].isin(relegated), "League"] = "Championship"
+            kpi.loc[kpi["User"].isin(promoted),  "League"] = "Premier"
+
+            kpi.loc[kpi["User"].isin(promoted),  "Promoted"] = True
+            kpi.loc[kpi["User"].isin(relegated), "Relegated"] = True
+
+        # -------------------------
+        # FINAL RANKING
         # -------------------------
         kpi["Rank"] = (
             kpi.groupby("League")["points"]
-               .rank(method="min", ascending=False)
+               .rank(method="first", ascending=False)
         )
 
         kpi["Champion"] = kpi["Rank"] == 1
         kpi["Month"] = month.to_timestamp()
 
-        history_rows.append(kpi.copy())
+        history_rows.append(kpi)
+        prev_league = kpi.set_index("User")["League"].to_dict()
 
-    history = pd.concat(history_rows, ignore_index=True)
-    return history
+    return pd.concat(history_rows, ignore_index=True)
 
 # -------------------------
 # Era Engine
