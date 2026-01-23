@@ -564,19 +564,26 @@ def build_league_history(df, roster_df):
             champ   = kpi[kpi["League"] == "Championship"].sort_values("points", ascending=False)
 
             MOVE_N = 2
-            PREMIER_SIZE = 10
-
-            # bottom 2 active Premier
-            relegated = premier.tail(MOVE_N)["User"].tolist()
-
-            # top 2 active Championship
+            PREMIER_SIZE = 9
+            
+            current_prem_size = len([u for u,v in league_registry.items() if v == "Premier"])
+            
+            # always promote
             promoted = champ.head(MOVE_N)["User"].tolist()
-
-            # apply moves to registry
-            for u in relegated:
-                league_registry[u] = "Championship"
             for u in promoted:
                 league_registry[u] = "Premier"
+            
+            kpi.loc[kpi["User"].isin(promoted), "Promoted"] = True
+            
+            # only relegate AFTER Premier is full
+            relegated = []
+            if current_prem_size >= PREMIER_SIZE:
+            
+                relegated = premier.tail(MOVE_N)["User"].tolist()
+                for u in relegated:
+                    league_registry[u] = "Championship"
+            
+                kpi.loc[kpi["User"].isin(relegated), "Relegated"] = True
 
             kpi.loc[kpi["User"].isin(promoted), "Promoted"] = True
             kpi.loc[kpi["User"].isin(relegated), "Relegated"] = True
