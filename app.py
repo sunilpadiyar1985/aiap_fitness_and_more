@@ -3,35 +3,42 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
-# =========================================================
-# 🚧 MAINTENANCE MODE — HARD STOP SWITCH
-# =========================================================
+# ======================================
+# 🚧 MAINTENANCE + ADMIN ACCESS GATE
+# ======================================
 
-MAINTENANCE_MODE = True   # 🔁 change to False to go live
+MAINTENANCE_MODE = True   # ← switch ON / OFF
 
-if MAINTENANCE_MODE:
-    import streamlit as st
-
-    st.set_page_config(
-        page_title="Steps League – Under Maintenance",
-        page_icon="🚧",
-        layout="centered"
-    )
+def maintenance_gate():
+    st.set_page_config(page_title="Steps League – Maintenance", page_icon="🚧", layout="centered")
 
     st.markdown("""
-    <div style="text-align:center; padding:40px;">
-        <h1>🚧 Steps League is under maintenance</h1>
-        <p style="font-size:18px;">
-            The league engine is being upgraded.<br><br>
-            Please check back soon.
-        </p>
-        <p style="color:#777;">
-            We’ll be back stronger, fairer, and more competitive 💪
+    <div style="
+        background:#fff4e5;
+        padding:26px;
+        border-radius:18px;
+        text-align:center;
+        border:1px solid #ffd8a8;
+    ">
+        <h2>🚧 Steps League is under maintenance</h2>
+        <p style="font-size:16px">
+        League engine upgrades in progress.<br>
+        We’ll be back shortly.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    st.stop()   # ⛔ nothing below this will run
+    st.markdown("### 🔐 Admin access")
+
+    pwd = st.text_input("Enter admin password", type="password")
+
+    if pwd != st.secrets.get("LEAGUE_ADMIN_PASSWORD", ""):
+        st.info("Maintenance mode is active.")
+        st.stop()
+
+# ---- EXECUTE GATE ----
+if MAINTENANCE_MODE:
+    maintenance_gate()
 
 
 st.cache_data.clear()
