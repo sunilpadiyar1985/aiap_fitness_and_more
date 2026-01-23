@@ -1144,6 +1144,53 @@ def team_month_stats(df, month, active_users):
         "team_avg": int(team_avg)
     }
 
+def monthly_top_records(df, selected_month):
+
+    # Split data
+    this_month = df[df["date"].dt.to_period("M") == selected_month].copy()
+    before = df[df["date"].dt.to_period("M") < selected_month].copy()
+
+    # ------------------------
+    # 🔥 BEST DAYS (top 3)
+    # ------------------------
+    top_days = (
+        this_month.sort_values("steps", ascending=False)
+        .head(3)
+        .reset_index(drop=True)
+    )
+
+    prev_best_day = before["steps"].max() if not before.empty else 0
+    best_day_record = (not top_days.empty) and (top_days.loc[0, "steps"] > prev_best_day)
+
+    # ------------------------
+    # 🗓️ BEST WEEKS (top 3)
+    # ------------------------
+    this_month["week"] = this_month["date"].dt.to_period("W").apply(lambda r: r.start_time)
+    before["week"] = before["date"].dt.to_period("W").apply(lambda r: r.start_time)
+
+    week_totals = (
+        this_month.groupby(["User","week"])["steps"]
+        .sum()
+        .reset_index()
+        .sort_values("steps", ascending=False)
+        .head(3)
+        .reset_index(drop=True)
+    )
+
+    prev_best_week = (
+        before.groupby(["User","week"])["steps"].sum().max()
+        if not before.empty else 0
+    )
+
+    best_week_record = (not week_totals.empty) and (week_totals.loc[0, "steps"] > prev_best_week)
+
+    return {
+        "top_days": top_days,
+        "day_record": best_day_record,
+        "top_weeks": week_totals,
+        "week_record": best_week_record
+    }
+
 
 league_events = build_league_events(df, league_history)
 show_global_league_moments(league_events)
@@ -1505,10 +1552,11 @@ if page == "🏠 Monthly Results":
             """,
             unsafe_allow_html=True
         )
-
+    
     # ----------------------------
     # MONTHLY HIGHLIGHTS
     # ----------------------------
+    monthly_records = monthly_top_records(df, selected_month)
     st.divider()
     st.markdown("###### 🎖️ This month's highlights")
     
@@ -1566,11 +1614,49 @@ if page == "🏠 Monthly Results":
     
     slopes = pivot_active.apply(slope, axis=1).sort_values(ascending=False)
     top_improved = slopes.head(3)
+
+    td = monthly_records["top_days"]
+
+    if not td.empty:
+        crown = " 👑" if monthly_records["day_record"] else ""
+
+    tw = monthly_records["top_weeks"]
+
+    if not tw.empty:
+        crown = " 👑" if monthly_records["week_record"] else ""
     
     c1, c2 = st.columns(2)
     
     with c1:
-        st.success(f"""🎯 **Most consistent**
+        
+        st.success(f"""🔥 **Highest steps in a day**
+    
+    {td.loc[0,'User']} — {int(td.loc[0,'steps']):,}{crown}  
+    {td.loc[1,'User']} — {int(td.loc[1,'steps']):,}  
+    {td.loc[2,'User']} — {int(td.loc[2,'steps']):,}""")
+
+        st.success(f"""🗓️ **Highest steps in a week**
+
+    {tw.loc[0,'User']} — {int(tw.loc[0,'steps']):,}{crown}  
+    {tw.loc[1,'User']} — {int(tw.loc[1,'steps']):,}  
+    {tw.loc[2,'User']} — {int(tw.loc[2,'steps']):,}""")
+
+           st.info(f"""🏅 **10K crossed king / queen**
+    
+    {top_10k.index[0]} — {int(top_10k.iloc[0])} days  
+    {top_10k.index[1]} — {int(top_10k.iloc[1])} days  
+    {top_10k.index[2]} — {int(top_10k.iloc[2])} days""")
+    
+        st.info(f"""🥈 **5K crossed king / queen**
+    
+    {top_5k.index[0]} — {int(top_5k.iloc[0])} days  
+    {top_5k.index[1]} — {int(top_5k.iloc[1])} days  
+    {top_5k.index[2]} — {int(top_5k.iloc[2])} days""")
+
+    
+    with c2:
+
+            st.success(f"""🎯 **Most consistent**
     
     {top_consistent.index[0]} — {int(top_consistent.iloc[0]):,} std dev  
     {top_consistent.index[1]} — {int(top_consistent.iloc[1]):,}  
@@ -1587,19 +1673,6 @@ if page == "🏠 Monthly Results":
     {top_improved.index[0]} — {int(top_improved.iloc[0]):,} slope  
     {top_improved.index[1]} — {int(top_improved.iloc[1]):,} 
     {top_improved.index[2]} — {int(top_improved.iloc[2]):,}""")
-    
-    with c2:
-        st.info(f"""🏅 **10K crossed king / queen**
-    
-    {top_10k.index[0]} — {int(top_10k.iloc[0])} days  
-    {top_10k.index[1]} — {int(top_10k.iloc[1])} days  
-    {top_10k.index[2]} — {int(top_10k.iloc[2])} days""")
-    
-        st.info(f"""🥈 **5K crossed king / queen**
-    
-    {top_5k.index[0]} — {int(top_5k.iloc[0])} days  
-    {top_5k.index[1]} — {int(top_5k.iloc[1])} days  
-    {top_5k.index[2]} — {int(top_5k.iloc[2])} days""")
     
     premier = month_lh[month_lh["League"] == "Premier"].sort_values("Rank")
     championship = month_lh[month_lh["League"] == "Championship"].sort_values("Rank")
