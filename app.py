@@ -1201,7 +1201,7 @@ def monthly_top_records(df, selected_month):
     return {
         "top_days": top_days,
         "day_record": best_day_record,
-        "top_weeks": week_totals,
+        "top_weeks": top_weeks,
         "week_record": best_week_record
     }
 
