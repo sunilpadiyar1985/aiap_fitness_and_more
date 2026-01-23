@@ -1122,10 +1122,35 @@ def show_global_league_moments(events_df):
     """, unsafe_allow_html=True)
 
 
+def team_month_stats(df, month, active_users):
+    mdf = df[(df["month"] == month) & (df["User"].isin(active_users))]
+
+    if mdf.empty or mdf["steps"].sum() == 0:
+        return None
+
+    total_steps = mdf["steps"].sum()
+
+    active_players = mdf.groupby("User")["steps"].sum()
+    active_players = active_players[active_players > 0]
+
+    num_players = len(active_players)
+
+    days_in_month = mdf["date"].nunique()
+    team_avg = total_steps / (num_players * days_in_month) if num_players else 0
+
+    return {
+        "total_steps": int(total_steps),
+        "players": int(num_players),
+        "team_avg": int(team_avg)
+    }
+
+
 league_events = build_league_events(df, league_history)
 show_global_league_moments(league_events)
 
-# Data Load Fineshes...
+# Data Load Finishes...
+# Helper function completed...
+# Engines have been build and ready to roar...
 
 # =========================================================
 # 🏆 HALL OF FAME — ALL TIME RECORDS
@@ -1673,6 +1698,74 @@ if page == "🏠 Monthly Results":
     
     st.plotly_chart(fig, use_container_width=True)
     #st.dataframe(monthly_totals, use_container_width=True, hide_index=True)
+
+    if month_df["steps"].sum() == 0:
+        st.info("📭 Data not available yet for this month.")
+        st.stop()
+
+    # =========================================================
+    # 🏟️ TEAM MONTH SNAPSHOT
+    # =========================================================
+    
+    current_stats = team_month_stats(df, selected_month, active_users)
+    
+    prev_month = selected_month - 1
+    prev_stats = team_month_stats(df, prev_month, active_users)
+    
+    st.divider()
+    st.markdown("#### 🏟️ Team month snapshot")
+    
+    if current_stats:
+    
+        c1, c2, c3, c4 = st.columns(4)
+    
+        c1.metric(
+            "👣 Team steps",
+            f"{current_stats['total_steps']:,}"
+        )
+    
+        c2.metric(
+            "👥 Active players",
+            current_stats["players"]
+        )
+    
+        c3.metric(
+            "📊 Team daily average",
+            f"{current_stats['team_avg']:,}"
+        )
+    
+        if prev_stats:
+            step_change = ((current_stats["total_steps"] - prev_stats["total_steps"]) / prev_stats["total_steps"]) * 100
+            avg_change = ((current_stats["team_avg"] - prev_stats["team_avg"]) / prev_stats["team_avg"]) * 100
+    
+            arrow1 = "📈" if step_change >= 0 else "📉"
+            arrow2 = "📈" if avg_change >= 0 else "📉"
+    
+            c4.metric(
+                "📆 vs last month",
+                f"{step_change:+.1f}%",
+                f"Avg {avg_change:+.1f}%"
+            )
+    
+            # ---------- Team form line ----------
+            if step_change > 10:
+                form = "🔥 The league is on fire this month!"
+            elif step_change > 3:
+                form = "🚀 Strong team momentum building"
+            elif step_change < -10:
+                form = "🥶 Tough month for the league"
+            elif step_change < -3:
+                form = "⚠️ Slight team slowdown"
+            else:
+                form = "➖ Stable and steady month"
+    
+            st.caption(form)
+    
+        else:
+            c4.metric("📆 vs last month", "—", "No previous data")
+    
+    else:
+        st.info("Team stats not available for this month yet.")
 
 # =========================================================
 # 👤 PLAYER PROFILE PAGE
