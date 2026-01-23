@@ -1878,7 +1878,6 @@ if page == "👤 Player Profile":
     # ----------------------------
     # LEAGUE CAREER SNAPSHOT
     # ----------------------------
-    st.divider()
     st.markdown("###### 🧍 League career snapshot")
 
     first_month = player_lh["Month"].min().strftime("%b %Y")
