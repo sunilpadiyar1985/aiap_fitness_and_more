@@ -452,8 +452,7 @@ def build_league_history(df, roster_df):
     all_months = sorted(monthly_activity[monthly_activity > 0].index)
 
     history_rows = []
-    prev_month_avg = None
-    prev_league = {}
+    prev_league = None
 
     for i, month in enumerate(all_months):
 
@@ -470,7 +469,6 @@ def build_league_history(df, roster_df):
 
         month_df = df[(df["month"] == month) & (df["User"].isin(active))]
 
-        # 🔐 Skip months with no real activity
         if month_df["steps"].sum() == 0:
             continue
 
@@ -478,6 +476,7 @@ def build_league_history(df, roster_df):
         # DAILY WINS
         # -------------------------
         daily_max = month_df.groupby("date")["steps"].transform("max")
+        month_df = month_df.copy()
         month_df["daily_win"] = (month_df["steps"] == daily_max) & (month_df["steps"] > 0)
 
         # -------------------------
@@ -488,6 +487,7 @@ def build_league_history(df, roster_df):
             avg_steps=("steps", "mean"),
             best_day=("steps", "max"),
             tenk_days=("steps", lambda x: (x >= 10000).sum()),
+            fivek_days=("steps", lambda x: (x >= 5000).sum()),
             daily_wins=("daily_win", "sum")
         ).reset_index()
 
@@ -503,43 +503,33 @@ def build_league_history(df, roster_df):
         kpi = kpi.merge(best_week, on="User", how="left").fillna(0)
 
         # -------------------------
-        # LEAGUE PLACEMENT
-        # -------------------------
-        if i == 0:
-            kpi["League"] = "Premier"
-            # First ever month → no promotions/relegations
-            prev_league = {u: "Premier" for u in kpi["User"]}
-        else:
-            avg_prev = prev_month_avg.reindex(active).fillna(0)
-
-            premier = avg_prev[avg_prev >= 7000].index.tolist()
-
-            if len(premier) < 6:
-                premier = avg_prev.sort_values(ascending=False).head(6).index.tolist()
-
-            kpi["League"] = kpi["User"].apply(
-                lambda x: "Premier" if x in premier else "Championship"
-            )
-
-        # -------------------------
         # NORMALIZATION
         # -------------------------
-        for col in ["total_steps", "best_day", "best_week", "tenk_days", "daily_wins"]:
+        for col in ["total_steps", "avg_steps", "tenk_days", "fivek_days", "best_week", "daily_wins"]:
             max_val = kpi[col].max()
             kpi[col + "_score"] = kpi[col] / max_val if max_val > 0 else 0
 
         # -------------------------
-        # POINTS
+        # 🧮 POINTS (NEW SYSTEM)
         # -------------------------
         kpi["points"] = (
-            kpi["total_steps_score"] * 0.5 +
-            kpi["best_day_score"]   * 0.1 +
-            kpi["best_week_score"]  * 0.1 +
-            kpi["tenk_days_score"]  * 0.3 +
-            kpi["daily_wins_score"] * 0.2
+            kpi["total_steps_score"] * 0.40 +
+            kpi["avg_steps_score"]   * 0.15 +
+            kpi["tenk_days_score"]   * 0.15 +
+            kpi["fivek_days_score"]  * 0.10 +
+            kpi["best_week_score"]   * 0.10 +
+            kpi["daily_wins_score"]  * 0.10
         )
 
         kpi["points_display"] = (kpi["points"] * 100).round(0).astype(int)
+
+        # -------------------------
+        # FIRST MONTH → ALL PREMIER
+        # -------------------------
+        if i == 0:
+            kpi["League"] = "Premier"
+        else:
+            kpi["League"] = kpi["User"].map(prev_league).fillna("Championship")
 
         # -------------------------
         # LEAGUE RANKING
@@ -552,24 +542,41 @@ def build_league_history(df, roster_df):
         # -------------------------
         # PROMOTION / RELEGATION
         # -------------------------
-        if prev_league:
-            kpi["Prev league"] = kpi["User"].map(prev_league)
-            kpi["Promoted"] = (kpi["Prev league"] == "Championship") & (kpi["League"] == "Premier")
-            kpi["Relegated"] = (kpi["Prev league"] == "Premier") & (kpi["League"] == "Championship")
-        else:
-            kpi["Promoted"] = False
-            kpi["Relegated"] = False
+        kpi["Promoted"] = False
+        kpi["Relegated"] = False
+
+        if i > 0:
+            premier = kpi[kpi["League"] == "Premier"].sort_values("Rank")
+            champ = kpi[kpi["League"] == "Championship"].sort_values("Rank")
+
+            # safety for small leagues
+            move_n = 2 if len(premier) >= 6 and len(champ) >= 6 else 1
+
+            relegated = premier.tail(move_n)["User"].tolist()
+            promoted = champ.head(move_n)["User"].tolist()
+
+            kpi.loc[kpi["User"].isin(promoted), "League"] = "Premier"
+            kpi.loc[kpi["User"].isin(relegated), "League"] = "Championship"
+
+            kpi.loc[kpi["User"].isin(promoted), "Promoted"] = True
+            kpi.loc[kpi["User"].isin(relegated), "Relegated"] = True
+
+            # recompute ranks after movement
+            kpi["Rank"] = (
+                kpi.groupby("League")["points"]
+                .rank(method="min", ascending=False)
+            )
 
         kpi["Champion"] = kpi["Rank"] == 1
         kpi["Month"] = month.to_timestamp()
 
         history_rows.append(kpi)
 
-        prev_month_avg = kpi.set_index("User")["avg_steps"]
         prev_league = kpi.set_index("User")["League"].to_dict()
 
     history = pd.concat(history_rows, ignore_index=True)
     return history
+
 
 # -------------------------
 # Era Engine
@@ -2489,117 +2496,211 @@ if page == "📜 League History":
 # =========================================================
 if page == "ℹ️ Readme: Our Dashboard":
 
-    st.markdown("### ℹ️ About the Steps League")
-    st.caption("What this dashboard is, and how the league works")
+    # ℹ️ About the Steps League
+    
+    > *Move more. Stay consistent. Make fitness a game.*
+    
+    The **Steps League** is a community-driven fitness league that transforms everyday walking and running into a living, competitive ecosystem — complete with leagues, seasons, promotions, records, badges, and legends.
+    
+    Think of it as:  
+    **Fantasy Football × Strava × Habit Building** 😄
+    
+    ---
+    
+    # 🚶 What is this dashboard?
+    
+    This dashboard automatically tracks daily steps and turns them into:
+    
+    • monthly seasons  
+    • league tables (Premier & Championship)  
+    • promotions & relegations  
+    • personal fitness profiles  
+    • streaks, records & achievements  
+    • historical league archives  
+    • hall of fame & GOAT rankings  
+    
+    It is not just about who walked the most — it’s about who built the strongest **fitness engine**.
+    
+    ---
+    
+    # 🏟️ The League System
+    
+    There are two divisions:
+    
+    🥇 **Premier League** – the top division  
+    🥈 **Championship** – the challenger division  
+    
+    ### How league placement works
+    
+    • At the very beginning of the league → **everyone starts in Premier**  
+    • After that → leagues **persist month to month**  
+    • Every month, players earn **league points**  
+    • Based on league results:  
+      - ⬆ Top Championship players are **promoted**  
+      - ⬇ Bottom Premier players are **relegated**  
+    • New players always start in **Championship**
+    
+    This creates a living system where:
+    
+    • Premier is hard to stay in  
+    • Championship is hungry and competitive  
+    • Every month has **real stakes**
+    
+    ---
+    
+    # 🧮 How league points are calculated
+    
+    Monthly league positions are **NOT decided only by total steps.**
+    
+    Each player earns points based on **six performance dimensions**:
+    
+    ### 🧠 The Six Engines
+    
+    • **Total steps** → overall output  
+    • **Average steps** → baseline quality  
+    • **10K days** → discipline & intensity  
+    • **5K days** → consistency & habit strength  
+    • **Best week** → peak performance  
+    • **Daily wins** → dominance on individual days  
+    
+    All metrics are **normalized within the month** and combined using weighted scoring.
+    
+    ### ⚖️ Current scoring model
+    
+    • 40% → Total steps  
+    • 15% → Average steps  
+    • 15% → 10K days  
+    • 10% → 5K days  
+    • 10% → Best week  
+    • 10% → Daily wins  
+    
+    This ensures the league rewards:
+    
+    ✔ consistency  
+    ✔ sustained effort  
+    ✔ not missing days  
+    ✔ strong weeks  
+    ✔ competitive dominance  
+    ✔ not just a few lucky spikes  
+    
+    So someone who shows up daily can beat someone who only had a few huge days.
+    
+    ---
+    
+    # 🏅 Badges & Achievements
+    
+    Beyond leagues, players earn **badges** across four tiers:
+    
+    🥉 Bronze – foundations & early habits  
+    🥈 Silver – strong routines & growth  
+    🥇 Gold – elite consistency & volume  
+    💎 Legendary – rare long-term dominance  
+    
+    Badges are awarded for:
+    
+    • streaks (5K, 10K, habit streaks)  
+    • volume (days, weeks, months)  
+    • consistency levels  
+    • league success  
+    • longevity  
+    • elite performances  
+    
+    Badges represent **who you are becoming**, not just what you won.
+    
+    ---
+    
+    # 🏆 Records & Hall of Fame
+    
+    The system permanently tracks:
+    
+    • highest single days  
+    • highest weeks  
+    • highest months  
+    • longest streaks  
+    • league title records  
+    • eras & dynasties  
+    • all-time leaders  
+    • GOAT rankings  
+    
+    This is the **history book** of the league.
+    
+    Once set, records become targets for everyone else.
+    
+    ---
+    
+    # 👤 Player Profiles
+    
+    Every player gets a full career page with:
+    
+    • lifetime step stats  
+    • best performances  
+    • streak engines  
+    • fitness trend analysis  
+    • league career path  
+    • trophy cabinet  
+    • badges earned  
+    • rivals & head-to-heads  
+    
+    This turns the league from a leaderboard into a **personal growth system**.
+    
+    ---
+    
+    # 📄 What each page shows
+    
+    ### 🏠 Monthly Results
+    • Monthly podium  
+    • League tables  
+    • Promotions & relegations  
+    • Highlights & records  
+    • Storylines & momentum  
+    • Team statistics  
+    
+    ### 👤 Player Profile  
+    • Career overview  
+    • Streak engines  
+    • Trend analysis  
+    • Trophies & badges  
+    • League journey  
+    
+    ### 🏆 Hall of Fame  
+    • All-time step records  
+    • Elite streaks  
+    • League legends  
+    • GOAT rankings  
+    
+    ### 📜 League History  
+    • Champions archive  
+    • Dynasties & eras  
+    • Historical tables  
+    • League evolution  
+    
+    ---
+    
+    # ❤️ Why this league exists
+    
+    This league exists to:
+    
+    • make walking addictive  
+    • reward showing up  
+    • celebrate consistency  
+    • visualize improvement  
+    • build long-term habits  
+    • create a healthy competitive culture  
+    
+    Whether someone is chasing trophies or just building a daily routine —  
+    **every step matters.**
+    
+    ---
+    
+    # 🧭 Core philosophy
+    
+    > This is not a step counter.  
+    > This is a **habit engine.**
+    
+    The real win condition is not podiums.
+    
+    The real win condition is:  
+    **showing up month after month.** 👣🔥
 
-    st.divider()
-
-    st.markdown("###### 🚶 What is this?")
-    st.markdown("""
-The **Steps League** is a fun, community-driven fitness league built around one simple idea:
-
-> _Move more. Stay consistent. And make it fun._
-
-This dashboard tracks daily step data and turns it into:
-
-• monthly competitions  
-• leagues (Premier & Championship)  
-• promotions & relegations  
-• career records  
-• hall of fame stats  
-
-Think of it like **Fantasy Football meets Fitbit** 😄
-""")
-
-    st.divider()
-
-    st.markdown("###### 🏟️ The League System")
-    st.markdown("""
-There are two leagues:
-
-🥇 **Premier League** – the top division  
-🥈 **Championship** – the second division  
-
-Every month, players are placed into leagues based on their **average steps in the previous month**.
-
-**How league placement works:**
-
-• First month ever → everyone starts in Premier  
-• If your previous month average ≥ **7,000 steps/day** → Premier  
-• Otherwise → Championship  
-• At least **6 players** are always kept in Premier  
-• New players always start in Championship  
-
-Promotions and relegations happen automatically every month.
-""")
-
-    st.divider()
-
-    st.markdown("###### 🧮 How points are calculated")
-    st.markdown("""
-Monthly league winners are **not decided only by total steps**.
-
-Each player earns points based on multiple aspects of performance:
-
-• Total steps  
-• Highest single day  
-• Highest week  
-• Number of 10K days  
-• Number of daily wins  
-
-These are combined using weighted scoring and normalized within the month.
-
-The result is a **balanced score** that rewards:
-
-• consistency  
-• peak performance  
-• staying active regularly  
-
-This means someone who is steady all month can beat someone who only had a few big days.
-""")
-
-    st.divider()
-
-    st.markdown("###### 🏆 What the pages show")
-    st.markdown("""
-#### 📅 Monthly Results
-• Step winners  
-• Monthly highlights  
-• Premier & Championship tables  
-• Champions of the month  
-• Promotions & relegations  
-
-#### 👤 Player Profile
-• Career step stats  
-• Streaks and records  
-• Trophy cabinet  
-• League journey over time  
-
-#### 🏆 Hall of Fame
-• All-time fitness records  
-• League legends  
-• Titles, streaks, dominance stats  
-
-#### 📜 League History
-• Full month-by-month archive  
-• Past champions  
-• Historical league tables  
-""")
-
-    st.divider()
-
-    st.markdown("###### ❤️ Why this exists")
-    st.markdown("""
-This league exists to:
-
-• make walking more fun  
-• encourage consistency  
-• celebrate improvement  
-• build a healthy community habit  
-
-Whether you're chasing trophies or just building a routine — every step counts 👣
-""")
-
-    st.success("If something looks wrong, confusing, or interesting — reach out to the league admin 😄")
 
 
