@@ -1704,11 +1704,10 @@ if page == "🏠 Monthly Results":
         st.stop()
 
     # =========================================================
-    # 🏟️ TEAM MONTH SNAPSHOT
+    # 🏟️ TEAM MONTH SNAPSHOT (EMBEDDED DELTAS)
     # =========================================================
     
     current_stats = team_month_stats(df, selected_month, active_users)
-    
     prev_month = selected_month - 1
     prev_stats = team_month_stats(df, prev_month, active_users)
     
@@ -1717,55 +1716,56 @@ if page == "🏠 Monthly Results":
     
     if current_stats:
     
-        c1, c2, c3, c4 = st.columns(4)
+        # ----------- safe defaults -----------
+        step_delta = None
+        avg_delta = None
     
+        if prev_stats and prev_stats["total_steps"] > 0 and prev_stats["team_avg"] > 0:
+            step_delta = ((current_stats["total_steps"] - prev_stats["total_steps"]) / prev_stats["total_steps"]) * 100
+            avg_delta = ((current_stats["team_avg"] - prev_stats["team_avg"]) / prev_stats["team_avg"]) * 100
+    
+        c1, c2, c3 = st.columns(3)
+    
+        # 👣 TEAM STEPS
         c1.metric(
             "👣 Team steps",
-            f"{current_stats['total_steps']:,}"
+            f"{current_stats['total_steps']:,}",
+            delta=f"{step_delta:+.1f}%" if step_delta is not None else None,
+            delta_color="normal"   # green up, red down (what you want)
         )
     
+        # 👥 ACTIVE PLAYERS
         c2.metric(
             "👥 Active players",
             current_stats["players"]
         )
     
+        # 📊 TEAM DAILY AVERAGE
         c3.metric(
             "📊 Team daily average",
-            f"{current_stats['team_avg']:,}"
+            f"{current_stats['team_avg']:,}",
+            delta=f"{avg_delta:+.1f}%" if avg_delta is not None else None,
+            delta_color="normal"
         )
     
-        if prev_stats:
-            step_change = ((current_stats["total_steps"] - prev_stats["total_steps"]) / prev_stats["total_steps"]) * 100
-            avg_change = ((current_stats["team_avg"] - prev_stats["team_avg"]) / prev_stats["team_avg"]) * 100
-    
-            arrow1 = "📈" if step_change >= 0 else "📉"
-            arrow2 = "📈" if avg_change >= 0 else "📉"
-    
-            c4.metric(
-                "📆 vs last month",
-                f"{step_change:+.1f}%",
-                f"Avg {avg_change:+.1f}%"
-            )
-    
-            # ---------- Team form line ----------
-            if step_change > 10:
+        # ----------- Team form line -----------
+        if step_delta is not None:
+            if step_delta > 10:
                 form = "🔥 The league is on fire this month!"
-            elif step_change > 3:
+            elif step_delta > 3:
                 form = "🚀 Strong team momentum building"
-            elif step_change < -10:
+            elif step_delta < -10:
                 form = "🥶 Tough month for the league"
-            elif step_change < -3:
+            elif step_delta < -3:
                 form = "⚠️ Slight team slowdown"
             else:
                 form = "➖ Stable and steady month"
     
             st.caption(form)
     
-        else:
-            c4.metric("📆 vs last month", "—", "No previous data")
-    
     else:
         st.info("Team stats not available for this month yet.")
+
 
 # =========================================================
 # 👤 PLAYER PROFILE PAGE
