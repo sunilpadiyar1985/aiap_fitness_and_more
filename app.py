@@ -900,7 +900,7 @@ def build_league_events(df, league_history):
                     "User": user,
                     "type": "active_5k_habit",
                     "value": int(cur),
-                    "title": f"Longest active 5K+ habit streak ever ({cur} days)",
+                    "title": f"Longest active 5K+ habit streak ever :",
                     "meta": f"{start_date.strftime('%d %b')} → {end_date.strftime('%d %b')}"
                 })
 
@@ -1089,7 +1089,7 @@ def show_global_league_moments(events_df):
     messages = []
     for _, r in breaking.iterrows():
         messages.append(
-            f"🔥 {r['title']} — {name_with_status(r['User'])} set {r['value']:,}"
+            f"🔥 {r['title']} — by {name_with_status(r['User'])} setting it to {r['value']:,}"
         )
 
     ticker_text = "   |   ".join(messages)
@@ -1564,13 +1564,13 @@ if page == "🏠 Monthly Results":
     {top_improved.index[2]} — {int(top_improved.iloc[2]):,}""")
     
     with c2:
-        st.info(f"""🏅 **10K crossed king**
+        st.info(f"""🏅 **10K crossed king / queen**
     
     {top_10k.index[0]} — {int(top_10k.iloc[0])} days  
     {top_10k.index[1]} — {int(top_10k.iloc[1])} days  
     {top_10k.index[2]} — {int(top_10k.iloc[2])} days""")
     
-        st.info(f"""🥈 **5K crossed king**
+        st.info(f"""🥈 **5K crossed king / queen**
     
     {top_5k.index[0]} — {int(top_5k.iloc[0])} days  
     {top_5k.index[1]} — {int(top_5k.iloc[1])} days  
