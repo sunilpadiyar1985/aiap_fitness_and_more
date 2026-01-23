@@ -452,7 +452,7 @@ def build_league_history(df, roster_df):
     all_months = sorted(monthly_activity[monthly_activity > 0].index)
 
     history_rows = []
-    prev_league = None
+    prev_league = {}
 
     for i, month in enumerate(all_months):
 
@@ -469,7 +469,7 @@ def build_league_history(df, roster_df):
 
         month_df = df[(df["month"] == month) & (df["User"].isin(active))]
 
-        if month_df["steps"].sum() == 0:
+        if month_df.empty or month_df["steps"].sum() == 0:
             continue
 
         # -------------------------
@@ -491,6 +491,15 @@ def build_league_history(df, roster_df):
             daily_wins=("daily_win", "sum")
         ).reset_index()
 
+        # ✅ only real participants this month
+        kpi = kpi[kpi["total_steps"] > 0]
+
+        if kpi.empty:
+            continue
+
+        # -------------------------
+        # BEST WEEK
+        # -------------------------
         month_df["week"] = month_df["date"].dt.to_period("W").apply(lambda r: r.start_time)
         best_week = (
             month_df.groupby(["User", "week"])["steps"]
@@ -510,7 +519,7 @@ def build_league_history(df, roster_df):
             kpi[col + "_score"] = kpi[col] / max_val if max_val > 0 else 0
 
         # -------------------------
-        # 🧮 POINTS (NEW SYSTEM)
+        # 🧮 POINTS ENGINE (FINAL)
         # -------------------------
         kpi["points"] = (
             kpi["total_steps_score"] * 0.40 +
@@ -524,20 +533,14 @@ def build_league_history(df, roster_df):
         kpi["points_display"] = (kpi["points"] * 100).round(0).astype(int)
 
         # -------------------------
-        # FIRST MONTH → ALL PREMIER
+        # LEAGUE ASSIGNMENT
         # -------------------------
         if i == 0:
+            # First season only
             kpi["League"] = "Premier"
         else:
+            # Existing keep league, new go to Championship
             kpi["League"] = kpi["User"].map(prev_league).fillna("Championship")
-
-        # -------------------------
-        # LEAGUE RANKING
-        # -------------------------
-        kpi["Rank"] = (
-            kpi.groupby("League")["points"]
-            .rank(method="min", ascending=False)
-        )
 
         # -------------------------
         # PROMOTION / RELEGATION
@@ -546,26 +549,40 @@ def build_league_history(df, roster_df):
         kpi["Relegated"] = False
 
         if i > 0:
-            premier = kpi[kpi["League"] == "Premier"].sort_values("Rank")
-            champ = kpi[kpi["League"] == "Championship"].sort_values("Rank")
 
-            # safety for small leagues
-            move_n = 2 if len(premier) >= 6 and len(champ) >= 6 else 1
+            premier = kpi[kpi["League"] == "Premier"].sort_values("points", ascending=False)
+            champ   = kpi[kpi["League"] == "Championship"].sort_values("points", ascending=False)
 
-            relegated = premier.tail(move_n)["User"].tolist()
-            promoted = champ.head(move_n)["User"].tolist()
+            PREMIER_SIZE = 10
+            MOVE_N = 3
 
-            kpi.loc[kpi["User"].isin(promoted), "League"] = "Premier"
+            # bottom 3 Premier → Championship
+            relegated = premier.tail(MOVE_N)["User"].tolist()
+
+            # top 3 Championship → Premier
+            promoted = champ.head(MOVE_N)["User"].tolist()
+
             kpi.loc[kpi["User"].isin(relegated), "League"] = "Championship"
+            kpi.loc[kpi["User"].isin(promoted), "League"] = "Premier"
 
             kpi.loc[kpi["User"].isin(promoted), "Promoted"] = True
             kpi.loc[kpi["User"].isin(relegated), "Relegated"] = True
 
-            # recompute ranks after movement
-            kpi["Rank"] = (
-                kpi.groupby("League")["points"]
-                .rank(method="min", ascending=False)
-            )
+            # enforce Premier cap = 10
+            premier_after = kpi[kpi["League"] == "Premier"].sort_values("points", ascending=False)
+
+            if len(premier_after) > PREMIER_SIZE:
+                overflow = premier_after.tail(len(premier_after) - PREMIER_SIZE)["User"].tolist()
+                kpi.loc[kpi["User"].isin(overflow), "League"] = "Championship"
+                kpi.loc[kpi["User"].isin(overflow), "Relegated"] = True
+
+        # -------------------------
+        # FINAL RANKING
+        # -------------------------
+        kpi["Rank"] = (
+            kpi.groupby("League")["points"]
+               .rank(method="min", ascending=False)
+        )
 
         kpi["Champion"] = kpi["Rank"] == 1
         kpi["Month"] = month.to_timestamp()
@@ -576,7 +593,6 @@ def build_league_history(df, roster_df):
 
     history = pd.concat(history_rows, ignore_index=True)
     return history
-
 
 # -------------------------
 # Era Engine
