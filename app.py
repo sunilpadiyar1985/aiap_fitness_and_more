@@ -13,17 +13,14 @@ def maintenance_gate():
     st.set_page_config(page_title="Steps League – Maintenance", page_icon="🚧", layout="centered")
 
     st.markdown("""
-    <div style="
-        background:#fff4e5;
-        padding:26px;
-        border-radius:18px;
-        text-align:center;
-        border:1px solid #ffd8a8;
-    ">
-        <h2>🚧 Steps League is under maintenance</h2>
-        <p style="font-size:16px">
-        League engine upgrades in progress.<br>
-        We’ll be back shortly.
+    <div style="text-align:center; padding:40px;">
+        <h1>🚧 Steps League is under maintenance</h1>
+        <p style="font-size:18px;">
+            The league engine is being upgraded.<br><br>
+            Please check back soon.
+        </p>
+        <p style="color:#777;">
+            We’ll be back stronger, fairer, and more competitive 💪
         </p>
     </div>
     """, unsafe_allow_html=True)
