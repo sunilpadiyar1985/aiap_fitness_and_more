@@ -219,10 +219,6 @@ BADGE_CATALOG = [
 {"id":"consistent_85","name":"Unshakeable","emoji":"🧱","tier":"Gold","desc":"85% days ≥5K","color":"#ffd700"},
 {"id":"prem_5_runnerup","name":"Elite Presence","emoji":"🎩","tier":"Gold","desc":"5 Premier top-3 finishes","color":"#ffd700"},
 {"id":"active_500","name":"Iron Calendar","emoji":"🗓️","tier":"Gold","desc":"500 active days","color":"#ffd700"},
-{"id":"month_500k","name":"Marathon Month","emoji":"🏃","tier":"Gold","desc":"500K steps in a month","color":"#ffd700"},
-{"id":"consistent_85","name":"Unshakeable","emoji":"🧱","tier":"Gold","desc":"85% days ≥5K","color":"#ffd700"},
-{"id":"prem_5_runnerup","name":"Elite Presence","emoji":"🎩","tier":"Gold","desc":"5 Premier top-3 finishes","color":"#ffd700"},
-{"id":"active_500","name":"Iron Calendar","emoji":"🗓️","tier":"Gold","desc":"500 active days","color":"#ffd700"},
 
 
 # ---------------- LEGENDARY ----------------
