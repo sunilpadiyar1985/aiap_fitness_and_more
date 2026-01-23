@@ -1641,7 +1641,7 @@ if page == "🏠 Monthly Results":
     {tw.loc[1,'User']} — {int(tw.loc[1,'steps']):,}  
     {tw.loc[2,'User']} — {int(tw.loc[2,'steps']):,}""")
 
-           st.info(f"""🏅 **10K crossed king / queen**
+        st.info(f"""🏅 **10K crossed king / queen**
     
     {top_10k.index[0]} — {int(top_10k.iloc[0])} days  
     {top_10k.index[1]} — {int(top_10k.iloc[1])} days  
