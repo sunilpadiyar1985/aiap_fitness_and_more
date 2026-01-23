@@ -564,7 +564,7 @@ def build_league_history(df, roster_df):
             champ   = kpi[kpi["League"] == "Championship"].sort_values("points", ascending=False)
 
             MOVE_N = 2
-            PREMIER_SIZE = 9
+            PREMIER_SIZE = 10
             
             current_prem_size = len([u for u,v in league_registry.items() if v == "Premier"])
             
