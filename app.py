@@ -494,7 +494,7 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
         month_end   = month.to_timestamp("M")
 
         # -------------------------
-        # ACTIVE ROSTER FOR MONTH
+        # ACTIVE ROSTER
         # -------------------------
         active = roster_df[
             (roster_df["Active from"] <= month_end) &
@@ -543,7 +543,7 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
             kpi[col + "_score"] = kpi[col] / max_val if max_val > 0 else 0
 
         # -------------------------
-        # 🧮 POINTS (NEW SYSTEM)
+        # 🧮 POINTS SYSTEM
         # -------------------------
         kpi["points"] = (
             kpi["total_steps_score"] * 0.40 +
@@ -567,9 +567,19 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
         kpi["Promoted"] = False
         kpi["Relegated"] = False
 
-        # -------------------------
-        # 🏟️ SEAT BALANCING — FILL PREMIER
-        # -------------------------
+        # =====================================================
+        # 🧱 HARD CAP — TRIM PREMIER IF TOO BIG
+        # =====================================================
+        premier = kpi[kpi["League"] == "Premier"].sort_values("points", ascending=False)
+
+        if len(premier) > PREMIER_SIZE:
+            overflow = premier.tail(len(premier) - PREMIER_SIZE)["User"].tolist()
+            kpi.loc[kpi["User"].isin(overflow), "League"] = "Championship"
+            kpi.loc[kpi["User"].isin(overflow), "Relegated"] = True
+
+        # =====================================================
+        # 🏟️ SEAT BALANCING — FILL PREMIER IF SHORT
+        # =====================================================
         premier = kpi[kpi["League"] == "Premier"]
         champ   = kpi[kpi["League"] == "Championship"]
 
@@ -580,9 +590,9 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
             kpi.loc[kpi["User"].isin(fillers), "League"] = "Premier"
             kpi.loc[kpi["User"].isin(fillers), "Promoted"] = True
 
-        # -------------------------
-        # 🔁 PROMOTION / RELEGATION (ONLY IF FULL)
-        # -------------------------
+        # =====================================================
+        # 🔁 PROMOTION / RELEGATION (ONLY WHEN FULL)
+        # =====================================================
         premier = kpi[kpi["League"] == "Premier"].sort_values("points", ascending=False)
         champ   = kpi[kpi["League"] == "Championship"].sort_values("points", ascending=False)
 
@@ -612,6 +622,7 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
         prev_league = kpi.set_index("User")["League"].to_dict()
 
     return pd.concat(history_rows, ignore_index=True)
+
 
 # -------------------------
 # Era Engine
