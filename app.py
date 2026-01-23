@@ -2186,18 +2186,44 @@ if page == "👤 Player Profile":
 
     chart_df = player_lh.sort_values("Month").copy()
     
-    PREMIER_SIZE = 10  # keep in sync with league engine
+    PREMIER_SIZE = 10
     
-    # ------------------------------------------------
-    # Build continuous rank axis (Premier + Championship)
-    # ------------------------------------------------
+    # Continuous Y axis
     chart_df["plot_rank"] = np.where(
         chart_df["League"] == "Premier",
         chart_df["Rank"],
         chart_df["Rank"] + PREMIER_SIZE
     )
     
-    chart_df["RankLabel"] = chart_df["Rank"].apply(lambda x: f"#{int(x)}")
+    # Crown for champions
+    chart_df["RankLabel"] = chart_df.apply(
+        lambda r: "👑 #1" if r["Rank"] == 1 else f"#{int(r['Rank'])}",
+        axis=1
+    )
+    
+    # Marker colors (promotion / relegation / normal)
+    def marker_color(r):
+        if r.get("Promoted", False):
+            return "#16a34a"   # green
+        if r.get("Relegated", False):
+            return "#dc2626"   # red
+        return "#2563eb"       # blue
+    
+    chart_df["marker_color"] = chart_df.apply(marker_color, axis=1)
+    
+    # Tooltip
+    chart_df["hover"] = chart_df.apply(lambda r: (
+        f"<b>{r['Month'].strftime('%b %Y')}</b><br>"
+        f"League: {r['League']}<br>"
+        f"Rank: #{int(r['Rank'])}<br>"
+        f"Points: {int(r['points_display'])}<br>"
+        f"Total steps: {int(r['total_steps']):,}<br>"
+        f"Avg steps: {int(r['avg_steps']):,}<br>"
+        f"Best week: {int(r['best_week']):,}<br>"
+        f"10K days: {int(r['tenk_days'])}<br>"
+        f"5K days: {int(r['fivek_days'])}<br>"
+        f"Daily wins: {int(r['daily_wins'])}"
+    ), axis=1)
     
     # ------------------------------------------------
     # Plot
@@ -2214,11 +2240,17 @@ if page == "👤 Player Profile":
         text=chart_df["RankLabel"],
         textposition="top center",
         line=dict(width=3),
-        marker=dict(size=9)
+        marker=dict(
+            size=11,
+            color=chart_df["marker_color"],
+            line=dict(width=1, color="white")
+        ),
+        hovertext=chart_df["hover"],
+        hoverinfo="text"
     )
     
     # ------------------------------------------------
-    # Premier / Championship zones
+    # Zones
     # ------------------------------------------------
     fig.add_hrect(
         y0=0.5, y1=PREMIER_SIZE + 0.5,
@@ -2234,7 +2266,7 @@ if page == "👤 Player Profile":
         line_width=0
     )
     
-    # Relegation cut line
+    # Relegation cut
     fig.add_hline(
         y=PREMIER_SIZE + 0.5,
         line_dash="dash",
@@ -2242,7 +2274,7 @@ if page == "👤 Player Profile":
     )
     
     # ------------------------------------------------
-    # Axis styling
+    # Axis & layout
     # ------------------------------------------------
     fig.update_yaxes(
         autorange="reversed",
@@ -2253,7 +2285,7 @@ if page == "👤 Player Profile":
     )
     
     fig.update_layout(
-        height=420,
+        height=430,
         xaxis_title="",
         yaxis_title="",
         margin=dict(l=20, r=20, t=20, b=20),
@@ -2261,6 +2293,7 @@ if page == "👤 Player Profile":
     )
     
     st.plotly_chart(fig, use_container_width=True)
+
 
 
     # ----------------------------
