@@ -1151,38 +1151,52 @@ def monthly_top_records(df, selected_month):
     before = df[df["date"].dt.to_period("M") < selected_month].copy()
 
     # ------------------------
-    # 🔥 BEST DAYS (top 3)
+    # 🔥 BEST DAYS (top 3 unique users)
     # ------------------------
-    top_days = (
-        this_month.sort_values("steps", ascending=False)
-        .head(3)
-        .reset_index(drop=True)
+    
+    best_days_per_user = (
+        this_month
+        .groupby("User")["steps"]
+        .max()
+        .reset_index()
+        .sort_values("steps", ascending=False)
     )
-
+    
+    top_days = best_days_per_user.head(3).reset_index(drop=True)
+    
     prev_best_day = before["steps"].max() if not before.empty else 0
     best_day_record = (not top_days.empty) and (top_days.loc[0, "steps"] > prev_best_day)
 
     # ------------------------
-    # 🗓️ BEST WEEKS (top 3)
+    # 🗓️ BEST WEEKS (top 3 unique users)
     # ------------------------
+    
     this_month["week"] = this_month["date"].dt.to_period("W").apply(lambda r: r.start_time)
     before["week"] = before["date"].dt.to_period("W").apply(lambda r: r.start_time)
-
+    
     week_totals = (
         this_month.groupby(["User","week"])["steps"]
         .sum()
         .reset_index()
-        .sort_values("steps", ascending=False)
-        .head(3)
-        .reset_index(drop=True)
     )
-
+    
+    best_week_per_user = (
+        week_totals
+        .groupby("User")["steps"]
+        .max()
+        .reset_index()
+        .sort_values("steps", ascending=False)
+    )
+    
+    top_weeks = best_week_per_user.head(3).reset_index(drop=True)
+    
     prev_best_week = (
         before.groupby(["User","week"])["steps"].sum().max()
         if not before.empty else 0
     )
+    
+    best_week_record = (not top_weeks.empty) and (top_weeks.loc[0, "steps"] > prev_best_week)
 
-    best_week_record = (not week_totals.empty) and (week_totals.loc[0, "steps"] > prev_best_week)
 
     return {
         "top_days": top_days,
