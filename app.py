@@ -858,7 +858,7 @@ def build_league_events(df, league_history):
                     "User": user,
                     "type": "streak_10k",
                     "value": int(cur),
-                    "title": f"Longest 10K streak ever ({cur} days)",
+                    "title": f"Longest 10K streak ever - ",
                     "meta": f"{start_date.strftime('%d %b')} → {end_date.strftime('%d %b')}"
                 })
     
