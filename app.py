@@ -3,6 +3,37 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
+# =========================================================
+# 🚧 MAINTENANCE MODE — HARD STOP SWITCH
+# =========================================================
+
+MAINTENANCE_MODE = True   # 🔁 change to False to go live
+
+if MAINTENANCE_MODE:
+    import streamlit as st
+
+    st.set_page_config(
+        page_title="Steps League – Under Maintenance",
+        page_icon="🚧",
+        layout="centered"
+    )
+
+    st.markdown("""
+    <div style="text-align:center; padding:40px;">
+        <h1>🚧 Steps League is under maintenance</h1>
+        <p style="font-size:18px;">
+            The league engine is being upgraded.<br><br>
+            Please check back soon.
+        </p>
+        <p style="color:#777;">
+            We’ll be back stronger, fairer, and more competitive 💪
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.stop()   # ⛔ nothing below this will run
+
+
 st.cache_data.clear()
 st.cache_resource.clear()
 
