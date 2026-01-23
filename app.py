@@ -2496,8 +2496,9 @@ if page == "📜 League History":
 # =========================================================
 if page == "ℹ️ Readme: Our Dashboard":
 
-    # ℹ️ About the Steps League
+    st.markdown("### ℹ️ About the Steps League")
 
+    st.markdown("""
 Move more. Stay consistent. Make fitness a game.
 
 The Steps League is a community-driven fitness league that turns daily walking and running into a living system of leagues, seasons, records, badges, and champions.
@@ -2507,7 +2508,7 @@ Fantasy Football + Strava + Habit Building
 
 ---
 
-# 🚶 What is this dashboard?
+## 🚶 What is this dashboard?
 
 This dashboard automatically tracks daily steps and turns them into:
 
@@ -2519,12 +2520,12 @@ This dashboard automatically tracks daily steps and turns them into:
 - historical league archives  
 - hall of fame and GOAT rankings  
 
-It is not only about who walked the most.
+It is not only about who walked the most.  
 It is about who built the strongest fitness engine.
 
 ---
 
-# 🏟️ The League System
+## 🏟️ The League System
 
 There are two divisions:
 
@@ -2549,7 +2550,7 @@ This creates a living system where:
 
 ---
 
-# 🧮 How league points are calculated
+## 🧮 How league points are calculated
 
 Monthly league positions are not decided only by total steps.
 
@@ -2586,7 +2587,7 @@ This ensures the league rewards:
 
 ---
 
-# 🏅 Badges and achievements
+## 🏅 Badges and achievements
 
 Beyond leagues, players earn badges across four tiers:
 
@@ -2608,7 +2609,7 @@ Badges represent who you are becoming, not just what you won.
 
 ---
 
-# 🏆 Records and Hall of Fame
+## 🏆 Records and Hall of Fame
 
 The system permanently tracks:
 
@@ -2625,7 +2626,7 @@ This is the history book of the league.
 
 ---
 
-# 👤 Player Profiles
+## 👤 Player Profiles
 
 Every player gets a full career page with:
 
@@ -2640,7 +2641,7 @@ Every player gets a full career page with:
 
 ---
 
-# 📄 What each page shows
+## 📄 What each page shows
 
 ### Monthly Results
 - Monthly podium  
@@ -2671,7 +2672,7 @@ Every player gets a full career page with:
 
 ---
 
-# ❤️ Why this league exists
+## ❤️ Why this league exists
 
 This league exists to:
 
@@ -2682,12 +2683,12 @@ This league exists to:
 - build long-term habits  
 - create a healthy competitive culture  
 
-Whether someone is chasing trophies or just building a routine,
+Whether someone is chasing trophies or just building a routine,  
 every step matters.
 
 ---
 
-# 🧭 Core philosophy
+## 🧭 Core philosophy
 
 This is not a step counter.  
 This is a habit engine.
@@ -2695,7 +2696,6 @@ This is a habit engine.
 The real win condition is not podiums.
 
 The real win condition is showing up month after month.
-
-
+""")
 
 
