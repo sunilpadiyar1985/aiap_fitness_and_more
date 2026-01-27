@@ -2571,7 +2571,19 @@ if page == "📜 League History":
     history_df = pd.DataFrame(records)
     if history_df.empty:
         st.info("No complete league results yet.")
-        st.stop()
+    else:
+        prem_hist = history_df[history_df["League"] == "Premier"].drop(columns=["League"])
+        champ_hist = history_df[history_df["League"] == "Championship"].drop(columns=["League"])
+    
+        st.markdown("#### 🥇 Premier League — Last 12 months, scroll to see more")
+        st.dataframe(prem_hist, use_container_width=True, hide_index=True, height=460)
+    
+        st.divider()
+    
+        st.markdown("#### 🥈 Championship — Last 12 months, scroll to see more")
+        st.dataframe(champ_hist, use_container_width=True, hide_index=True, height=460)
+    
+        st.caption("🏆 Only winners and runner-ups are shown here. Full tables are in Monthly Results.")
 
     prem_hist = history_df[history_df["League"] == "Premier"].drop(columns=["League"])
     champ_hist = history_df[history_df["League"] == "Championship"].drop(columns=["League"])
