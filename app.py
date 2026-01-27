@@ -2613,6 +2613,10 @@ if page == "📜 League History":
 
     st.divider()
 
+st.write("DEBUG months:", months)
+st.write("DEBUG months type:", type(months[0]) if months else "empty")
+st.write("DEBUG unique months in lh:", lh["Month"].dt.to_period("M").unique())
+
 # =========================================================
 # ℹ️ ABOUT — STEPS LEAGUE README
 # =========================================================
