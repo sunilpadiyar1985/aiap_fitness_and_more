@@ -693,7 +693,6 @@ df = raw_df.copy()
 roster_df = load_roster()
 league_history = build_league_history(raw_df.copy(), roster_df)
 
-st.write("LEAGUE MONTHS:", league_history["Month"].dt.to_period("M").unique())
 
 #df = load_data()
 
@@ -2409,20 +2408,20 @@ if page == "📜 League History":
         
         for user, g in L.groupby("User"):
         
-            months = g["Month"].dt.to_period("M").sort_values().tolist()
+             user_months = g["Month"].dt.to_period("M").sort_values().tolist()
         
             current = 1
             longest = 1
         
-            for i in range(1, len(months)):
-                if months[i] == months[i-1] + 1:
+            for i in range(1, len(user_months)):
+                if months[i] == user_months[i-1] + 1:
                     current += 1
                     longest = max(longest, current)
                 else:
                     current = 1
         
             active_streak = False
-            if months and months[-1] == latest_month:
+            if user_months and user_months[-1] == latest_month:
                 active_streak = True
         
             streaks.append((user, longest, active_streak))
