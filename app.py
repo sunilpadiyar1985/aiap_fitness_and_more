@@ -2585,19 +2585,6 @@ if page == "📜 League History":
     
         st.caption("🏆 Only winners and runner-ups are shown here. Full tables are in Monthly Results.")
 
-    prem_hist = history_df[history_df["League"] == "Premier"].drop(columns=["League"])
-    champ_hist = history_df[history_df["League"] == "Championship"].drop(columns=["League"])
-
-    st.markdown("#### 🥇 Premier League — Last 12 months, scroll to see more")
-    st.dataframe(prem_hist, use_container_width=True, hide_index=True, height=460)
-
-    st.divider()
-
-    st.markdown("#### 🥈 Championship — Last 12 months, scroll to see more")
-    st.dataframe(champ_hist, use_container_width=True, hide_index=True, height=460)
-
-    st.caption("🏆 Only winners and runner-ups are shown here. Full tables are in Monthly Results.")
-
     st.markdown("##### 📊 League flow timeline")
     
     flow = league_history.copy()
