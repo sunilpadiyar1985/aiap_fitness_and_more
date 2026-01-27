@@ -2370,12 +2370,15 @@ if page == "📜 League History":
         title_counts = L["User"].value_counts()
     
         # --- Longest streaks ---
-        latest_month = champs["Month"].max()
+        latest_month = L["Month"].max()   # ✅ per league
         streaks = []
         
-        for user, g in champs.groupby("User"):
+        for user, g in L.groupby("User"):  # ✅ per league only
+        
             g = g.sort_values("Month")
-            current = longest = 1
+        
+            current = 1
+            longest = 1
             prev = None
             active_streak = False
         
@@ -2387,15 +2390,15 @@ if page == "📜 League History":
                     current = 1
                 prev = m
         
-            # if user's latest title is in latest league month → streak is active
-            if prev.to_period("M") == latest_month.to_period("M"):
+            if prev is not None and prev.to_period("M") == latest_month.to_period("M"):
                 active_streak = True
         
             streaks.append((user, longest, active_streak))
-
-    
-        streak_df = pd.DataFrame(streaks, columns=["User","Streak","Active"]) \
+        
+        streak_df = (
+            pd.DataFrame(streaks, columns=["User","Streak","Active"])
               .sort_values("Streak", ascending=False)
+        )
     
         # --- Runner ups ---
         runners = lh[(lh["League"] == league) & (lh["Rank"] == 2)]["User"].value_counts()
