@@ -636,7 +636,7 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
 
     return pd.concat(history_rows, ignore_index=True)
 
-st.write("LEAGUE MONTHS:", league_history["Month"].dt.to_period("M").unique())
+
 # -------------------------
 # Era Engine
 # -------------------------
@@ -692,6 +692,8 @@ raw_df = load_data()
 df = raw_df.copy()
 roster_df = load_roster()
 league_history = build_league_history(raw_df.copy(), roster_df)
+
+st.write("LEAGUE MONTHS:", league_history["Month"].dt.to_period("M").unique())
 
 #df = load_data()
 
