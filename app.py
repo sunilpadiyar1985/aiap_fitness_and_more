@@ -492,7 +492,7 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
     roster_df["Active from"] = pd.to_datetime(roster_df["Active from"])
     roster_df["Active till"] = pd.to_datetime(roster_df["Active till"], errors="coerce")
 
-    all_months = sorted(df.loc[df["steps"] > 0, "MonthP"].unique())
+    all_months = sorted(df["MonthP"].dropna().unique())
 
     history_rows = []
     prev_league = {}
@@ -508,7 +508,7 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
         month_df = df[(df["MonthP"] == month)]
 
         # still skip if truly no activity
-        if month_df["steps"].sum() == 0:
+        if month_df.empty:
             continue
 
         # -------------------------
