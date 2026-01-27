@@ -690,8 +690,9 @@ def build_eras(league_history, min_streak=3):
 
 raw_df = load_data()
 df = raw_df.copy()
-league_history = build_league_history(raw_df.copy(), roster_df)
 roster_df = load_roster()
+league_history = build_league_history(raw_df.copy(), roster_df)
+
 #df = load_data()
 
 
