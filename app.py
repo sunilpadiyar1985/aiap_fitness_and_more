@@ -2369,28 +2369,27 @@ if page == "📜 League History":
         # --- Titles ---
         title_counts = L["User"].value_counts()
     
-        # --- Longest streaks ---
-        latest_month = L["Month"].max()   # ✅ per league
+        # --- Longest streaks (ROBUST) ---
+
+        latest_month = L["Month"].dt.to_period("M").max()
         streaks = []
         
-        for user, g in L.groupby("User"):  # ✅ per league only
+        for user, g in L.groupby("User"):
         
-            g = g.sort_values("Month")
+            months = g["Month"].dt.to_period("M").sort_values().tolist()
         
             current = 1
             longest = 1
-            prev = None
-            active_streak = False
         
-            for m in g["Month"]:
-                if prev is not None and (m.to_period("M") - prev.to_period("M")) == 1:
+            for i in range(1, len(months)):
+                if months[i] == months[i-1] + 1:
                     current += 1
                     longest = max(longest, current)
                 else:
                     current = 1
-                prev = m
         
-            if prev is not None and prev.to_period("M") == latest_month.to_period("M"):
+            active_streak = False
+            if months and months[-1] == latest_month:
                 active_streak = True
         
             streaks.append((user, longest, active_streak))
@@ -2399,6 +2398,7 @@ if page == "📜 League History":
             pd.DataFrame(streaks, columns=["User","Streak","Active"])
               .sort_values("Streak", ascending=False)
         )
+
     
         # --- Runner ups ---
         runners = lh[(lh["League"] == league) & (lh["Rank"] == 2)]["User"].value_counts()
