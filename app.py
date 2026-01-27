@@ -2408,7 +2408,7 @@ if page == "📜 League History":
         
         for user, g in L.groupby("User"):
         
-             user_months = g["Month"].dt.to_period("M").sort_values().tolist()
+            user_months = g["Month"].dt.to_period("M").sort_values().tolist()
         
             current = 1
             longest = 1
