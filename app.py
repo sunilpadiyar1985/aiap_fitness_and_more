@@ -501,9 +501,16 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
             ((roster_df["Active till"].isna()) | (roster_df["Active till"] >= month_start))
         ]["User"].unique().tolist()
 
-        month_df = df[(df["month"] == month) & (df["User"].isin(active))]
-
-        if month_df.empty or month_df["steps"].sum() == 0:
+        month_all = df[df["month"] == month]
+        month_active = month_all[month_all["User"].isin(active)]
+        
+        # 👉 Fallback: if roster wipes the month, use raw month data
+        if month_active["steps"].sum() == 0:
+            month_df = month_all[month_all["steps"] > 0]
+        else:
+            month_df = month_active
+        
+        if month_df.empty:
             continue
 
         # -------------------------
