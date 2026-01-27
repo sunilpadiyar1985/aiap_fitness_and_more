@@ -1125,10 +1125,12 @@ def show_global_league_moments(events_df):
 
     current_month = pd.Timestamp.today().to_period("M").to_timestamp()
 
+    events_df["MonthP"] = events_df["Month"].dt.to_period("M")
+
     breaking = (
-        events_df[events_df["MonthP"] == current_month]
+        events_df[events_df["MonthP"] == current_month.to_period("M")]
         .sort_values("date", ascending=False)
-        .drop_duplicates(subset=["type"], keep="first")  # ✅ de-dup here
+        .drop_duplicates(subset=["type"], keep="first")
         .head(5)
     )
 
