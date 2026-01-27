@@ -2345,8 +2345,10 @@ if page == "📜 League History":
     lh = league_history.copy()
     lh["Month"] = pd.to_datetime(lh["Month"])
 
-    # Only months with real data
-    valid = lh.groupby("Month")["points"].sum()
+    # Only months with real data (CANONICAL)
+    lh["MonthP"] = lh["Month"].dt.to_period("M")
+    
+    valid = lh.groupby("MonthP")["points"].sum()
     months = sorted(valid[valid > 0].index, reverse=True)
 
     if not months:
@@ -2613,9 +2615,9 @@ if page == "📜 League History":
 
     st.divider()
 
-st.write("DEBUG months:", months)
-st.write("DEBUG months type:", type(months[0]) if months else "empty")
-st.write("DEBUG unique months in lh:", lh["Month"].dt.to_period("M").unique())
+#st.write("DEBUG months:", months)
+#st.write("DEBUG months type:", type(months[0]) if months else "empty")
+#st.write("DEBUG unique months in lh:", lh["Month"].dt.to_period("M").unique())
 
 # =========================================================
 # ℹ️ ABOUT — STEPS LEAGUE README
