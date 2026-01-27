@@ -2548,7 +2548,7 @@ if page == "📜 League History":
     records = []
 
     for m in months:
-        month_df = lh[lh["Month"].dt.to_period("M") == m.to_period("M")]
+        month_df = lh[lh["Month"].dt.to_period("M") == m]
 
         for league in ["Premier", "Championship"]:
             league_df = month_df[month_df["League"] == league].sort_values("Rank")
