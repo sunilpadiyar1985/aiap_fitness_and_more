@@ -149,7 +149,14 @@ def load_data():
             # First attempt (normal)
             df_long["date"] = pd.to_datetime(df_long["date"], errors="coerce", dayfirst=True)
             
-            # Second attempt for anything that failed (force format like 1-Dec-2025)
+            # try again without dayfirst
+            mask = df_long["date"].isna()
+            df_long.loc[mask, "date"] = pd.to_datetime(
+                df_long.loc[mask, "date"],
+                errors="coerce"
+            )
+
+            # try explicit legacy format
             mask = df_long["date"].isna()
             df_long.loc[mask, "date"] = pd.to_datetime(
                 df_long.loc[mask, "date"],
@@ -162,6 +169,9 @@ def load_data():
 
             if not df_long.empty:
                 all_data.append(df_long)
+
+            st.write(f"Loaded {year} rows:", len(df_long), 
+                    " valid dates:", df_long["date"].notna().sum())
 
         except:
             continue
@@ -672,8 +682,11 @@ def build_eras(league_history, min_streak=3):
     return pd.DataFrame(eras)
 
 df = load_data()
+
 roster_df = load_roster()
 league_history = build_league_history(df, roster_df)
+st.write("RAW month spread:", 
+         df.groupby(df["date"].dt.to_period("M"))["steps"].sum())
 
 # ----------------------------
 # ACTIVE USERS ENGINE
