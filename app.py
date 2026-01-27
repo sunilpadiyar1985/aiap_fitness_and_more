@@ -494,21 +494,9 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
         month_end   = month.to_timestamp("M")
 
         # -------------------------
-        # ACTIVE ROSTER
+        # MONTH DATA (HISTORICAL, ROSTER-FREE)
         # -------------------------
-        active = roster_df[
-            (roster_df["Active from"] <= month_end) &
-            ((roster_df["Active till"].isna()) | (roster_df["Active till"] >= month_start))
-        ]["User"].unique().tolist()
-
-        month_all = df[df["month"] == month]
-        month_active = month_all[month_all["User"].isin(active)]
-        
-        # 👉 Fallback: if roster wipes the month, use raw month data
-        if month_active["steps"].sum() == 0:
-            month_df = month_all[month_all["steps"] > 0]
-        else:
-            month_df = month_active
+        month_df = df[(df["month"] == month) & (df["steps"] > 0)]
         
         if month_df.empty:
             continue
