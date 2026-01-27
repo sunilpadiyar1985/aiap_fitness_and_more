@@ -170,9 +170,6 @@ def load_data():
             if not df_long.empty:
                 all_data.append(df_long)
 
-            st.write(f"Loaded {year} rows:", len(df_long), 
-                    " valid dates:", df_long["date"].notna().sum())
-
         except:
             continue
 
@@ -507,9 +504,10 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
         # -------------------------
         # MONTH DATA (HISTORICAL, ROSTER-FREE)
         # -------------------------
-        month_df = df[(df["MonthP"] == month) & (df["steps"] > 0)]
-        
-        if month_df.empty:
+        month_df = df[(df["MonthP"] == month)]
+
+        # still skip if truly no activity
+        if month_df["steps"].sum() == 0:
             continue
 
         # -------------------------
@@ -541,6 +539,8 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
 
         kpi = kpi.merge(best_week, on="User", how="left").fillna(0)
 
+        if kpi.empty:
+            continue
         # -------------------------
         # NORMALIZATION
         # -------------------------
@@ -562,6 +562,11 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
 
         kpi["points_display"] = (kpi["points"] * 100).round(0).astype(int)
 
+        if i < 2:
+            kpi["League"] = "Premier"
+            kpi["Promoted"] = False
+            kpi["Relegated"] = False
+            
         # -------------------------
         # LEAGUE CARRY FORWARD
         # -------------------------
@@ -685,8 +690,6 @@ df = load_data()
 
 roster_df = load_roster()
 league_history = build_league_history(df, roster_df)
-st.write("RAW month spread:", 
-         df.groupby(df["date"].dt.to_period("M"))["steps"].sum())
 
 # ----------------------------
 # ACTIVE USERS ENGINE
