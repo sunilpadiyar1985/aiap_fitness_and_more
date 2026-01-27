@@ -2372,9 +2372,13 @@ if page == "📜 League History":
 
     # Only months with real data (CANONICAL)
     lh["MonthP"] = lh["Month"].dt.to_period("M")
-    
-    valid = lh.groupby("MonthP")["points"].sum()
-    months = sorted(valid[valid > 0].index, reverse=True)
+
+    months = (
+        lh["MonthP"]
+        .dropna()
+        .sort_values()
+        .unique()
+    )[::-1]
 
     if not months:
         st.info("No league history available yet.")
