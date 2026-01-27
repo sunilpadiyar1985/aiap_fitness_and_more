@@ -2569,7 +2569,8 @@ if page == "📜 League History":
             })
 
     history_df = pd.DataFrame(records)
-    if history_df.empty:
+
+    if history_df.empty or "League" not in history_df.columns:
         st.info("No complete league results yet.")
     else:
         prem_hist = history_df[history_df["League"] == "Premier"].drop(columns=["League"])
