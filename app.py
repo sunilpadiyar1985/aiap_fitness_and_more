@@ -171,6 +171,7 @@ def load_data():
 
     df_all = pd.concat(all_data, ignore_index=True)
     df_all["month"] = df_all["date"].dt.to_period("M")
+    df_all["MonthP"] = df_all["date"].dt.to_period("M") 
 
     return df_all
     
@@ -475,15 +476,15 @@ def render_badge_cabinet(earned_ids):
 
 def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
 
-    df = df.copy()
-    df["month"] = df["date"].dt.to_period("M")
+    df = df[["User","date","steps"]].copy()
+    df["MonthP"] = df["date"].dt.to_period("M")
     df = df.sort_values("date")
 
     roster_df = roster_df.copy()
     roster_df["Active from"] = pd.to_datetime(roster_df["Active from"])
     roster_df["Active till"] = pd.to_datetime(roster_df["Active till"], errors="coerce")
 
-    all_months = sorted(df[df["steps"] > 0]["month"].unique())
+    all_months = sorted(df.loc[df["steps"] > 0, "MonthP"].unique())
 
     history_rows = []
     prev_league = {}
@@ -496,7 +497,7 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
         # -------------------------
         # MONTH DATA (HISTORICAL, ROSTER-FREE)
         # -------------------------
-        month_df = df[(df["month"] == month) & (df["steps"] > 0)]
+        month_df = df[(df["MonthP"] == month) & (df["steps"] > 0)]
         
         if month_df.empty:
             continue
@@ -1125,7 +1126,7 @@ def show_global_league_moments(events_df):
     current_month = pd.Timestamp.today().to_period("M").to_timestamp()
 
     breaking = (
-        events_df[events_df["Month"] == current_month]
+        events_df[events_df["MonthP"] == current_month]
         .sort_values("date", ascending=False)
         .drop_duplicates(subset=["type"], keep="first")  # ✅ de-dup here
         .head(5)
@@ -1171,7 +1172,7 @@ def show_global_league_moments(events_df):
 
 
 def team_month_stats(df, month, active_users):
-    mdf = df[(df["month"] == month) & (df["User"].isin(active_users))]
+    mdf = df[(df["MonthP"] == month) & (df["User"].isin(active_users))]
 
     if mdf.empty or mdf["steps"].sum() == 0:
         return None
@@ -1517,7 +1518,7 @@ if page == "🏠 Monthly Results":
     ]
     
     month_df = df[
-        (df["month"] == selected_month) &
+        (df["MonthP"] == selected_month) &
         (df["User"].isin(active_users))
     ]
     
