@@ -37,10 +37,12 @@ def maintenance_gate():
 if MAINTENANCE_MODE:
     maintenance_gate()
 
-
-st.cache_data.clear()
-st.cache_resource.clear()
-
+# ---- ADMIN TOOLS  ----
+with st.sidebar.expander("🧹 Admin tools"):
+    if st.button("Clear cache & reload"):
+        st.cache_data.clear()
+        st.cache_resource.clear()
+        st.rerun()
 # ============================
 # GLOBAL SAFE DEFAULTS
 # ============================
@@ -177,7 +179,6 @@ def load_data():
         return pd.DataFrame(columns=["User", "date", "steps", "month"])
 
     df_all = pd.concat(all_data, ignore_index=True)
-    df_all["month"] = df_all["date"].dt.to_period("M")
     df_all["MonthP"] = df_all["date"].dt.to_period("M") 
 
     return df_all
@@ -627,7 +628,8 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
         )
 
         kpi["Champion"] = kpi["Rank"] == 1
-        kpi["Month"] = month.to_timestamp()
+        kpi["MonthP"] = month
+        kpi["Month"] = month.to_timestamp("M")
 
         history_rows.append(kpi)
         prev_league = kpi.set_index("User")["League"].to_dict()
@@ -1132,19 +1134,22 @@ def build_league_events(df, league_history):
                 "title": "First ever 100K steps day"
             })
             
-    return pd.DataFrame(events).sort_values("date")
+    events_df = pd.DataFrame(events).sort_values("date")
+
+    if not events_df.empty:
+        events_df["MonthP"] = pd.to_datetime(events_df["Month"]).dt.to_period("M")
+    
+    return events_df
     
 def show_global_league_moments(events_df):
 
     if events_df is None or events_df.empty:
         return
 
-    current_month = pd.Timestamp.today().to_period("M").to_timestamp()
-
-    events_df["MonthP"] = events_df["Month"].dt.to_period("M")
+    current_month = pd.Timestamp.today().to_period("M")
 
     breaking = (
-        events_df[events_df["MonthP"] == current_month.to_period("M")]
+        events_df[events_df["MonthP"] == current_month]
         .sort_values("date", ascending=False)
         .drop_duplicates(subset=["type"], keep="first")
         .head(5)
@@ -1271,6 +1276,7 @@ def monthly_top_records(df, selected_month):
         "top_weeks": top_weeks,
         "week_record": best_week_record
     }
+    
 
 
 league_events = build_league_events(df, league_history)
@@ -1503,12 +1509,12 @@ if page == "🏠 Monthly Results":
     # MONTH SELECTOR (ONLY REAL MONTHS, LAST 6)
     # ----------------------------
     month_totals = (
-        df.groupby(df["date"].dt.to_period("M"))["steps"]
-        .sum()
-        .reset_index()
+        df.groupby("MonthP")["steps"]
+          .sum()
+          .reset_index()
     )
     
-    real_months = month_totals[month_totals["steps"] > 0]["date"].sort_values().unique()
+    real_months = month_totals[month_totals["steps"] > 0]["MonthP"].sort_values().unique()
     available_months = list(real_months[-6:])
     
     if not available_months:
