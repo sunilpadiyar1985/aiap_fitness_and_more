@@ -2548,17 +2548,18 @@ if page == "📜 League History":
     records = []
 
     for m in months:
-        month_df = lh[lh["Month"].dt.to_period("M") == m]
 
+        month_df = lh[lh["Month"].dt.to_period("M") == m]
+    
         for league in ["Premier", "Championship"]:
             league_df = month_df[month_df["League"] == league].sort_values("Rank")
-
+    
             if len(league_df) < 1:
                 continue
-            
+    
             winner = league_df.iloc[0]
             runner = league_df.iloc[1] if len(league_df) > 1 else None
-            
+    
             records.append({
                 "Month": m.strftime("%b %Y"),
                 "League": league,
@@ -2567,7 +2568,7 @@ if page == "📜 League History":
                 "Runner-up": name_with_status(runner["User"]) if runner is not None else "—",
                 "Runner-up Points": int(runner["points_display"]) if runner is not None else None
             })
-
+        
     history_df = pd.DataFrame(records)
 
     if history_df.empty or "League" not in history_df.columns:
