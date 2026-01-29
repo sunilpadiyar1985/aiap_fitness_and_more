@@ -2498,9 +2498,11 @@ if page == "📜 League History":
             .iloc[0]
     )
 
-    latest_month = league_history["Month"].max()
-    
-    active_eras = eras[eras["End"] == latest_month]
+    latest_month = league_history["Month"].dt.to_period("M").max()
+
+    active_eras = eras[
+        eras["End"].dt.to_period("M") == latest_month
+    ]
     
     active_longest = None
     if not active_eras.empty:
