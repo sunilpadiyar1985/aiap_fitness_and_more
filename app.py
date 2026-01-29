@@ -2393,6 +2393,17 @@ if page == "📜 League History":
     champs = champs.sort_values("Month")
     
     engines = {}
+
+    # --- ERA STREAK SOURCE OF TRUTH ---
+    eras_all = build_eras(league_history, min_streak=2)
+    
+    era_streaks = (
+        eras_all
+        .groupby(["League", "Champion"])["Titles"]
+        .max()
+        .reset_index()
+        .rename(columns={"Champion": "User", "Titles": "BestStreak"})
+    )
     
     for league in ["Premier", "Championship"]:
     
@@ -2407,22 +2418,20 @@ if page == "📜 League History":
         streaks = []
         
         for user, g in L.groupby("User"):
-        
-            user_months = g["Month"].dt.to_period("M").sort_values().tolist()
+
+            months = g["Month"].dt.to_period("M").sort_values().tolist()
         
             current = 1
             longest = 1
         
-            for i in range(1, len(user_months)):
-                if months[i] == user_months[i-1] + 1:
+            for i in range(1, len(months)):
+                if months[i] == months[i-1] + 1:
                     current += 1
                     longest = max(longest, current)
                 else:
                     current = 1
         
-            active_streak = False
-            if user_months and user_months[-1] == latest_month:
-                active_streak = True
+            active_streak = (user == active_dynasty_user)
         
             streaks.append((user, longest, active_streak))
         
@@ -2437,19 +2446,26 @@ if page == "📜 League History":
     
         no_title = runners[~runners.index.isin(title_counts.index)]
     
-        # --- Dynasties ---
+        # --- Dynasties (ERA-BASED) ---
         dyn = []
-    
+        
         for u, t in title_counts.items():
-            s = streak_df[streak_df["User"] == u]["Streak"].max()
-            if t >= 3 or s >= 3:
+        
+            row = era_streaks[
+                (era_streaks["League"] == league) &
+                (era_streaks["User"] == u)
+            ]
+        
+            best_streak = int(row["BestStreak"].iloc[0]) if not row.empty else 1
+        
+            if t >= 3 or best_streak >= 3:
                 dyn.append({
                     "League": league,
                     "User": u,
                     "Titles": int(t),
-                    "Streak": int(s)
+                    "Streak": best_streak
                 })
-    
+            
         engines[league] = {
             "titles": title_counts,
             "streaks": streak_df,
@@ -2475,21 +2491,43 @@ if page == "📜 League History":
     st.markdown("#### 🏟️ Hall of Champions")
 
     b1, b2, b3, b4, b5 = st.columns(5)
-    all_streaks = pd.concat([
-        prem_streaks.assign(League="Premier"),
-        champ_streaks.assign(League="Championship")
-    ])
+    eras = build_eras(league_history, min_streak=2)
     
-    top = all_streaks.sort_values("Streak", ascending=False).iloc[0]
-    star = " 🔥" if top["Active"] else ""
+    longest = (
+        eras.sort_values("Titles", ascending=False)
+            .iloc[0]
+    )
+
+    latest_month = league_history["Month"].max()
+    
+    active_eras = eras[eras["End"] == latest_month]
+    
+    active_longest = None
+    if not active_eras.empty:
+        active_longest = (
+            active_eras.sort_values("Titles", ascending=False)
+                       .iloc[0]
+        )
+
 
     with b1:
         if not prem_titles.empty:
             hall_card("🏅 Most Premier titles", name_with_status(prem_titles.index[0]), f"↑ {int(prem_titles.iloc[0])}")
 
     with b2:
-        if not prem_streaks.empty:
-            hall_card("🔥 Longest streak", name_with_status(top["User"]), f"{int(top['Streak'])} months{star}")
+        star = " 🔥" if (
+            active_longest is not None and
+            active_longest["Champion"] == longest["Champion"] and
+            active_longest["Titles"] == longest["Titles"]
+        ) else ""
+    
+        hall_card(
+            "🔥 Longest streak",
+            name_with_status(longest["Champion"]),
+            f"{int(longest['Titles'])} months{star}"
+        )
+    
+        if star:
             st.caption("* Active streak")
     
     with b3:
@@ -2551,6 +2589,20 @@ if page == "📜 League History":
     st.markdown("#### 📜 League Eras (periods of dominance)")
 
     eras = build_eras(league_history, min_streak=3)
+
+    latest_month = league_history["Month"].dt.to_period("M").max()
+
+    active_eras = eras[eras["End"].dt.to_period("M") == latest_month]
+    
+    active_dynasty_user = None
+    
+    if not active_eras.empty:
+        active_dynasty_user = (
+            active_eras
+            .sort_values("Titles", ascending=False)
+            .iloc[0]["Champion"]
+        )
+
     
     if eras.empty:
         st.info("No true eras yet — the league is still in its early chaos phase 😄")
