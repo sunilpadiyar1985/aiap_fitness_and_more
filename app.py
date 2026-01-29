@@ -2435,7 +2435,7 @@ if page == "📜 League History":
             streaks.append((user, longest))
         
         streak_df = (
-            pd.DataFrame(streaks, columns=["User","Streak","Active"])
+            pd.DataFrame(streaks, columns=["User","Streak"])
               .sort_values("Streak", ascending=False)
         )
 
