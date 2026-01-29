@@ -2431,9 +2431,8 @@ if page == "📜 League History":
                 else:
                     current = 1
         
-            active_streak = (user == active_dynasty_user)
-        
-            streaks.append((user, longest, active_streak))
+            # active handled later via eras
+            streaks.append((user, longest))
         
         streak_df = (
             pd.DataFrame(streaks, columns=["User","Streak","Active"])
