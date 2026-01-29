@@ -561,7 +561,7 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
             kpi["daily_wins_score"]  * 0.10
         )
 
-        kpi["points_display"] = (kpi["points"] * 100).round(0).astype(int)
+        kpi["points_display"] = np.floor(kpi["points"] * 100).astype(int)
 
         if i < 2:
             kpi["League"] = "Premier"
