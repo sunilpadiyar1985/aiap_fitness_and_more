@@ -644,7 +644,9 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
 def build_eras(league_history, min_streak=3):
 
     lh = league_history.copy()
-    lh["Month"] = pd.to_datetime(lh["Month"])
+    lh["Month"] = pd.to_datetime(lh["Month"], errors="coerce")
+    lh = lh.dropna(subset=["Month"])
+    lh["MonthP"] = lh["Month"].dt.to_period("M")
 
     eras = []
 
@@ -2639,7 +2641,7 @@ if page == "📜 League History":
         for league in ["Premier", "Championship"]:
             league_df = month_df[month_df["League"] == league].sort_values("Rank")
     
-            if len(league_df) < 1:
+            if league_df.empty:
                 continue
     
             winner = league_df.iloc[0]
