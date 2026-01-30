@@ -1410,7 +1410,9 @@ if page == "🏆 Hall of Fame":
     st.caption("All-time league dominance & achievements")
 
     lh = league_history.copy()
-    lh["Month"] = pd.to_datetime(lh["Month"])
+    #lh["Month"] = pd.to_datetime(lh["Month"])
+    st.write("DEBUG MonthP:", sorted(lh["MonthP"].unique()))
+    st.write("DEBUG Month:", sorted(lh["Month"].unique()))
 
     prem_titles = lh[(lh["League"] == "Premier") & (lh["Champion"])]["User"].value_counts()
     champ_titles = lh[(lh["League"] == "Championship") & (lh["Champion"])]["User"].value_counts()
@@ -2347,7 +2349,7 @@ if page == "📜 League History":
     lh["Month"] = pd.to_datetime(lh["Month"])
 
     # Only months with real data (CANONICAL)
-    lh["MonthP"] = lh["Month"].dt.to_period("M")
+    #lh["MonthP"] = lh["Month"].dt.to_period("M")
 
     months = (
         lh["MonthP"]
