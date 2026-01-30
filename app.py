@@ -7,7 +7,7 @@ import numpy as np
 # 🚧 MAINTENANCE + ADMIN ACCESS GATE
 # ======================================
 
-MAINTENANCE_MODE = False   # ← switch ON / OFF
+MAINTENANCE_MODE = True   # ← switch ON / OFF
 
 def maintenance_gate():
     st.set_page_config(page_title="Steps League – Maintenance", page_icon="🚧", layout="centered")
