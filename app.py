@@ -477,8 +477,6 @@ def render_badge_cabinet(earned_ids):
     render_badge_section("🥈 Silver", "Silver", earned_ids)
     render_badge_section("🥇 Gold", "Gold", earned_ids)
     render_badge_section("💎 Legendary", "Legendary", earned_ids)
-
-
 #-------------------
 #League Engine
 #-------------------
@@ -660,6 +658,7 @@ def build_eras(league_history, min_streak=3):
     return pd.DataFrame(eras)
 
 raw_df = load_data()
+base_df = raw_df.copy()
 df = raw_df.copy()
 roster_df = load_roster()
 league_history = build_league_history(raw_df.copy(), roster_df)
@@ -668,7 +667,7 @@ league_history = build_league_history(raw_df.copy(), roster_df)
 #df = load_data()
 
 
-#league_history = build_league_history(df, roster_df)
+#league_history = build_league_history(base_df, roster_df)
 
 # ----------------------------
 # ACTIVE USERS ENGINE
@@ -1256,16 +1255,8 @@ def monthly_top_records(df, selected_month):
     
 
 
-league_events = build_league_events(df, league_history)
+league_events = build_league_events(base_df, league_history)
 show_global_league_moments(league_events)
-
-#temp-debug
-st.write(
-    df[["date", "MonthP"]]
-    .drop_duplicates()
-    .sort_values("date")
-    .head(20)
-)
 
 # Data Load Finishes...
 # Helper function completed...
@@ -2339,16 +2330,16 @@ if page == "👤 Player Profile":
 
     st.dataframe(monthly_stats, use_container_width=True, hide_index=True)
 
+
+assert base_df["date"].dt.to_period("M").nunique() > 1, \
+    "❌ DF COLLAPSED: only one month present"
 # =========================================================
 # 📜 LEAGUE HISTORY — HALL OF CHAMPIONS
 # =========================================================
 
 
 if page == "📜 League History":
-    #temp-debug
-    st.write("LH shape:", league_history.shape)
-    st.write("LH months:", league_history["Month"].head(10))
-
+    
     st.markdown("### 📜 League History")
     st.caption("The official record book of the Steps League")
 
@@ -2364,9 +2355,6 @@ if page == "📜 League History":
         .sort_values()
         .unique()
     )[::-1]
-
-    #temp-debug
-    st.write("Months detected:", months)
 
     if not months:
         st.info("No league history available yet.")
@@ -2622,9 +2610,6 @@ if page == "📜 League History":
     for m in months:
 
         month_df = lh[lh["MonthP"] == m]
-
-        #temp-debug
-        st.write("Month", m, "rows", len(month_df))
     
         for league in ["Premier", "Championship"]:
             league_df = month_df[month_df["League"] == league].sort_values("Rank")
