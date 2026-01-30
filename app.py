@@ -1411,8 +1411,6 @@ if page == "🏆 Hall of Fame":
 
     lh = league_history.copy()
     #lh["Month"] = pd.to_datetime(lh["Month"])
-    st.write("DEBUG MonthP:", sorted(lh["MonthP"].unique()))
-    st.write("DEBUG Month:", sorted(lh["Month"].unique()))
 
     prem_titles = lh[(lh["League"] == "Premier") & (lh["Champion"])]["User"].value_counts()
     champ_titles = lh[(lh["League"] == "Championship") & (lh["Champion"])]["User"].value_counts()
