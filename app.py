@@ -2365,7 +2365,12 @@ if page == "👤 Player Profile":
 # =========================================================
 # 📜 LEAGUE HISTORY — HALL OF CHAMPIONS
 # =========================================================
+
+
 if page == "📜 League History":
+    #temp-debug
+    st.write("LH shape:", league_history.shape)
+    st.write("LH months:", league_history["Month"].head(10))
 
     st.markdown("### 📜 League History")
     st.caption("The official record book of the Steps League")
@@ -2382,6 +2387,9 @@ if page == "📜 League History":
         .sort_values()
         .unique()
     )[::-1]
+
+    #temp-debug
+    st.write("Months detected:", months)
 
     if not months:
         st.info("No league history available yet.")
@@ -2636,7 +2644,10 @@ if page == "📜 League History":
 
     for m in months:
 
-        month_df = lh[lh["Month"].dt.to_period("M") == m]
+        month_df = lh[lh["MonthP"] == m]
+
+        #temp-debug
+        st.write("Month", m, "rows", len(month_df))
     
         for league in ["Premier", "Championship"]:
             league_df = month_df[month_df["League"] == league].sort_values("Rank")
