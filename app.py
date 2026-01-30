@@ -216,13 +216,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-#temp-debug
-st.write(
-    df[["date", "MonthP"]]
-    .drop_duplicates()
-    .sort_values("date")
-    .head(20)
-)
+
 
 st.write("Unique months:", df["MonthP"].unique())
 
@@ -1266,6 +1260,14 @@ def monthly_top_records(df, selected_month):
 
 league_events = build_league_events(df, league_history)
 show_global_league_moments(league_events)
+
+#temp-debug
+st.write(
+    df[["date", "MonthP"]]
+    .drop_duplicates()
+    .sort_values("date")
+    .head(20)
+)
 
 # Data Load Finishes...
 # Helper function completed...
