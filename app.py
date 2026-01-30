@@ -216,9 +216,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
-
-st.write("Unique months:", df["MonthP"].unique())
+#st.write("Unique months:", df["MonthP"].unique())
 
 #-------------------
 #Badge Engine
