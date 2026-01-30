@@ -541,6 +541,10 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
         kpi = kpi.merge(best_week, on="User", how="left").fillna(0)
 
         if kpi.empty:
+            # still record the month with no standings
+            kpi["MonthP"] = month
+            kpi["Month"]  = month.to_timestamp("M")
+            history_rows.append(kpi)
             continue
         # -------------------------
         # NORMALIZATION
