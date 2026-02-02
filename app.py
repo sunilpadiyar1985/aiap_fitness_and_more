@@ -1304,7 +1304,7 @@ def monthly_top_records(df, selected_month):
     
 def render_wrapped(df, year):
 
-    st.subheader(" 🎁 Steps Wrapped — {year}")
+    st.subheader(f" 🎁 Steps Wrapped — {year}")
     st.write("Your year in walking — one story at a time")
 
     st.divider()
