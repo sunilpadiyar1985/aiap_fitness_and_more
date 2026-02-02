@@ -108,7 +108,7 @@ def hall_card(title, name, sub):
 
 page = st.sidebar.radio(
     "Navigate",
-    ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History", "ℹ️ Readme: Our Dashboard"]
+    ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History", "🎁 Wrapped", "ℹ️ Readme: Our Dashboard"]
 )
 # ----------------------------
 # CONFIG
@@ -550,7 +550,11 @@ def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
             kpi["daily_wins_score"]  * 0.10
         )
 
-        kpi["points_display"] = (kpi["points"] * 100).astype(int)
+        kpi["points_display"] = (
+            np.floor(kpi["points"] * 100)
+            .clip(upper=100)
+            .astype(int)
+        )
 
         # -------------------------
         # LEAGUE ASSIGNMENT
@@ -1117,30 +1121,74 @@ def build_league_events(df, league_history):
     
     return events_df
     
+def league_now(df):
+    return df["date"].max()
+
+def build_active_streak_messages(df):
+    messages = []
+
+    league_date = league_now(df)
+
+    for user in df["User"].unique():
+        s = compute_user_streaks(df, user)
+        if not s:
+            continue
+
+        # 🔥 Active 10K streak
+        if s["10k"]["current"] >= 7:
+            messages.append(
+                f"🔥 {name_with_status(user)} is on a "
+                f"{s['10k']['current']}-day 10K streak "
+                f"(active as of {league_date.strftime('%d %b %Y')})"
+            )
+
+        # 💪 Active 5K+ habit
+        if s["active5"]["current"] >= 14:
+            messages.append(
+                f"💪 {name_with_status(user)} is on a "
+                f"{s['active5']['current']}-day 5K+ habit "
+                f"(active as of {league_date.strftime('%d %b %Y')})"
+            )
+
+    return messages
+    
 def show_global_league_moments(events_df):
 
     if events_df is None or events_df.empty:
         return
 
-    current_month = pd.Timestamp.today().to_period("M")
+    league_current_month = league_now(df).to_period("M")
 
+    # -------------------------
+    # 🧱 RECORD EVENTS (HISTORY)
+    # -------------------------
     breaking = (
-        events_df[events_df["MonthP"] == current_month]
+        events_df[events_df["MonthP"] == league_current_month]
         .sort_values("date", ascending=False)
         .drop_duplicates(subset=["type"], keep="first")
         .head(5)
     )
 
-    if breaking.empty:
-        return
-
-    messages = []
+    record_messages = []
     for _, r in breaking.iterrows():
-        messages.append(
-            f"🔥 {r['title']} — by {name_with_status(r['User'])} setting it to {r['value']:,}"
+        record_messages.append(
+            f"🏆 {r['title']} — {name_with_status(r['User'])} ({r['value']:,})"
         )
 
-    ticker_text = "   |   ".join(messages)
+    # -------------------------
+    # 🔥 LIVE STATE (STREAKS)
+    # -------------------------
+    live_messages = build_active_streak_messages(df)
+
+    # -------------------------
+    # 🎯 COMBINE (LIVE FIRST)
+    # -------------------------
+    messages = live_messages + record_messages
+
+    if not messages:
+        return
+
+    ticker_text = "   |   ".join(messages[:6])  # cap length
 
     st.markdown(f"""
     <style>
@@ -1168,6 +1216,7 @@ def show_global_league_moments(events_df):
         </marquee>
     </div>
     """, unsafe_allow_html=True)
+
 
 
 def team_month_stats(df, month, active_users):
@@ -1253,6 +1302,386 @@ def monthly_top_records(df, selected_month):
         "week_record": best_week_record
     }
     
+def render_wrapped(df, year):
+
+    st.title(f"🎁 Steps Wrapped — {year}")
+    st.write("Your year in walking — one story at a time")
+
+    st.divider()
+
+    wrapped_df = df[df["date"].dt.year == year]
+
+    user = st.selectbox(
+        "Select a user",
+        sorted(wrapped_df["User"].unique())
+    )
+
+    user_df = wrapped_df[wrapped_df["User"] == user].copy()
+
+    # Derived columns (IMPORTANT)
+    user_df["month"] = user_df["date"].dt.strftime("%b")
+    user_df["weekday"] = user_df["date"].dt.day_name()
+
+    tab1, tab2, tab3, tab4 = st.tabs(
+        ["🏁 Overview", "🔥 Performance", "📅 Calendar", "👥 Comparison & Badges"]
+    )
+    
+    with tab1:
+        # --------------------------------------------------
+        # Core Metrics (NOW SAFE)
+        # --------------------------------------------------
+        total_steps = int(user_df["steps"].sum())
+        avg_steps = int(user_df["steps"].mean(skipna=True))
+    
+        st.subheader("📊 Your 2025 at a glance")
+    
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Total steps", f"{total_steps:,}")
+        col2.metric("Avg / day", f"{avg_steps:,}")
+    
+        if total_steps > 0:
+            best_day = user_df.loc[user_df["steps"].idxmax()]
+            best_day_text = best_day["date"].strftime("%d %b")
+        else:
+            best_day_text = "No data"
+    
+        col3.metric("Best day", best_day_text)
+    
+        st.divider()
+    
+        # --------------------------------------------------
+        # Consistency Stats (5K / 10K Days)
+        # --------------------------------------------------
+        st.subheader("📈 Consistency")
+    
+        total_days = user_df["date"].nunique()
+    
+        days_10k = (user_df["steps"] >= 10000).sum()
+        days_5k = (user_df["steps"] >= 5000).sum()
+    
+        pct_10k = int((days_10k / total_days) * 100) if total_days else 0
+        pct_5k = int((days_5k / total_days) * 100) if total_days else 0
+    
+        col1, col2 = st.columns(2)
+    
+        col1.metric(
+            "Days ≥ 10,000 steps",
+            f"{days_10k} days",
+            f"{pct_10k}% of the year"
+        )
+    
+        col2.metric(
+            "Days ≥ 5,000 steps",
+            f"{days_5k} days",
+            f"{pct_5k}% of the year"
+        )
+    
+        st.markdown(
+            f"""
+            🚀 You hit **10K steps** on **{days_10k} days**  
+            💪 You crossed **5K steps** on **{days_5k} days**
+            """
+        )
+    
+        st.divider()
+    
+        # --------------------------------------------------
+        # Fun Facts (Dynamic)
+        # --------------------------------------------------
+        distance_km = total_steps * 0.0008
+        calories = total_steps * 0.04
+        
+        if distance_km < 300:
+            journey = "running multiple half marathons 🏃"
+        elif distance_km < 800:
+            journey = "walking Mumbai → Pune 🚶‍♂️"
+        elif distance_km < 1500:
+            journey = "walking Bengaluru → Chennai 🚶‍♂️"
+        elif distance_km < 2200:
+            journey = "walking Bengaluru → Delhi 🚶‍♂️"
+        elif distance_km < 4000:
+            journey = "walking across India 🇮🇳"
+        else:
+            journey = "walking coast-to-coast multiple times 🌍"
+        
+        st.subheader("🛣️ Fun facts")
+        
+        st.markdown(
+            f"""
+            • You walked approximately **{int(distance_km):,} km**  
+            • Burned roughly **{int(calories):,} calories**  
+            • That’s like **{journey}**
+            """
+        )
+    
+    
+    
+    with tab2:
+        # --------------------------------------------------
+        # Peak Performance
+        # --------------------------------------------------
+        st.subheader("🔥 Peak performance")
+    
+        if total_steps > 0:
+    
+            # ---- Best Day ----
+            best_day_row = user_df.loc[user_df["steps"].idxmax()]
+            best_day_date = best_day_row["date"].strftime("%d %b")
+            best_day_steps = int(best_day_row["steps"])
+    
+            # ---- Best Week ----
+            temp_df = user_df.copy()
+            temp_df["week"] = temp_df["date"].dt.to_period("W").apply(lambda r: r.start_time)
+    
+            weekly = temp_df.groupby("week")["steps"].sum().reset_index()
+            best_week_row = weekly.loc[weekly["steps"].idxmax()]
+    
+            week_start = best_week_row["week"]
+            week_end = week_start + pd.Timedelta(days=6)
+            best_week_steps = int(best_week_row["steps"])
+    
+            # ---- Best Month (enhanced) ----
+            monthly = (
+                user_df.groupby("month", sort=False)["steps"]
+                .sum()
+                .reset_index()
+            )
+            best_month_row = monthly.loc[monthly["steps"].idxmax()]
+            best_month_name = best_month_row["month"]
+            best_month_steps = int(best_month_row["steps"])
+            pct_of_year = int((best_month_steps / total_steps) * 100)
+    
+            col1, col2, col3 = st.columns(3)
+    
+            col1.metric(
+                "🔥 Best day",
+                best_day_date,
+                f"{best_day_steps:,} steps"
+            )
+    
+            col2.metric(
+                "🗓️ Best week",
+                f"{week_start.strftime('%d %b')} – {week_end.strftime('%d %b')}",
+                f"{best_week_steps:,} steps"
+            )
+    
+            col3.metric(
+                "🏆 Best month",
+                best_month_name,
+                f"{best_month_steps:,} steps ({pct_of_year}%)"
+            )
+    
+        else:
+            st.write("Not enough data to determine peak performance.")
+    
+        st.divider()
+    
+    
+    
+        # --------------------------------------------------
+        # Monthly Summary
+        # --------------------------------------------------
+        monthly = (
+            user_df.groupby("month", sort=False)["steps"]
+            .sum()
+            .reset_index()
+        )
+    
+        st.subheader("🏆 Your best month")
+    
+        if total_steps > 0:
+            best_month = monthly.loc[monthly["steps"].idxmax()]
+            st.markdown(
+                f"""
+                **{best_month['month']}** was your peak month with  
+                **{int(best_month['steps']):,} steps** 🔥
+                """
+            )
+        else:
+            st.write("No walking data available")
+    
+        st.bar_chart(
+            monthly.set_index("month")["steps"]
+        )
+    
+        st.divider()
+    
+        # --------------------------------------------------
+        # Weekly Pattern
+        # --------------------------------------------------
+        weekday_avg = (
+            user_df.groupby("weekday")["steps"]
+            .mean()
+            .reindex([
+                "Monday", "Tuesday", "Wednesday",
+                "Thursday", "Friday", "Saturday", "Sunday"
+            ])
+        )
+    
+        st.subheader("🗓️ Your walking pattern")
+    
+        if total_steps > 0:
+            st.write(f"😴 Laziest day: **{weekday_avg.idxmin()}**")
+            st.write(f"🔥 Most active day: **{weekday_avg.idxmax()}**")
+        else:
+            st.write("Not enough data to detect patterns")
+    
+        st.bar_chart(weekday_avg)
+    
+        st.divider()
+    
+    with tab3:
+        # --------------------------------------------------
+        # Calendar Heatmap
+        # --------------------------------------------------
+        st.subheader("📅 Your year at a glance")
+    
+        # Prepare daily data
+        heat_df = user_df.copy()
+        heat_df = heat_df.groupby("date", as_index=False)["steps"].sum()
+    
+        # Create helper columns
+        heat_df["week"] = heat_df["date"].dt.isocalendar().week
+        heat_df["weekday"] = heat_df["date"].dt.weekday  # Monday = 0
+        heat_df["month"] = heat_df["date"].dt.strftime("%b")
+    
+        # Normalize week numbers (important for Jan)
+        heat_df["week"] = heat_df["week"].astype(int)
+    
+        # Pivot for heatmap
+        pivot = heat_df.pivot(
+            index="weekday",
+            columns="week",
+            values="steps"
+        ).fillna(0)
+    
+        # Create heatmap
+        fig = px.imshow(
+            pivot,
+            labels=dict(x="Week of year", y="Day of week", color="Steps"),
+            x=pivot.columns,
+            y=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            color_continuous_scale="YlGn",
+            aspect="auto"
+        )
+    
+        fig.update_layout(
+            height=300,
+            margin=dict(l=20, r=20, t=20, b=20),
+            coloraxis_colorbar=dict(title="Steps")
+        )
+    
+        st.plotly_chart(fig, use_container_width=True)
+    
+        st.caption("Darker = more steps. Light days = rest or recovery.")
+    
+    with tab4:
+        # --------------------------------------------------
+        # Peer Comparison
+        # --------------------------------------------------
+        st.subheader("👥 You vs your peers")
+    
+        # Compute per-user averages
+        peer_stats = (
+            df.groupby("User")["steps"]
+            .mean()
+            .reset_index(name="avg_steps")
+        )
+    
+        user_avg = peer_stats.loc[
+            peer_stats["User"] == user, "avg_steps"
+        ].values[0]
+    
+        team_avg = peer_stats["avg_steps"].mean()
+    
+        # Percentile calculation
+        percentile = (
+            (peer_stats["avg_steps"] < user_avg).sum()
+            / len(peer_stats)
+        ) * 100
+    
+        percentile = int(percentile)
+    
+        col1, col2, col3 = st.columns(3)
+    
+        col1.metric(
+            "Your avg / day",
+            f"{int(user_avg):,} steps"
+        )
+    
+        col2.metric(
+            "Team avg / day",
+            f"{int(team_avg):,} steps"
+        )
+    
+        col3.metric(
+            "You beat",
+            f"{percentile}%",
+            "of your peers"
+        )
+    
+        # Friendly interpretation
+        st.markdown("---")
+    
+        if percentile >= 75:
+            message = "🔥 You’re among the **top walkers** in the group. Serious consistency!"
+        elif percentile >= 50:
+            message = "💪 You’re **above average** — solid and reliable effort!"
+        elif percentile >= 25:
+            message = "🙂 You’re close to the middle — room to push a bit more!"
+        else:
+            message = "🚀 Plenty of upside — every step forward counts!"
+    
+        st.write(message)
+    
+        st.divider()
+    
+    
+        # --------------------------------------------------
+        # Badges
+        # --------------------------------------------------
+    
+    
+        st.subheader("🏅 Your badges")
+    
+        badges = []
+    
+        # Consistency Champ
+        if days_10k >= 100:
+            badges.append("🎖️ Consistency Champ")
+    
+        # Weekend Warrior
+        weekday_avg = user_df[user_df["weekday"].isin(
+            ["Monday","Tuesday","Wednesday","Thursday","Friday"]
+        )]["steps"].mean()
+    
+        weekend_avg = user_df[user_df["weekday"].isin(
+            ["Saturday","Sunday"]
+        )]["steps"].mean()
+    
+        if weekend_avg > weekday_avg:
+            badges.append("🏖️ Weekend Warrior")
+    
+        # Comeback Kid
+        user_df["month_num"] = user_df["date"].dt.month
+        early_avg = user_df[user_df["month_num"] <= 3]["steps"].mean()
+        late_avg = user_df[user_df["month_num"] >= 10]["steps"].mean()
+    
+        if late_avg > early_avg:
+            badges.append("🚀 Comeback Kid")
+    
+        # Marathoner
+        if distance_km >= 2500:
+            badges.append("🏃 Marathoner")
+    
+        # Display
+        if badges:
+            for badge in badges:
+                st.success(badge)
+        else:
+            st.info("Badges are warming up for next year 😄")
+
+
 
 
 league_events = build_league_events(base_df, league_history)
@@ -2671,6 +3100,26 @@ if page == "📜 League History":
     st.plotly_chart(fig, use_container_width=True)
 
     st.divider()
+
+# =========================================================
+# Wrapped
+# =========================================================
+if page == "🎁 Wrapped":
+
+    st.title("🎁 Steps Wrapped")
+
+    available_years = sorted(
+        df["date"].dt.year.unique()
+    )
+
+    current_year = pd.Timestamp.today().year
+    wrapped_years = [y for y in available_years if y < current_year]
+
+    year = st.selectbox("Select year", wrapped_years[::-1])
+
+    wrapped_df = df[df["date"].dt.year == year]
+
+    render_wrapped(wrapped_df, year)
 
 # =========================================================
 # ℹ️ ABOUT — STEPS LEAGUE README
