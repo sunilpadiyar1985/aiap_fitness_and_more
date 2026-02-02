@@ -1124,33 +1124,43 @@ def build_league_events(df, league_history):
 def league_now(df):
     return df["date"].max()
 
+def get_active_users(df):
+    league_date = df["date"].max()
+    return set(
+        df.loc[df["date"] == league_date, "User"]
+    )
+
 def build_active_streak_messages(df):
     messages = []
 
     league_date = league_now(df)
+    active_users = get_active_users(df)
 
     for user in df["User"].unique():
+
+        if user not in active_users:
+            continue   # 🚫 skip inactive players
+
         s = compute_user_streaks(df, user)
         if not s:
             continue
 
-        # 🔥 Active 10K streak
+        label = []
+
         if s["10k"]["current"] >= 7:
+            label.append(f"{s['10k']['current']}-day 10K")
+
+        if s["active5"]["current"] >= 14:
+            label.append(f"{s['active5']['current']}-day 5K+")
+
+        if label:
             messages.append(
                 f"🔥 {name_with_status(user)} is on a "
-                f"{s['10k']['current']}-day 10K streak "
+                f"{' & '.join(label)} streak "
                 f"(active as of {league_date.strftime('%d %b %Y')})"
             )
 
-        # 💪 Active 5K+ habit
-        if s["active5"]["current"] >= 14:
-            messages.append(
-                f"💪 {name_with_status(user)} is on a "
-                f"{s['active5']['current']}-day 5K+ habit "
-                f"(active as of {league_date.strftime('%d %b %Y')})"
-            )
-
-    return messages
+    return messages[:6]
     
 def show_global_league_moments(events_df):
 
