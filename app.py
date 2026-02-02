@@ -1549,11 +1549,13 @@ def render_wrapped(df, year):
         heat_df["week"] = heat_df["week"].astype(int)
     
         # Pivot for heatmap
-        pivot = heat_df.pivot(
+        pivot = heat_df.pivot_table(
             index="weekday",
             columns="week",
-            values="steps"
-        ).fillna(0)
+            values="steps",
+            aggfunc="sum",
+            fill_value=0
+        )
     
         # Create heatmap
         fig = px.imshow(
