@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
+st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered", )
+
 # ======================================
 # 🚧 MAINTENANCE + ADMIN ACCESS GATE
 # ======================================
@@ -33,16 +35,28 @@ def maintenance_gate():
         st.info("Maintenance mode is active.")
         st.stop()
 
+    if "is_admin" not in st.session_state:
+    st.session_state.is_admin = False
+    
+    pwd = st.text_input("Enter admin password", type="password")
+    
+    if pwd == st.secrets.get("LEAGUE_ADMIN_PASSWORD", ""):
+        st.session_state.is_admin = True
+    else:
+        st.info("Maintenance mode is active.")
+        st.stop()
+
 # ---- EXECUTE GATE ----
 if MAINTENANCE_MODE:
     maintenance_gate()
 
 # ---- ADMIN TOOLS  ----
-with st.sidebar.expander("🧹 Admin tools"):
-    if st.button("Clear cache & reload"):
-        st.cache_data.clear()
-        st.cache_resource.clear()
-        st.rerun()
+if st.session_state.get("is_admin", False):
+    with st.sidebar.expander("🧹 Admin tools"):
+        if st.button("Clear cache & reload"):
+            st.cache_data.clear()
+            st.cache_resource.clear()
+            st.rerun()
 # ============================
 # GLOBAL SAFE DEFAULTS
 # ============================
@@ -51,7 +65,6 @@ top_active     = pd.Series(dtype=float)
 top_10k        = pd.Series(dtype=int)
 top_5k         = pd.Series(dtype=int)
 top_improved   = pd.Series(dtype=float)
-st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered", )
 
 st.markdown("""
 <style>
@@ -61,22 +74,58 @@ html, body, [class*="css"] {
     font-family: 'Poppins', sans-serif;
 }
 
+html, body {
+    background-color: #f9fafb;
+}
+
+/* Typography */
 h1 { font-size: 2.2rem; font-weight: 700; }
 h2 { font-size: 1.7rem; font-weight: 600; }
 h3 { font-size: 1.35rem; font-weight: 600; }
 h4, h5, h6 { font-weight: 500; }
 
+/* Sidebar */
 section[data-testid="stSidebar"] {
     background-color: #fafafa;
 }
 
+/* Metrics */
 div[data-testid="metric-container"] {
     border-radius: 14px;
     padding: 12px;
     background-color: #f7f8fa;
 }
+
+/* Kill top whitespace (desktop default) */
+.block-container {
+    padding-top: 1rem !important;
+}
+
+/* Mobile tightening */
+@media (max-width: 768px) {
+    .block-container {
+        padding-top: 0.5rem !important;
+    }
+}
+
+/* Sticky hero header */
+.hero {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Reusable card */
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+}
 </style>
 """, unsafe_allow_html=True)
+
+#CSV ends...
 
 def hall_card(title, name, sub):
     st.markdown(f"""
