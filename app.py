@@ -36,7 +36,7 @@ def maintenance_gate():
         st.stop()
 
     if "is_admin" not in st.session_state:
-    st.session_state.is_admin = False
+        st.session_state.is_admin = False
     
     pwd = st.text_input("Enter admin password", type="password")
     
