@@ -1767,7 +1767,7 @@ st.markdown("""
     background: linear-gradient(135deg, #f8fafc, #eef2ff);
     padding: 18px 22px;
     border-radius: 18px;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
 ">
     <div style="font-size:26px; font-weight:700;">
         🏃 Steps League
