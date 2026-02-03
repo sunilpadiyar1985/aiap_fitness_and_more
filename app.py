@@ -66,6 +66,8 @@ top_10k        = pd.Series(dtype=int)
 top_5k         = pd.Series(dtype=int)
 top_improved   = pd.Series(dtype=float)
 
+#CSV
+
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -113,6 +115,8 @@ div[data-testid="metric-container"] {
     position: sticky;
     top: 0;
     z-index: 10;
+    background: #f9fafb;
+    padding-bottom: 6px;
 }
 
 /* Reusable card */
@@ -1745,15 +1749,38 @@ def render_wrapped(df, year):
         else:
             st.info("Badges are warming up for next year 😄")
 
-
-
-
 league_events = build_league_events(base_df, league_history)
 show_global_league_moments(league_events)
 
 # Data Load Finishes...
 # Helper function completed...
 # Engines have been build and ready to roar...
+
+st.markdown("""
+<div class="hero">
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<div style="
+    background: linear-gradient(135deg, #f8fafc, #eef2ff);
+    padding: 18px 22px;
+    border-radius: 18px;
+    margin-bottom: 12px;
+">
+    <div style="font-size:26px; font-weight:700;">
+        🏃 Steps League
+    </div>
+    <div style="color:#555; font-size:14px;">
+        Consistency • Competition • Community
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+</div>
+""", unsafe_allow_html=True)
+# Spacer to prevent overlap
+st.markdown("<div style='height: 8px'></div>", unsafe_allow_html=True)
 
 # =========================================================
 # 🏆 HALL OF FAME — ALL TIME RECORDS
