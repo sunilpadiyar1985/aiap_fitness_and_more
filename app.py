@@ -114,9 +114,8 @@ div[data-testid="metric-container"] {
 .hero {
     position: sticky;
     top: 0;
-    z-index: 10;
-    background: #f9fafb;
-    padding-bottom: 6px;
+    z-index: 20;
+    background: transparent;  
 }
 
 /* Reusable card */
@@ -1258,18 +1257,23 @@ def show_global_league_moments(events_df):
     .ticker-box {{
         background:#fff4f4;
         border-radius:14px;
-        padding:8px 14px;
-        margin-top:4px;
+        padding:10px 16px;
+        margin-top:8px;
         margin-bottom:12px;
         font-size:14px;
         font-weight:500;
         border:1px solid #ffd6d6;
-        overflow:hidden;
+    
+        /* 🔑 FIXES */
+        overflow: visible;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
     }}
-
     .ticker-box marquee {{
         white-space: nowrap;
         line-height: 1.4;
+        padding-top: 2px;
     }}
     </style>
 
@@ -1279,8 +1283,6 @@ def show_global_league_moments(events_df):
         </marquee>
     </div>
     """, unsafe_allow_html=True)
-
-
 
 def team_month_stats(df, month, active_users):
     mdf = df[(df["MonthP"] == month) & (df["User"].isin(active_users))]
