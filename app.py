@@ -39,9 +39,9 @@ def maintenance_gate():
         st.session_state.is_admin = False
 
     if st.session_state.get("is_admin"):
-    st.markdown(
-        "[🔎 Full backend health](https://stepsync-backend-727314171136.us-central1.run.app/health)"
-    )
+        st.markdown(
+            "[🔎 Full backend health](https://stepsync-backend-727314171136.us-central1.run.app/health)"
+        )
     
     pwd = st.text_input("Enter admin password", type="password")
     
