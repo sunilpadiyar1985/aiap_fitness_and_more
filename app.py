@@ -2636,11 +2636,20 @@ if page == "👤 Player Profile":
 
     st.markdown("###### 🧬 Consistency fingerprint")
 
+    # 🔧 Restrict to user's active window
+    u_active = u.copy()
+    
+    # First day user actually existed (had any data point)
+    first_active_date = u_active[u_active["steps"].notna()].index.min()
+    
+    # Slice out pre-join days
+    u_active = u_active.loc[first_active_date:]
+
     bins = {
-        "No activity": (u["steps"] == 0).mean(),
-        "1–5k": ((u["steps"] > 0) & (u["steps"] < 5000)).mean(),
-        "5k–10k": ((u["steps"] >= 5000) & (u["steps"] < 10000)).mean(),
-        "10k+": (u["steps"] >= 10000).mean()
+        "No activity": (u_active["steps"] == 0).mean(),
+        "1–5k": ((u_active["steps"] > 0) & (u_active["steps"] < 5000)).mean(),
+        "5k–10k": ((u_active["steps"] >= 5000) & (u_active["steps"] < 10000)).mean(),
+        "10k+": (u_active["steps"] >= 10000).mean()
     }
     
     finger = pd.DataFrame({
@@ -2663,6 +2672,8 @@ if page == "👤 Player Profile":
     )
     
     st.plotly_chart(fig, use_container_width=True)
+    if len(u_active) < 5:
+        st.caption("🕒 Consistency fingerprint will stabilise after a few more active days")
 
     st.markdown("###### 🎖️ Badges earned")
     
