@@ -3252,9 +3252,6 @@ if page == "📜 League History":
 # Wrapped
 # =========================================================
 if page == "🎁 Wrapped":
-
-    st.markdown("#### 🎁 Steps Wrapped")
-
     available_years = sorted(
         df["date"].dt.year.unique()
     )
