@@ -162,6 +162,43 @@ page = st.sidebar.radio(
     "Navigate",
     ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History", "🎁 Wrapped", "ℹ️ Readme: Our Dashboard"]
 )
+
+with st.sidebar.expander("🧰 User tools", expanded=False):
+
+    health = fetch_health()
+
+    if not health:
+        st.error("Health check unavailable")
+    else:
+        summary = health["summary"]
+
+        st.caption(
+            f"Healthy: {summary['healthy']} | "
+            f"Re-auth: {summary['needs_reauth']} | "
+            f"Broken: {summary['broken']}"
+        )
+
+        if health["needs_reauth"]:
+            st.warning("⚠️ Needs re-auth")
+            for u in health["needs_reauth"]:
+                st.markdown(
+                    f"**{u['user']}**  \n"
+                    f"Last success: {u['last_success']}  \n"
+                    f"[Re-auth link]({u['reauth_url']})"
+                )
+
+        if health["broken"]:
+            st.error("❌ Broken users")
+            for u in health["broken"]:
+                st.markdown(
+                    f"**{u['user']}**  \n"
+                    f"Last success: {u['last_success']}  \n"
+                    f"Reason: {u['reason']}"
+                )
+
+        if not health["needs_reauth"] and not health["broken"]:
+            st.success("All users synced ✅")
+            
 # ----------------------------
 # CONFIG
 # ----------------------------
@@ -1750,6 +1787,18 @@ def render_wrapped(df, year):
                 st.success(badge)
         else:
             st.info("Badges are warming up for next year 😄")
+
+
+@st.cache_data(ttl=300)
+def fetch_health():
+    try:
+        r = requests.get(
+            "https://stepsync-backend-727314171136.us-central1.run.app/health",
+            timeout=5
+        )
+        return r.json()
+    except Exception:
+        return None
 
 league_events = build_league_events(base_df, league_history)
 show_global_league_moments(league_events)
