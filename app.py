@@ -2640,7 +2640,7 @@ if page == "👤 Player Profile":
     u_active = u.copy()
     
     # First day user actually existed (had any data point)
-    first_active_date = u_active[u_active["steps"].notna()].index.min()
+    first_active_date = u_active[u_active["steps"] > 0].index.min()
     
     # Slice out pre-join days
     u_active = u_active.loc[first_active_date:]
