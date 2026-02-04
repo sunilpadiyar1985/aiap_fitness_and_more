@@ -2750,8 +2750,7 @@ if page == "👤 Player Profile":
 
     # ----------------------------
     # LEAGUE JOURNEY TABLE
-    # ----------------------------
-    st.divider()
+    # ---------------------------
     st.markdown("###### 📜 League journey")
 
     journey = player_lh.sort_values("Month", ascending=False)[
