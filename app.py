@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
+import requests
 
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered", )
 
