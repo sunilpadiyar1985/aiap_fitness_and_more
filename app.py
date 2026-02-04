@@ -158,6 +158,17 @@ def hall_card(title, name, sub):
     </div>
     """, unsafe_allow_html=True)
 
+@st.cache_data(ttl=300)
+def fetch_health():
+    try:
+        r = requests.get(
+            "https://stepsync-backend-727314171136.us-central1.run.app/health",
+            timeout=5
+        )
+        return r.json()
+    except Exception:
+        return None
+
 page = st.sidebar.radio(
     "Navigate",
     ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History", "🎁 Wrapped", "ℹ️ Readme: Our Dashboard"]
@@ -1787,18 +1798,6 @@ def render_wrapped(df, year):
                 st.success(badge)
         else:
             st.info("Badges are warming up for next year 😄")
-
-
-@st.cache_data(ttl=300)
-def fetch_health():
-    try:
-        r = requests.get(
-            "https://stepsync-backend-727314171136.us-central1.run.app/health",
-            timeout=5
-        )
-        return r.json()
-    except Exception:
-        return None
 
 league_events = build_league_events(base_df, league_history)
 show_global_league_moments(league_events)
