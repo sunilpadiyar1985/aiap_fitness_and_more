@@ -28,7 +28,7 @@ def maintenance_gate():
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("### 🔐 Admin access")
+    st.markdown("#### 🔐 Admin access")
 
     pwd = st.text_input("Enter admin password", type="password")
 
@@ -1843,7 +1843,7 @@ st.markdown("<div style='height: 8px'></div>", unsafe_allow_html=True)
 # =========================================================
 if page == "🏆 Hall of Fame":
 
-    st.markdown("### 🏆 Hall of Fame — All Time Records")
+    st.markdown("#### 🏆 Hall of Fame — All Time Records")
     st.caption("Since the inception of the Steps League")
 
     # -------------------------
@@ -2007,7 +2007,7 @@ if page == "🏆 Hall of Fame":
     record_row("Best single-season performance", "🚀", best_season, lambda x: f"{round(x*100)} pts")
 
     st.divider()
-    st.markdown("### 🐐 GOAT Rankings — All-time greats")
+    st.markdown("###### 🐐 GOAT Rankings — All-time greats")
     
     lh = league_history.copy()
     
@@ -2054,7 +2054,7 @@ if page == "🏆 Hall of Fame":
 
 if page == "🏠 Monthly Results":
     
-    st.markdown("### 🏃 Steps League – Monthly Results")
+    st.markdown("#### 🏃 Monthly Results")
     current_month = pd.Timestamp.today().to_period("M")
     
     # ----------------------------
@@ -2115,7 +2115,7 @@ if page == "🏠 Monthly Results":
     
     monthly_totals.insert(0, "Rank", range(1, len(monthly_totals) + 1))
     
-    st.markdown(f"#### Results for {selected_month.strftime('%B %Y')} ⭐")
+    st.markdown(f"##### Results for {selected_month.strftime('%B %Y')} ⭐")
     if is_current_month:
         st.info("🕒 **Live month in progress** — standings are based on current data and may change before month end.")
 
@@ -2429,7 +2429,7 @@ if page == "🏠 Monthly Results":
     prev_stats = team_month_stats(df, prev_month, active_users)
     
     st.divider()
-    st.markdown("#### 🏟️ Team month snapshot")
+    st.markdown("##### 🏟️ Team month snapshot")
     
     if current_stats:
     
@@ -2489,7 +2489,7 @@ if page == "🏠 Monthly Results":
 # =========================================================
 if page == "👤 Player Profile":
 
-    st.markdown("### 👤 Player Profile")
+    st.markdown("#### 👤 Player Profile")
 
     users = sorted(df["User"].unique())
     display_map = {name_with_status(u): u for u in users}
@@ -2916,7 +2916,7 @@ assert base_df["date"].dt.to_period("M").nunique() > 1, \
 
 if page == "📜 League History":
     
-    st.markdown("### 📜 League History")
+    st.markdown("#### 📜 League History")
     st.caption("The official record book of the Steps League")
 
     lh = league_history.copy()
@@ -3037,7 +3037,7 @@ if page == "📜 League History":
     # =====================================================
     # 🏟️ HALL BANNERS
     # =====================================================
-    st.markdown("#### 🏟️ Hall of Champions")
+    st.markdown("##### 🏟️ Hall of Champions")
 
     b1, b2, b3, b4, b5 = st.columns(5)
     eras = build_eras(league_history, min_streak=2)
@@ -3100,13 +3100,13 @@ if page == "📜 League History":
     # =====================================================
     
     if dynasties:
-        st.markdown("#### 👑 Dynasties of the League")
+        st.markdown("##### 👑 Dynasties of the League")
     
         prem = [d for d in dynasties if d["League"] == "Premier"]
         champ = [d for d in dynasties if d["League"] == "Championship"]
     
         if prem:
-            st.markdown("##### 👑 Premier League Dynasties")
+            st.markdown("###### 👑 Premier League Dynasties")
             for d in prem:
                 st.markdown(f"""
                 <div style="
@@ -3121,7 +3121,7 @@ if page == "📜 League History":
                 """, unsafe_allow_html=True)
     
         if champ:
-            st.markdown("##### 🏆 Championship Dynasties")
+            st.markdown("###### 🏆 Championship Dynasties")
             for d in champ:
                 st.markdown(f"""
                 <div style="
@@ -3137,7 +3137,7 @@ if page == "📜 League History":
     
         st.divider()
         
-    st.markdown("#### 📜 League Eras (periods of dominance)")
+    st.markdown("##### 📜 League Eras (periods of dominance)")
 
     eras = build_eras(league_history, min_streak=3)
 
@@ -3212,17 +3212,17 @@ if page == "📜 League History":
         prem_hist = history_df[history_df["League"] == "Premier"].drop(columns=["League"])
         champ_hist = history_df[history_df["League"] == "Championship"].drop(columns=["League"])
     
-        st.markdown("#### 🥇 Premier League — Last 12 months, scroll to see more")
+        st.markdown("##### 🥇 Premier League — Last 12 months, scroll to see more")
         st.dataframe(prem_hist, use_container_width=True, hide_index=True, height=460)
     
         st.divider()
     
-        st.markdown("#### 🥈 Championship — Last 12 months, scroll to see more")
+        st.markdown("##### 🥈 Championship — Last 12 months, scroll to see more")
         st.dataframe(champ_hist, use_container_width=True, hide_index=True, height=460)
     
         st.caption("🏆 Only winners and runner-ups are shown here. Full tables are in Monthly Results.")
 
-    st.markdown("##### 📊 League flow timeline")
+    st.markdown("###### 📊 League flow timeline")
     
     flow = league_history.copy()
     flow["Month"] = pd.to_datetime(flow["Month"])
@@ -3253,7 +3253,7 @@ if page == "📜 League History":
 # =========================================================
 if page == "🎁 Wrapped":
 
-    st.title("🎁 Steps Wrapped")
+    st.markdown("#### 🎁 Steps Wrapped")
 
     available_years = sorted(
         df["date"].dt.year.unique()
@@ -3273,7 +3273,7 @@ if page == "🎁 Wrapped":
 # =========================================================
 if page == "ℹ️ Readme: Our Dashboard":
 
-    st.markdown("### ℹ️ About the Steps League")
+    st.markdown("#### ℹ️ About the Steps League")
 
     st.markdown("""
 Move more. Stay consistent. Make fitness a game.
