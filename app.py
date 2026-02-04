@@ -2401,6 +2401,99 @@ if page == "🏠 Monthly Results":
         st.caption("Monthly storylines will appear once enough activity data is available.")
         
     # ----------------------------
+    # Daily steps trend (this month)
+    # ----------------------------
+    
+    st.markdown("###### 📈 Daily steps trend (this month)")
+    # Rank users by monthly total
+    user_totals = (
+        month_df.groupby("User")["steps"]
+        .sum()
+        .sort_values(ascending=False)
+    )
+    
+    top_users = user_totals.head(5).index.tolist()
+    mode = st.radio(
+        "View mode",
+        ["Top 5 players", "Custom selection"],
+        horizontal=True
+    )
+    
+    # Selector
+    selected_users = st.multiselect(
+        "Select players to display",
+        options=user_totals.index.tolist(),
+        default=top_users,
+        help="Default shows top performers. Select up to a few players for comparison."
+    )
+
+    # Prepare daily data
+    daily_trend = month_df.copy()
+    daily_trend["day"] = daily_trend["date"].dt.day
+    
+    # Optional: only users who actually walked this month
+    active_month_users = (
+        daily_trend.groupby("User")["steps"]
+        .sum()
+        .loc[lambda x: x > 0]
+        .index
+    )
+    
+    daily_trend = daily_trend[
+        daily_trend["User"].isin(active_month_users)
+    ]
+    daily_trend = month_df.copy()
+    daily_trend["day"] = daily_trend["date"].dt.day
+    
+    daily_trend = daily_trend[
+        daily_trend["User"].isin(selected_users)
+    ]
+
+    fig_daily = px.line(
+    daily_trend,
+    x="day",
+    y="steps",
+    color="User",
+    markers=False
+    )
+    
+    fig_daily.update_layout(
+        height=420,
+        xaxis_title="Day of month",
+        yaxis_title="Steps",
+        hovermode="x unified",
+        legend_title="Player"
+    )
+
+    # Line chart
+    fig_daily = px.line(
+        daily_trend,
+        x="day",
+        y="steps",
+        color="User",
+        markers=False
+    )
+    
+    fig_daily.update_layout(
+        height=420,
+        xaxis_title="Day of month",
+        yaxis_title="Steps",
+        legend_title="Player",
+        hovermode="x unified"
+    )
+
+    daily_trend["rolling"] = (
+        daily_trend
+        .groupby("User")["steps"]
+        .rolling(3)
+        .mean()
+        .reset_index(level=0, drop=True)
+    )
+    mode = st.radio("View", ["Daily", "3-day average"], horizontal=True)
+    y_col = "rolling" if mode == "3-day average" else "steps"
+    st.plotly_chart(fig_daily, use_container_width=True)
+
+    # ----------------------------
     # LEADERBOARD
     # ----------------------------
     st.divider()
