@@ -5,6 +5,14 @@ import numpy as np
 import requests
 
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered", )
+if not st.session_state.get("is_admin", False):
+    st.markdown("""
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    </style>
+    """, unsafe_allow_html=True)
 
 # ======================================
 # 🚧 MAINTENANCE + ADMIN ACCESS GATE
@@ -2692,19 +2700,29 @@ if page == "👤 Player Profile":
 
     first_month = player_lh["Month"].min().strftime("%b %Y")
     last_month = player_lh["Month"].max().strftime("%b %Y")
-    seasons = player_lh["Month"].nunique()
+    seasons = (
+        user_df[user_df["steps"] > 0]["date"]
+        .dt.to_period("M")
+        .nunique()
+    )
+    debut_month = (
+        user_df[user_df["steps"] > 0]["date"]
+        .min()
+        .strftime("%b %Y")
+    )
 
     prem_months = (player_lh["League"] == "Premier").sum()
     champ_months = (player_lh["League"] == "Championship").sum()
     promotions = player_lh["Promoted"].sum()
     relegations = player_lh["Relegated"].sum()
 
-    l1, l2, l3, l4 = st.columns(4)
+    l1, l2, l3, l4, l5 = st.columns(5)
 
     l1.metric("Seasons played", seasons)
-    l2.metric("Premier months", prem_months)
-    l3.metric("Promotions", promotions)
-    l4.metric("Relegations", relegations)
+    l2.metric("Debut month", debut_month)
+    l3.metric("Premier months", prem_months)
+    l4.metric("Promotions", promotions)
+    l5.metric("Relegations", relegations)
 
     st.info(f"🗓️ Active career: **{first_month} → {last_month}**")
 
