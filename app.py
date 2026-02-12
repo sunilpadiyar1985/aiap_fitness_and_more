@@ -185,7 +185,7 @@ def fetch_health():
 
 page = st.sidebar.radio(
     "Navigate",
-    ["🏆 Hall of Fame", "🏠 Monthly Results", "👤 Player Profile", "📜 League History", "🎁 Wrapped", "ℹ️ Readme: Our Dashboard"]
+    ["🏠 Monthly Results", "👤 Player Profile", "🏆 Hall of Fame",  "📜 League History", "🎁 Wrapped", "ℹ️ Readme: Our Dashboard"]
 )
 
 with st.sidebar.expander("🧰 User tools", expanded=False):
