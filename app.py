@@ -3,6 +3,22 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 import requests
+import streamlit as st
+
+query_params = st.query_params
+is_mobile = query_params.get("mobile", "false") == "true"
+
+st.markdown("""
+<script>
+const width = window.innerWidth;
+if (width < 768) {
+    window.parent.postMessage({type: "SET_MOBILE"}, "*");
+}
+</script>
+""", unsafe_allow_html=True)
+
+if "is_mobile" not in st.session_state:
+    st.session_state.is_mobile = False
 
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered", )
 if not st.session_state.get("is_admin", False):
@@ -80,7 +96,9 @@ top_10k        = pd.Series(dtype=int)
 top_5k         = pd.Series(dtype=int)
 top_improved   = pd.Series(dtype=float)
 
-#CSS
+# =========================
+# 🎨 CSS
+# =========================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -97,7 +115,6 @@ html, body {
 h1 { font-size: 2.2rem; font-weight: 700; }
 h2 { font-size: 1.7rem; font-weight: 600; }
 h3 { font-size: 1.35rem; font-weight: 600; }
-h4, h5, h6 { font-weight: 500; }
 
 /* Sidebar */
 section[data-testid="stSidebar"] {
@@ -111,64 +128,19 @@ div[data-testid="metric-container"] {
     background-color: #f7f8fa;
 }
 
-/* Kill top whitespace */
+/* Layout spacing */
 .block-container {
     padding-top: 1rem !important;
 }
 
-/* Mobile tightening */
+/* =========================
+   📱 MOBILE
+========================= */
 @media (max-width: 768px) {
+
     .block-container {
         padding-top: 0.5rem !important;
     }
-}
-
-/* Sticky hero header */
-.hero {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: transparent;
-}
-
-/* Card */
-.card {
-    background: white;
-    border-radius: 16px;
-    padding: 14px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.05);
-}
-
-/* ---------------- DARK MODE ---------------- */
-@media (prefers-color-scheme: dark) {
-
-    html, body {
-        background-color: #0e1117 !important;
-        color: #e6e6e6 !important;
-    }
-
-    section[data-testid="stSidebar"] {
-        background-color: #161a22 !important;
-    }
-
-    div[data-testid="metric-container"] {
-        background-color: #1c1f26 !important;
-        color: #e6e6e6 !important;
-    }
-
-    .card {
-        background: #1c1f26 !important;
-        color: #e6e6e6 !important;
-        box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-    }
-
-    .block-container {
-        background-color: #0e1117 !important;
-    }
-}
-
-/* ---------------- MOBILE ---------------- */
-@media (max-width: 768px) {
 
     h1 { font-size: 1.6rem; }
     h2 { font-size: 1.3rem; }
@@ -182,41 +154,109 @@ div[data-testid="metric-container"] {
     div[data-testid="metric-container"] {
         padding: 8px;
     }
+
+    /* Hide sidebar on mobile */
+    section[data-testid="stSidebar"] {
+        display: none;
+    }
+}
+
+/* =========================
+   🧱 CARD
+========================= */
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+}
+
+/* =========================
+   📌 STICKY TOP NAV
+========================= */
+.hero {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    background: inherit;
+    padding: 10px 0;
+}
+
+/* Hide top nav on desktop */
+@media (min-width: 769px) {
+    .hero {
+        display: none;
+    }
+}
+
+/* =========================
+   🌙 DARK MODE
+========================= */
+@media (prefers-color-scheme: dark) {
+
+    html, body {
+        background-color: #0e1117 !important;
+        color: #e6e6e6 !important;
+    }
+
+    p, span, div, label {
+        color: #e6e6e6 !important;
+    }
+
+    .card {
+        background: #1c1f26 !important;
+        color: #e6e6e6 !important;
+    }
+
+    div[data-testid="metric-container"] {
+        background-color: #1c1f26 !important;
+        color: #ffffff !important;
+    }
+
+    section[data-testid="stSidebar"] {
+        background-color: #161a22 !important;
+    }
+
+    h1, h2, h3 {
+        color: #ffffff !important;
+    }
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-#CSS ends...
 
-def hall_card(title, name, sub):
-    st.markdown(f"""
-    <div style="
-        background:#f7f9fc;
-        padding:14px;
-        border-radius:14px;
-        text-align:center;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    ">
-        <div style="font-size:14px; font-weight:500; color:#666;">{title}</div>
-        <div style="font-size:20px; font-weight:600; margin-top:6px; white-space:normal;">
-            {name}
-        </div>
-        <div style="
-            display:inline-block;
-            margin-top:8px;
-            padding:4px 10px;
-            background:#e8f7ee;
-            color:#1b7f4b;
-            border-radius:999px;
-            font-size:12px;
-            font-weight:500;
-        ">
-            {sub}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+# =========================
+# 📍 NAVIGATION
+# =========================
+pages = [
+    "🏠 Monthly Results",
+    "👤 Player Profile",
+    "🏆 Hall of Fame",
+    "📜 League History",
+    "🎁 Wrapped",
+    "ℹ️ Readme: Our Dashboard"
+]
 
+# 🔥 Mobile Top Navigation
+st.markdown('<div class="hero">', unsafe_allow_html=True)
+
+mobile_page = st.selectbox("", pages, key="mobile_nav")
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+
+# 🖥️ Desktop Sidebar Navigation
+page = st.sidebar.radio("Navigate", pages)
+
+
+# 🎯 FINAL PAGE SELECTION (CRITICAL LINE)
+page = mobile_page or page
+
+
+# =========================
+# 🧰 USER TOOLS (Sidebar)
+# =========================
 @st.cache_data(ttl=300)
 def fetch_health():
     try:
@@ -228,10 +268,6 @@ def fetch_health():
     except Exception:
         return None
 
-page = st.sidebar.radio(
-    "Navigate",
-    ["🏠 Monthly Results", "👤 Player Profile", "🏆 Hall of Fame",  "📜 League History", "🎁 Wrapped", "ℹ️ Readme: Our Dashboard"]
-)
 
 with st.sidebar.expander("🧰 User tools", expanded=False):
 
@@ -273,6 +309,34 @@ with st.sidebar.expander("🧰 User tools", expanded=False):
 # CONFIG
 # ----------------------------
 SHEET_ID = "1DfUJd33T-12UVOavd6SqCfkcNl8_4sVxcqqXHtBeWpw"
+
+def hall_card(title, name, sub):
+    st.markdown(f"""
+    <div style="
+        background:#f7f9fc;
+        padding:14px;
+        border-radius:14px;
+        text-align:center;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    ">
+        <div style="font-size:14px; font-weight:500; color:#666;">{title}</div>
+        <div style="font-size:20px; font-weight:600; margin-top:6px; white-space:normal;">
+            {name}
+        </div>
+        <div style="
+            display:inline-block;
+            margin-top:8px;
+            padding:4px 10px;
+            background:#e8f7ee;
+            color:#1b7f4b;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:500;
+        ">
+            {sub}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ----------------------------
 # LOAD DATA (MULTI YEAR, SAFE)
@@ -1371,19 +1435,16 @@ def show_global_league_moments(events_df):
         font-weight:500;
         border:1px solid #ffd6d6;
     
-        /* 🔑 FIXES */
-        overflow: visible;
-        min-height: 42px;
-        display: flex;
-        align-items: center;
+        overflow: hidden;   /* IMPORTANT */
+        display: block;     /* FIX */
     }}
+    
     .ticker-box marquee {{
         white-space: nowrap;
         line-height: 1.4;
-        padding-top: 2px;
     }}
     </style>
-
+    
     <div class="ticker-box">
         <marquee behavior="scroll" direction="left" scrollamount="5">
             🚨 {ticker_text}
