@@ -80,7 +80,7 @@ top_10k        = pd.Series(dtype=int)
 top_5k         = pd.Series(dtype=int)
 top_improved   = pd.Series(dtype=float)
 
-#CSV
+#CSS
 
 st.markdown("""
 <style>
@@ -142,7 +142,51 @@ div[data-testid="metric-container"] {
 </style>
 """, unsafe_allow_html=True)
 
-#CSV ends...
+/* ---------------- DARK MODE SUPPORT ---------------- */
+@media (prefers-color-scheme: dark) {
+
+    html, body {
+        background-color: #0e1117 !important;
+        color: #e6e6e6 !important;
+    }
+
+    section[data-testid="stSidebar"] {
+        background-color: #161a22 !important;
+    }
+
+    div[data-testid="metric-container"] {
+        background-color: #1c1f26 !important;
+        color: #e6e6e6 !important;
+    }
+
+    .card {
+        background: #1c1f26 !important;
+        color: #e6e6e6 !important;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+
+    .block-container {
+        background-color: #0e1117 !important;
+    }
+}
+/* ---------------- MOBILE IMPROVEMENTS ---------------- */
+@media (max-width: 768px) {
+
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.3rem; }
+    h3 { font-size: 1.1rem; }
+
+    .card {
+        padding: 10px;
+        border-radius: 12px;
+    }
+
+    div[data-testid="metric-container"] {
+        padding: 8px;
+    }
+}
+
+#CSS ends...
 
 def hall_card(title, name, sub):
     st.markdown(f"""
