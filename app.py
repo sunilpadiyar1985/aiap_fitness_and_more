@@ -81,7 +81,6 @@ top_5k         = pd.Series(dtype=int)
 top_improved   = pd.Series(dtype=float)
 
 #CSS
-
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -112,7 +111,7 @@ div[data-testid="metric-container"] {
     background-color: #f7f8fa;
 }
 
-/* Kill top whitespace (desktop default) */
+/* Kill top whitespace */
 .block-container {
     padding-top: 1rem !important;
 }
@@ -129,20 +128,18 @@ div[data-testid="metric-container"] {
     position: sticky;
     top: 0;
     z-index: 20;
-    background: transparent;  
+    background: transparent;
 }
 
-/* Reusable card */
+/* Card */
 .card {
     background: white;
     border-radius: 16px;
     padding: 14px;
     box-shadow: 0 6px 16px rgba(0,0,0,0.05);
 }
-</style>
-""", unsafe_allow_html=True)
 
-/* ---------------- DARK MODE SUPPORT ---------------- */
+/* ---------------- DARK MODE ---------------- */
 @media (prefers-color-scheme: dark) {
 
     html, body {
@@ -169,7 +166,8 @@ div[data-testid="metric-container"] {
         background-color: #0e1117 !important;
     }
 }
-/* ---------------- MOBILE IMPROVEMENTS ---------------- */
+
+/* ---------------- MOBILE ---------------- */
 @media (max-width: 768px) {
 
     h1 { font-size: 1.6rem; }
@@ -185,6 +183,9 @@ div[data-testid="metric-container"] {
         padding: 8px;
     }
 }
+
+</style>
+""", unsafe_allow_html=True)
 
 #CSS ends...
 
