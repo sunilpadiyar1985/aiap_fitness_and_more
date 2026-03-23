@@ -1422,7 +1422,7 @@ def show_global_league_moments(events_df):
         return
 
     ticker_text = "   |   ".join(messages[:6])  # cap length
-    
+    speed = max(60, len(ticker_text) // 5)
     st.markdown(f"""
     <style>
     .ticker-box {{
@@ -1442,8 +1442,7 @@ def show_global_league_moments(events_df):
         display: inline-block;
         white-space: nowrap;
         padding-left: 100%;
-        speed = max(60, len(ticker_text) // 5)
-        animation: ticker-scroll {speed}s linear infinite;
+        animation: ticker-scroll {speed}s ease-in-out infinite;
     }}
     
     @keyframes ticker-scroll {{
