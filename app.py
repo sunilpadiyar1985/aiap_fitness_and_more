@@ -5,21 +5,6 @@ import numpy as np
 import requests
 import streamlit as st
 
-query_params = st.query_params
-is_mobile = query_params.get("mobile", "false") == "true"
-
-st.markdown("""
-<script>
-const width = window.innerWidth;
-if (width < 768) {
-    window.parent.postMessage({type: "SET_MOBILE"}, "*");
-}
-</script>
-""", unsafe_allow_html=True)
-
-if "is_mobile" not in st.session_state:
-    st.session_state.is_mobile = False
-
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered", )
 if not st.session_state.get("is_admin", False):
     st.markdown("""
@@ -97,73 +82,46 @@ top_5k         = pd.Series(dtype=int)
 top_improved   = pd.Series(dtype=float)
 
 # =========================
-# 🎨 CSS
+# 🎨 CSS (FINAL CLEAN)
 # =========================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
+/* -------------------------
+   GLOBAL
+------------------------- */
 html, body, [class*="css"] {
     font-family: 'Poppins', sans-serif;
-}
-
-html, body {
     background-color: #f9fafb;
 }
 
-/* Typography */
-h1 { font-size: 2.2rem; font-weight: 700; }
-h2 { font-size: 1.7rem; font-weight: 600; }
-h3 { font-size: 1.35rem; font-weight: 600; }
+/* -------------------------
+   REMOVE TOP GAP
+------------------------- */
+header {
+    display: none !important;
+}
 
-/* Sidebar */
+.block-container {
+    padding-top: 0.3rem !important;
+}
+
+/* -------------------------
+   SIDEBAR
+------------------------- */
 section[data-testid="stSidebar"] {
     background-color: #fafafa;
 }
 
-/* Metrics */
-div[data-testid="metric-container"] {
-    border-radius: 14px;
-    padding: 12px;
-    background-color: #f7f8fa;
+/* Hide Streamlit collapse button */
+button[kind="header"] {
+    display: none !important;
 }
 
-/* Layout spacing */
-.block-container {
-    padding-top: 1rem !important;
-}
-
-/* =========================
-   📱 MOBILE
-========================= */
-@media (max-width: 768px) {
-
-    .block-container {
-        padding-top: 0.5rem !important;
-    }
-
-    h1 { font-size: 1.6rem; }
-    h2 { font-size: 1.3rem; }
-    h3 { font-size: 1.1rem; }
-
-    .card {
-        padding: 10px;
-        border-radius: 12px;
-    }
-
-    div[data-testid="metric-container"] {
-        padding: 8px;
-    }
-
-    /* Hide sidebar on mobile */
-    section[data-testid="stSidebar"] {
-        display: none;
-    }
-}
-
-/* =========================
-   🧱 CARD
-========================= */
+/* -------------------------
+   CARDS
+------------------------- */
 .card {
     background: white;
     border-radius: 16px;
@@ -171,26 +129,31 @@ div[data-testid="metric-container"] {
     box-shadow: 0 6px 16px rgba(0,0,0,0.05);
 }
 
+/* -------------------------
+   METRICS
+------------------------- */
+div[data-testid="metric-container"] {
+    border-radius: 14px;
+    padding: 12px;
+    background-color: #f7f8fa;
+}
+
 /* =========================
-   📌 STICKY TOP NAV
+   MOBILE TWEAKS ONLY
 ========================= */
-.hero {
-    position: sticky;
-    top: 0;
-    z-index: 999;
-    background: inherit;
-    padding: 10px 0;
-}
+@media (max-width: 768px) {
 
-/* Hide top nav on desktop */
-@media (min-width: 769px) {
-    .hero {
-        display: none;
+    .block-container {
+        padding-top: 0.3rem !important;
     }
+
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.3rem; }
+    h3 { font-size: 1.1rem; }
 }
 
 /* =========================
-   🌙 DARK MODE
+   DARK MODE
 ========================= */
 @media (prefers-color-scheme: dark) {
 
@@ -199,36 +162,37 @@ div[data-testid="metric-container"] {
         color: #e6e6e6 !important;
     }
 
-    p, span, div, label {
-        color: #e6e6e6 !important;
-    }
-
     .card {
         background: #1c1f26 !important;
-        color: #e6e6e6 !important;
     }
 
     div[data-testid="metric-container"] {
         background-color: #1c1f26 !important;
-        color: #ffffff !important;
     }
 
     section[data-testid="stSidebar"] {
         background-color: #161a22 !important;
     }
+}
 
-    h1, h2, h3 {
-        color: #ffffff !important;
-    }
+/* Sidebar hidden by default (mobile-friendly) */
+section[data-testid="stSidebar"] {
+    transition: all 0.3s ease;
+}
+
+.menu-btn:hover {
+    background: #e0e3e8;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
+#css end
 
 # =========================
-# 📍 NAVIGATION
+# 📍 NAVIGATION (CLEAN & WORKING)
 # =========================
+
 pages = [
     "🏠 Monthly Results",
     "👤 Player Profile",
@@ -238,20 +202,56 @@ pages = [
     "ℹ️ Readme: Our Dashboard"
 ]
 
-# 🔥 Mobile Top Navigation
-st.markdown('<div class="hero">', unsafe_allow_html=True)
+# Persist page
+if "page" not in st.session_state:
+    st.session_state.page = pages[0]
 
-mobile_page = st.selectbox("", pages, key="mobile_nav")
+# Menu state
+if "menu_open" not in st.session_state:
+    st.session_state.menu_open = False
 
-st.markdown('</div>', unsafe_allow_html=True)
+# 🔘 Header row
+col1, col2 = st.columns([1, 10])
 
+with col1:
+    if st.button("☰", key="menu_btn"):
+        st.session_state.menu_open = not st.session_state.menu_open
 
-# 🖥️ Desktop Sidebar Navigation
-page = st.sidebar.radio("Navigate", pages)
+with col2:
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #f8fafc, #eef2ff);
+        padding: 18px 22px;
+        border-radius: 18px;
+        margin-bottom: 6px;
+    ">
+        <div style="font-size:26px; font-weight:700;">
+            🏃 Steps League
+        </div>
+        <div style="color:#555; font-size:14px;">
+            Consistency • Competition • Community
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+# 📱 Inline navigation menu (works on mobile + desktop)
+if st.session_state.menu_open:
 
+    st.markdown("#### Navigate")
 
-# 🎯 FINAL PAGE SELECTION (CRITICAL LINE)
-page = mobile_page or page
+    selected = st.radio(
+        "",
+        pages,
+        index=pages.index(st.session_state.page),
+        key="inline_nav"
+    )
+
+    st.session_state.page = selected
+    st.session_state.menu_open = False
+    
+
+# Final page
+page = st.session_state.page
 
 
 # =========================
@@ -1422,7 +1422,7 @@ def show_global_league_moments(events_df):
         return
 
     ticker_text = "   |   ".join(messages[:6])  # cap length
-
+    
     st.markdown(f"""
     <style>
     .ticker-box {{
@@ -1434,21 +1434,39 @@ def show_global_league_moments(events_df):
         font-size:14px;
         font-weight:500;
         border:1px solid #ffd6d6;
-    
-        overflow: hidden;   /* IMPORTANT */
-        display: block;     /* FIX */
+        overflow: hidden;
+        position: relative;
     }}
     
-    .ticker-box marquee {{
+    .ticker-content {{
+        display: inline-block;
         white-space: nowrap;
-        line-height: 1.4;
+        padding-left: 100%;
+        animation: ticker-scroll 20s linear infinite;
+    }}
+    
+    @keyframes ticker-scroll {{
+        0% {{
+            transform: translateX(0%);
+        }}
+        100% {{
+            transform: translateX(-100%);
+        }}
+    }}
+    
+    /* Mobile tweak */
+    @media (max-width: 768px) {{
+        .ticker-content {{
+            animation-duration: 25s;
+            font-size: 13px;
+        }}
     }}
     </style>
     
     <div class="ticker-box">
-        <marquee behavior="scroll" direction="left" scrollamount="5">
+        <div class="ticker-content">
             🚨 {ticker_text}
-        </marquee>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1928,22 +1946,6 @@ show_global_league_moments(league_events)
 
 st.markdown("""
 <div class="hero">
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<div style="
-    background: linear-gradient(135deg, #f8fafc, #eef2ff);
-    padding: 18px 22px;
-    border-radius: 18px;
-    margin-bottom: 6px;
-">
-    <div style="font-size:26px; font-weight:700;">
-        🏃 Steps League
-    </div>
-    <div style="color:#555; font-size:14px;">
-        Consistency • Competition • Community
-    </div>
-</div>
 """, unsafe_allow_html=True)
 
 st.markdown("""
