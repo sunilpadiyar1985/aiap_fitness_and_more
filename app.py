@@ -1442,7 +1442,7 @@ def show_global_league_moments(events_df):
         display: inline-block;
         white-space: nowrap;
         padding-left: 100%;
-        animation: ticker-scroll 50s linear infinite;
+        animation: ticker-scroll 50s ease-in-out infinite;
     }}
     
     @keyframes ticker-scroll {{
