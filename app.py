@@ -5,7 +5,7 @@ import numpy as np
 import requests
 import streamlit as st
 
-st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="centered", )
+st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="wide", )
 if not st.session_state.get("is_admin", False):
     st.markdown("""
     <style>
