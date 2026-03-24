@@ -183,6 +183,55 @@ section[data-testid="stSidebar"] {
 .menu-btn:hover {
     background: #e0e3e8;
 }
+/* =========================
+   DARK MODE TEXT FIX (IMPORTANT)
+========================= */
+@media (prefers-color-scheme: dark) {
+
+    /* Global text */
+    html, body, p, span, div {
+        color: #e6e6e6 !important;
+    }
+
+    /* Headings */
+    h1, h2, h3, h4, h5 {
+        color: #ffffff !important;
+    }
+
+    /* Secondary text */
+    small, label {
+        color: #b0b0b0 !important;
+    }
+
+    /* Cards (your podium cards etc.) */
+    .card {
+        background: #1c1f26 !important;
+        color: #ffffff !important;
+    }
+
+    /* Winner / highlight cards (important) */
+    div[style*="background"] {
+        color: #ffffff !important;
+    }
+
+    /* Selectbox / dropdown */
+    div[data-baseweb="select"] {
+        color: #ffffff !important;
+    }
+
+    /* Ticker */
+    .ticker-box {
+        background: #2a1a1a !important;
+        color: #ffcccc !important;
+        border: 1px solid #663333 !important;
+    }
+
+    /* Info / highlight boxes */
+    .stAlert {
+        color: #ffffff !important;
+    }
+
+}
 
 </style>
 """, unsafe_allow_html=True)
