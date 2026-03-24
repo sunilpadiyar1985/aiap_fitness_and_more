@@ -184,49 +184,81 @@ section[data-testid="stSidebar"] {
     background: #e0e3e8;
 }
 /* =========================
-   DARK MODE TEXT FIX (IMPORTANT)
+   DARK MODE — CLEAN FIX
 ========================= */
 @media (prefers-color-scheme: dark) {
 
-    /* Global text */
-    html, body, p, span, div {
-        color: #e6e6e6 !important;
+    /* Base background */
+    html, body {
+        background-color: #0e1117 !important;
     }
 
     /* Headings */
-    h1, h2, h3, h4, h5 {
+    h1, h2, h3, h4 {
         color: #ffffff !important;
     }
 
-    /* Secondary text */
-    small, label {
-        color: #b0b0b0 !important;
+    /* Normal readable text */
+    p, span, label {
+        color: #d0d0d0 !important;
     }
 
-    /* Cards (your podium cards etc.) */
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background-color: #161a22 !important;
+    }
+
+    /* Default cards */
     .card {
         background: #1c1f26 !important;
         color: #ffffff !important;
     }
 
-    /* Winner / highlight cards (important) */
-    div[style*="background"] {
+    /* Metrics */
+    div[data-testid="metric-container"] {
+        background-color: #1c1f26 !important;
         color: #ffffff !important;
     }
 
-    /* Selectbox / dropdown */
+    /* -------------------------
+       🎯 PODIUM / LIGHT CARDS
+    ------------------------- */
+
+    /* Catch your inline styled podium cards */
+    div[style*="#e8d9a8"],   /* gold */
+    div[style*="#e5e5e5"],   /* silver */
+    div[style*="#e0d0c0"] {  /* bronze */
+        color: #222222 !important;
+    }
+
+    /* -------------------------
+       🎁 BADGE CARDS
+    ------------------------- */
+
+    /* Your badge text fix */
+    div[style*="linear-gradient"] {
+        color: #111111 !important;
+    }
+
+    /* -------------------------
+       📊 SELECTBOX
+    ------------------------- */
     div[data-baseweb="select"] {
         color: #ffffff !important;
     }
 
-    /* Ticker */
+    /* -------------------------
+       🚨 TICKER
+    ------------------------- */
     .ticker-box {
         background: #2a1a1a !important;
         color: #ffcccc !important;
         border: 1px solid #663333 !important;
     }
 
-    /* Info / highlight boxes */
+    /* -------------------------
+       ℹ️ ALERT BOX
+    ------------------------- */
     .stAlert {
         color: #ffffff !important;
     }
