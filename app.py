@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 import requests
-import streamlit as st
 
 st.set_page_config(page_title="Steps League – Monthly Results", page_icon="🏃", layout="wide", )
 if not st.session_state.get("is_admin", False):
@@ -271,7 +270,7 @@ section[data-testid="stSidebar"] {
 #css end
 
 # =========================
-# 📍 NAVIGATION (CLEAN & WORKING)
+# 📍 NAVIGATION (STABLE FIX)
 # =========================
 
 pages = [
@@ -283,16 +282,20 @@ pages = [
     "ℹ️ Readme: Our Dashboard"
 ]
 
-# Persist page
+# -------------------------
+# STATE INIT
+# -------------------------
 if "page" not in st.session_state:
     st.session_state.page = pages[0]
 
-# Menu state
 if "menu_open" not in st.session_state:
     st.session_state.menu_open = False
 
-# 🔘 Header row
-col1, col2, col3 = st.columns([1, 8, 1])
+
+# -------------------------
+# HEADER
+# -------------------------
+col1, col2, col3 = st.columns([1, 6, 1])
 
 with col1:
     if st.button("☰", key="menu_btn"):
@@ -300,8 +303,7 @@ with col1:
 
 with col2:
     st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #f8fafc, #eef2ff);
+    <div class="main-header" style="
         padding: 18px 22px;
         border-radius: 18px;
         margin-bottom: 6px;
@@ -309,34 +311,39 @@ with col2:
         <div style="font-size:26px; font-weight:700;">
             🏃 Steps League
         </div>
-        <div style="color:#555; font-size:14px;">
+        <div style="font-size:14px;">
             Consistency • Competition • Community
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 with col3:
-    if st.button("🔄", help="Refresh data"):
+    if st.button("🔄", key="refresh_btn"):
         st.cache_data.clear()
         st.rerun()
-    
-# 📱 Inline navigation menu (works on mobile + desktop)
+
+
+# -------------------------
+# MENU (IMPORTANT FIX)
+# -------------------------
 if st.session_state.menu_open:
 
-    st.markdown("#### Navigate")
-
     selected = st.radio(
-        "",
+        "Navigate",
         pages,
         index=pages.index(st.session_state.page),
-        key="inline_nav"
+        key="nav_radio"
     )
 
-    st.session_state.page = selected
-    st.session_state.menu_open = False
-    
+    # ✅ Only update page when it actually changes
+    if selected != st.session_state.page:
+        st.session_state.page = selected
+        st.session_state.menu_open = False
+        st.rerun()   # 🔥 force clean navigation
 
-# Final page
+# -------------------------
+# FINAL PAGE
+# -------------------------
 page = st.session_state.page
 
 
