@@ -211,7 +211,7 @@ if "menu_open" not in st.session_state:
     st.session_state.menu_open = False
 
 # 🔘 Header row
-col1, col2 = st.columns([1, 8, 1])
+col1, col2, col3 = st.columns([1, 8, 1])
 
 with col1:
     if st.button("☰", key="menu_btn"):
