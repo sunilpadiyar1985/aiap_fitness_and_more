@@ -797,145 +797,133 @@ def render_badge_cabinet(earned_ids):
 #League Engine
 #-------------------
 
-def build_league_history(monthly_df, roster_df, raw_df, PREMIER_SIZE=10, MOVE_N=2):
+def build_league_history(df, roster_df, PREMIER_SIZE=10, MOVE_N=2):
 
-    df = monthly_df.copy()
+    df = df[["User", "date", "steps"]].copy()
+    df["MonthP"] = df["date"].dt.to_period("M")
+    df = df.sort_values("date")
+
     roster_df = roster_df.copy()
-
     roster_df["Active from"] = pd.to_datetime(roster_df["Active from"])
     roster_df["Active till"] = pd.to_datetime(roster_df["Active till"], errors="coerce")
 
-    months = sorted(df["MonthP"].dropna().unique())
+    all_months = sorted(df["MonthP"].dropna().unique())
 
-    history = []
-    prev_table = None
+    history_rows = []
+    prev_league = {}
 
-    for i, month in enumerate(months):
+    for i, month in enumerate(all_months):
 
-        month_start = month.start_time
-        month_end = month.end_time
-
-        # -----------------------------
-        # ACTIVE USERS
-        # -----------------------------
-        active_users = roster_df[
-            (roster_df["Active from"] <= month_end) &
-            (
-                roster_df["Active till"].isna() |
-                (roster_df["Active till"] >= month_start)
-            )
-        ]["User"].tolist()
-
-        # -----------------------------
-        # CURRENT MONTH PERFORMANCE
-        # -----------------------------
-        metrics = compute_month_metrics(raw_df, month, active_users)
-
-        if metrics is None or metrics.empty:
+        month_df = df[df["MonthP"] == month]
+        if month_df.empty:
             continue
 
-        scores = compute_points(metrics)
+        # -------------------------
+        # DAILY WINS
+        # -------------------------
+        daily_max = month_df.groupby("date")["steps"].transform("max")
+        month_df = month_df.copy()
+        month_df["daily_win"] = (month_df["steps"] == daily_max) & (month_df["steps"] > 0)
 
-        m = scores.merge(
-            metrics[["User", "total_steps"]],
-            on="User",
-            how="left"
+        # -------------------------
+        # KPIs
+        # -------------------------
+        kpi = month_df.groupby("User").agg(
+            total_steps=("steps", "sum"),
+            avg_steps=("steps", "mean"),
+            tenk_days=("steps", lambda x: (x >= 10000).sum()),
+            fivek_days=("steps", lambda x: (x >= 5000).sum()),
+            daily_wins=("daily_win", "sum")
+        ).reset_index()
+
+        month_df["week"] = month_df["date"].dt.to_period("W").apply(lambda r: r.start_time)
+        best_week = (
+            month_df.groupby(["User", "week"])["steps"]
+            .sum()
+            .groupby("User")
+            .max()
+            .reset_index(name="best_week")
         )
 
-        # =====================================================
-        # 🟢 FIRST MONTH → ALL IN PREMIER (your rule)
-        # =====================================================
+        kpi = kpi.merge(best_week, on="User", how="left").fillna(0)
+
+        # -------------------------
+        # NORMALIZATION
+        # -------------------------
+        for col in ["total_steps", "avg_steps", "tenk_days", "fivek_days", "best_week", "daily_wins"]:
+            max_val = kpi[col].max()
+            kpi[col + "_score"] = kpi[col] / max_val if max_val > 0 else 0
+
+        # -------------------------
+        # POINTS
+        # -------------------------
+        kpi["points"] = (
+            kpi["total_steps_score"] * 0.40 +
+            kpi["avg_steps_score"]   * 0.15 +
+            kpi["tenk_days_score"]   * 0.15 +
+            kpi["fivek_days_score"]  * 0.10 +
+            kpi["best_week_score"]   * 0.10 +
+            kpi["daily_wins_score"]  * 0.10
+        )
+
+        kpi["points_display"] = (
+            np.floor(kpi["points"] * 100)
+            .clip(upper=100)
+            .astype(int)
+        )
+
+        # -------------------------
+        # LEAGUE ASSIGNMENT
+        # -------------------------
         if i == 0:
-
-            m["League"] = "Premier"
-            m["Promoted"] = False
-            m["Relegated"] = False
-
+            kpi["League"] = "Premier"
         else:
+            kpi["League"] = kpi["User"].map(prev_league).fillna("Championship")
 
-            # -----------------------------
-            # START WITH PREVIOUS LEAGUE
-            # -----------------------------
-            m["League"] = m["User"].map(
-                prev_table.set_index("User")["League"]
-            )
+        kpi["Promoted"] = False
+        kpi["Relegated"] = False
 
-            # New users → Championship
-            m["League"] = m["League"].fillna("Championship")
+        # -------------------------
+        # PROMOTION / RELEGATION LOGIC
+        # -------------------------
+        premier = kpi[kpi["League"] == "Premier"].sort_values("points", ascending=False)
+        champ   = kpi[kpi["League"] == "Championship"].sort_values("points", ascending=False)
 
-            # Reset flags
-            m["Promoted"] = False
-            m["Relegated"] = False
+        if len(premier) > PREMIER_SIZE:
+            overflow = premier.tail(len(premier) - PREMIER_SIZE)["User"]
+            kpi.loc[kpi["User"].isin(overflow), "League"] = "Championship"
+            kpi.loc[kpi["User"].isin(overflow), "Relegated"] = True
 
-            # -----------------------------
-            # 🔥 REMOVE INACTIVE USERS FROM PREVIOUS
-            # -----------------------------
-            prev = prev_table.copy()
-            prev = prev[prev["User"].isin(active_users)]
+        if len(premier) == PREMIER_SIZE and len(champ) >= MOVE_N:
+            relegated = premier.tail(MOVE_N)["User"]
+            promoted  = champ.head(MOVE_N)["User"]
 
-            # -----------------------------
-            # 🔥 USE PREVIOUS MONTH RANKS
-            # -----------------------------
-            prev_prem = prev[prev["League"] == "Premier"].sort_values("Rank")
-            prev_champ = prev[prev["League"] == "Championship"].sort_values("Rank")
+            kpi.loc[kpi["User"].isin(relegated), "League"] = "Championship"
+            kpi.loc[kpi["User"].isin(promoted),  "League"] = "Premier"
+            kpi.loc[kpi["User"].isin(promoted),  "Promoted"] = True
+            kpi.loc[kpi["User"].isin(relegated), "Relegated"] = True
 
-            relegated = prev_prem.tail(MOVE_N)["User"].tolist()
-            promoted = prev_champ.head(MOVE_N)["User"].tolist()
+        # -------------------------
+        # FINAL RANKING
+        # -------------------------
+        kpi["Rank"] = kpi.groupby("League")["points"].rank(method="first", ascending=False)
+        kpi["Champion"] = kpi["Rank"] == 1
 
-            # Apply movement
-            m.loc[m["User"].isin(relegated), "League"] = "Championship"
-            m.loc[m["User"].isin(promoted), "League"] = "Premier"
+        # ✅ canonical month
+        kpi["MonthP"] = month
 
-            m.loc[m["User"].isin(relegated), "Relegated"] = True
-            m.loc[m["User"].isin(promoted), "Promoted"] = True
+        history_rows.append(kpi)
+        prev_league = kpi.set_index("User")["League"].to_dict()
 
-            # -----------------------------
-            # 🔥 ENSURE PREMIER SIZE = 10
-            # (Handle leavers / gaps)
-            # -----------------------------
-            current_prem = m[m["League"] == "Premier"]["User"].tolist()
+    # =========================
+    # FINALIZE (ONCE)
+    # =========================
+    lh = pd.concat(history_rows, ignore_index=True)
+    lh["MonthP"] = lh["MonthP"].astype("period[M]")
+    lh["Month"] = lh["MonthP"].dt.to_timestamp("M")
 
-            if len(current_prem) < PREMIER_SIZE:
+    return lh
 
-                needed = PREMIER_SIZE - len(current_prem)
-
-                extra = (
-                    m[
-                        (m["League"] == "Championship") &
-                        (~m["User"].isin(promoted))
-                    ]
-                    .sort_values("points", ascending=False)
-                    .head(needed)["User"]
-                    .tolist()
-                )
-
-                m.loc[m["User"].isin(extra), "League"] = "Premier"
-
-                # Optional: mark as promoted
-                m.loc[m["User"].isin(extra), "Promoted"] = True
-
-        # -----------------------------
-        # RANK WITHIN LEAGUE
-        # -----------------------------
-        m["Rank"] = (
-            m.groupby("League")["points"]
-            .rank(method="first", ascending=False)
-        )
-
-        # -----------------------------
-        # FINAL FLAGS
-        # -----------------------------
-        m["Champion"] = m["Rank"] == 1
-
-        m["MonthP"] = month
-        m["Month"] = month.to_timestamp("M")
-
-        history.append(m)
-
-        # Store for next iteration
-        prev_table = m.copy()
-
-    return pd.concat(history, ignore_index=True)
 
 # -------------------------
 # Era Engine
