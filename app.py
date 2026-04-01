@@ -827,7 +827,7 @@ def build_league_history(monthly_df, roster_df, raw_df, PREMIER_SIZE=10, MOVE_N=
         ]["User"].tolist()
 
         # -----------------------------
-        # PERFORMANCE
+        # CURRENT MONTH PERFORMANCE
         # -----------------------------
         metrics = compute_month_metrics(raw_df, month, active_users)
 
@@ -842,9 +842,9 @@ def build_league_history(monthly_df, roster_df, raw_df, PREMIER_SIZE=10, MOVE_N=
             how="left"
         )
 
-        # -----------------------------
-        # MONTH 1 → ALL IN PREMIER
-        # -----------------------------
+        # =====================================================
+        # 🟢 FIRST MONTH → ALL IN PREMIER (your rule)
+        # =====================================================
         if i == 0:
 
             m["League"] = "Premier"
@@ -853,23 +853,28 @@ def build_league_history(monthly_df, roster_df, raw_df, PREMIER_SIZE=10, MOVE_N=
 
         else:
 
-            prev = prev_table.copy()
-
             # -----------------------------
             # START WITH PREVIOUS LEAGUE
             # -----------------------------
-            m["League"] = m["User"].map(prev.set_index("User")["League"])
+            m["League"] = m["User"].map(
+                prev_table.set_index("User")["League"]
+            )
 
             # New users → Championship
             m["League"] = m["League"].fillna("Championship")
 
+            # Reset flags
+            m["Promoted"] = False
+            m["Relegated"] = False
+
             # -----------------------------
-            # REMOVE INACTIVE USERS FROM PREVIOUS
+            # 🔥 REMOVE INACTIVE USERS FROM PREVIOUS
             # -----------------------------
+            prev = prev_table.copy()
             prev = prev[prev["User"].isin(active_users)]
 
             # -----------------------------
-            # PROMOTION / RELEGATION
+            # 🔥 USE PREVIOUS MONTH RANKS
             # -----------------------------
             prev_prem = prev[prev["League"] == "Premier"].sort_values("Rank")
             prev_champ = prev[prev["League"] == "Championship"].sort_values("Rank")
@@ -881,8 +886,12 @@ def build_league_history(monthly_df, roster_df, raw_df, PREMIER_SIZE=10, MOVE_N=
             m.loc[m["User"].isin(relegated), "League"] = "Championship"
             m.loc[m["User"].isin(promoted), "League"] = "Premier"
 
+            m.loc[m["User"].isin(relegated), "Relegated"] = True
+            m.loc[m["User"].isin(promoted), "Promoted"] = True
+
             # -----------------------------
-            # 🔥 HANDLE LEAVERS (CRITICAL FIX)
+            # 🔥 ENSURE PREMIER SIZE = 10
+            # (Handle leavers / gaps)
             # -----------------------------
             current_prem = m[m["League"] == "Premier"]["User"].tolist()
 
@@ -890,7 +899,7 @@ def build_league_history(monthly_df, roster_df, raw_df, PREMIER_SIZE=10, MOVE_N=
 
                 needed = PREMIER_SIZE - len(current_prem)
 
-                extra_promotions = (
+                extra = (
                     m[
                         (m["League"] == "Championship") &
                         (~m["User"].isin(promoted))
@@ -900,13 +909,10 @@ def build_league_history(monthly_df, roster_df, raw_df, PREMIER_SIZE=10, MOVE_N=
                     .tolist()
                 )
 
-                m.loc[m["User"].isin(extra_promotions), "League"] = "Premier"
+                m.loc[m["User"].isin(extra), "League"] = "Premier"
 
-                promoted.extend(extra_promotions)
-
-            # Flags
-            m["Promoted"] = m["User"].isin(promoted)
-            m["Relegated"] = m["User"].isin(relegated)
+                # Optional: mark as promoted
+                m.loc[m["User"].isin(extra), "Promoted"] = True
 
         # -----------------------------
         # RANK WITHIN LEAGUE
@@ -916,11 +922,17 @@ def build_league_history(monthly_df, roster_df, raw_df, PREMIER_SIZE=10, MOVE_N=
             .rank(method="first", ascending=False)
         )
 
+        # -----------------------------
+        # FINAL FLAGS
+        # -----------------------------
         m["Champion"] = m["Rank"] == 1
+
         m["MonthP"] = month
         m["Month"] = month.to_timestamp("M")
 
         history.append(m)
+
+        # Store for next iteration
         prev_table = m.copy()
 
     return pd.concat(history, ignore_index=True)
