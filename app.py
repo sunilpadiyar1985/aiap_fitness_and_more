@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.set_page_config(page_title="We've Moved 🚀", layout="centered")
+st.set_page_config(page_title="We've Moved on! 🚀", layout="centered")
 
 st.markdown("""
 <div style="
@@ -22,7 +22,7 @@ This app is no longer available here.
 Please use the new app below:
 </p>
 
-<a href="https://unbrokentribe-fitness.streamlit.app/" target="_self"
+<a href="https://unbrokentribe-fitness.streamlit.app/" target="_blank"
 style="
 display:inline-block;
 margin-top:20px;
@@ -38,9 +38,8 @@ Go to New App
 </a>
 
 <p style="margin-top:20px; font-size:14px;">
-(Clicking will take you there instantly)
+(Opens in a new tab)
 </p>
 </div>
 """, unsafe_allow_html=True)
-
 st.stop()
